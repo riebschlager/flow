@@ -1,3 +1,4 @@
+import {normalizeEnvironment} from './environment.js?rev=environment-34';
 import {normalizePalette} from './palettes.js?rev=gestures-32';
 import {instruments,progressions,soundscapes,parseChord} from './music.js?rev=gestures-32';
 import {normalizeRhythm,drumVoices} from './rhythm.js?rev=gestures-32';
@@ -14,7 +15,7 @@ export function sanitizeSnapshot(raw){
  for(const key of ['cycleColors','autoPour','quantizeEnabled'])settings[key]=settings[key]===true;
  for(const key of ['reverb','delay','volume','swirl','persistence','rain','chordAtmosphere'])settings[key]=number(settings[key],0,100,mainDefaults[key]);settings.dropSize=number(settings.dropSize,10,100,45);
  for(const key of ['octavesDown','octavesUp'])settings[key]=Math.round(number(settings[key],0,3,mainDefaults[key]));settings.chordLength=[4,8,16].includes(Number(settings.chordLength))?String(settings.chordLength):'8';settings.quantizeBeats=[1,.5,.25,.125,1/3].includes(Number(settings.quantizeBeats))?Number(settings.quantizeBeats):.5;
- return {main:{settings,voices:[...main.voices],custom:[...main.custom],bpm:number(main.bpm,30,100,56),selected:Math.round(number(main.selected,0,3,0))},rhythm:normalizeRhythm(raw.rhythm),arp:normalizeArp(raw.arp),expression:normalizeGestureSettings(raw.expression),position:number(raw.position,0,100000,0),chordIndex:Math.round(number(raw.chordIndex,0,3,0)),performance:normalizePerformance(raw.performance)};
+ return {main:{settings,voices:[...main.voices],custom:[...main.custom],bpm:number(main.bpm,30,100,56),selected:Math.round(number(main.selected,0,3,0))},rhythm:normalizeRhythm(raw.rhythm),arp:normalizeArp(raw.arp),environment:normalizeEnvironment(raw.environment),expression:normalizeGestureSettings(raw.expression),position:number(raw.position,0,100000,0),chordIndex:Math.round(number(raw.chordIndex,0,3,0)),performance:normalizePerformance(raw.performance)};
 }
 const requireNumber=(value,lo,hi)=>{if(typeof value!=='number'||!Number.isFinite(value)||value<lo||value>hi)throw new Error('The performance contains an invalid visual action.');return value;};
 export function sanitizeTake(take){take.snapshot=sanitizeSnapshot(take.snapshot);for(const event of take.events){const d=event.data;
