@@ -1,10 +1,18 @@
-import {parseChord,instruments} from './music.js?rev=pad-balance-14';
+import {parseChord,instruments} from './music.js?rev=arp-envelope-15';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRates=[1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){
  raw=raw&&typeof raw==='object'?raw:{};
  const number=(value,lo,hi,fallback)=>Number.isFinite(Number(value))?Math.max(lo,Math.min(hi,Number(value))):fallback;
- return {enabled:raw.enabled===true,voice:Object.hasOwn(instruments,raw.voice)?raw.voice:'vibes',pattern:Object.hasOwn(arpPatterns,raw.pattern)?raw.pattern:'up',count:Math.round(number(raw.count,1,16,8)),beats:arpRates.includes(Number(raw.beats))?Number(raw.beats):.5,volume:number(raw.volume,0,100,55)};
+ return {enabled:raw.enabled===true,voice:Object.hasOwn(instruments,raw.voice)?raw.voice:'vibes',pattern:Object.hasOwn(arpPatterns,raw.pattern)?raw.pattern:'up',count:Math.round(number(raw.count,1,16,8)),beats:arpRates.includes(Number(raw.beats))?Number(raw.beats):.5,volume:number(raw.volume,0,100,55),length:number(raw.length,10,400,85),attack:number(raw.attack,0,2000,20),decay:number(raw.decay,0,2000,120),sustain:number(raw.sustain,0,100,65)};
+}
+export function arpEnvelope(raw={},step=.5){
+ const cfg=normalizeArp(raw),duration=Math.max(.02,Math.min(8,(Number(step)||.5)*cfg.length/100));
+ const release=Math.min(.25,Math.max(.012,duration*.2)),available=duration-release;
+ let attack=Math.max(.002,cfg.attack/1000),decay=Math.max(.002,cfg.decay/1000);
+ const fit=Math.min(1,available/(attack+decay));attack*=fit;decay*=fit;
+ const hold=Math.max(0,available-attack-decay),sustain=cfg.sustain/100;
+ return {duration,attack,decay,hold,release,sustain,fitted:fit<.999,envelope:[{duration:0,volume:0},{duration:attack,volume:1},{duration:decay,volume:sustain},{duration:hold,volume:sustain},{duration:release,volume:0}]};
 }
 export function arpNotes(chord,count=8){
  count=normalizeArp({count}).count;const base=parseChord(chord),notes=[];
@@ -58,10 +66,10 @@ export class ArpEngine{
    // Start each chord's pattern from its first step, even at a progression wrap.
    const chordKey=chordIndex+'|'+Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm));
    if(this.chordKey!==chordKey){this.chordKey=chordKey;this.pattern.reset();}
-   const pool=arpNotes(chord,cfg.count),index=this.pattern.next(pool.length,cfg.pattern),pitch=pool[index],length=Math.max(.12,Math.min(2.7,step*.85));
+   const pool=arpNotes(chord,cfg.count),index=this.pattern.next(pool.length,cfg.pattern),pitch=pool[index],shape=arpEnvelope(cfg,step),length=shape.duration;
    const note={time,end:time+length+.15,cancel:new AbortController(),envelope:null};this.notes.push(note);
    const expression={velocity:.9,sustain:1,pan:pool.length===1?0:(index/(pool.length-1)*2-1)*.45,cutoff:11000,energy:.15};
-   Promise.resolve(this.audio.note(cfg.voice,pitch,expression,{when:time,signal:note.cancel.signal,target:this.bus,noteLength:length})).then(envelope=>{note.envelope=envelope;if(note.cancel.signal.aborted&&envelope){envelope.cancel();try{envelope.audioBufferSourceNode?.stop();}catch{}}}).catch(error=>{if(!note.cancel.signal.aborted)this.fail(error);});
+   Promise.resolve(this.audio.note(cfg.voice,pitch,expression,{when:time,signal:note.cancel.signal,target:this.bus,noteLength:length,noteEnvelope:shape.envelope})).then(envelope=>{note.envelope=envelope;if(note.cancel.signal.aborted&&envelope){envelope.cancel();try{envelope.audioBufferSourceNode?.stop();}catch{}}}).catch(error=>{if(!note.cancel.signal.aborted)this.fail(error);});
    this.onEvent({type:'note',time,pitch,index,count:pool.length,chord,voice:cfg.voice});
   }
  }

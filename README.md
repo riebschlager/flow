@@ -75,3 +75,14 @@ Eight new FluidR3 GM FX voices (programs 96–103, zero-based) are bundled local
 ## New age pad balance
 
 New age pad keeps its existing sample and voice key, with a lower gain (0.075, previously 0.22), a slower 0.75-second swell, a shorter 3.8-second natural note, and a 1.15-second release. A gentle low-pass sweep from 2.8 kHz to 1.7 kHz reduces its upper-frequency presence. This avoids the earlier sustained dominance and reduces overlap in dense performances, including Orbital relay. The same adjustment applies when the voice is assigned manually or used in the arpeggiator. Existing saved voice assignments remain valid.
+
+## Arpeggio note shape
+
+Sound → Arpeggiator → Note shape exposes four independent controls with a live amplitude-envelope preview:
+
+- Note length: 10–400% of one rate step; above 100% allows overlap. Actual note duration is bounded to 20 ms–8 s.
+- Attack: 0–2000 ms to rise to peak level.
+- Decay: 0–2000 ms to settle from peak to the sustain level.
+- Sustain: 0–100% held amplitude, rather than a time setting.
+
+Attack and decay proportionally fit the available duration when necessary; the caption shows their actual timings. A short automatic release ends each note smoothly, and very short ramps avoid clicks. Defaults are 85% length, 20 ms attack, 120 ms decay, and 65% sustain. Old saved arpeggios gain these defaults; all four controls persist in the existing arpeggio settings. Tempo/rhythm-speed changes update the preview and total duration. Shape edits affect newly scheduled notes without resetting the melodic pattern; already sounding notes finish their envelopes. The custom amplitude envelope is per note and retains each voice's gain, tone sweep, stereo, and shared effects. Canvas/drop envelopes are unchanged.
