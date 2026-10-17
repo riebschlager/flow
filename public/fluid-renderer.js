@@ -11,7 +11,7 @@ const triangles=[[0,1,3],[0,3,2]].map(indices=>{
 });
 const edges=[[0,1],[1,3],[3,2],[2,0]].map(([a,b])=>{const start=vertices[a],dx=vertices[b][0]-start[0],dy=vertices[b][1]-start[1];return {a,b,start,dx,dy,length:dx*dx+dy*dy};});
 function createPigmentMapper(palette){
- const colors=getPalette(palette).colors.map(c=>hexRGB(c.hex).map(v=>v**2.2));
+ const colors=getPalette(palette).colors.map(c=>hexRGB(c.hex));
  return (r,g,b,out)=>{
   const sum=r+g+b,x=r/sum,y=g/sum;
   for(const {indices,a,b,c,den} of triangles){
@@ -24,45 +24,37 @@ function createPigmentMapper(palette){
  };
 }
 
-// Exposure changes value as a whole. Channel-by-channel compression would turn
-// all three channels white as dye accumulates, regardless of their original hue.
+// Palette colors are already display-ready sRGB. Keep their channel ratios and
+// saturation; density only controls coverage over the dark background.
 export function createFluidColorizer(palette){
  const mapDye=createPigmentMapper(palette),mapped=[0,0,0];
- const primary=hexRGB(getPalette(palette).colors[0].hex),lo=Math.min(...primary),span=Math.max(...primary)-lo;
- const fallback=primary.map(v=>(v-lo)/span);
- return function colorize(r,g,b,lighting,gradient,out,offset=0,tint=[1,1,1]){
+ return function colorize(r,g,b,lighting,gradient,out,offset=0){
   const density=Math.max(r,g,b);
   if(density<1e-10){out[offset]=7;out[offset+1]=10;out[offset+2]=17;return;}
   mapDye(r,g,b,mapped);
-  // Apply the chord's tint before saturation, so lighting cannot add gray back.
-  r=mapped[0]*tint[0];g=mapped[1]*tint[1];b=mapped[2]*tint[2];
-  let max=Math.max(r,g,b),min=Math.min(r,g,b),chroma=max-min;
-  // Opposing colors can mix to near-neutral. Ease toward the palette's first
-  // hue there, rather than amplifying tiny numeric differences into flicker.
-  const neutral=clamp(1-chroma/(max*.22),0,1),bias=neutral*neutral*(3-2*neutral)*.28*max;
-  r+=fallback[0]*bias;g+=fallback[1]*bias;b+=fallback[2]*bias;
-  max=Math.max(r,g,b);min=Math.min(r,g,b);chroma=max-min;
-  if(chroma<1e-8){r=fallback[0];g=fallback[1];b=fallback[2];min=0;max=chroma=1;}
-  const saturation=clamp((1-min/max)*1.12,.86,.99);
-  const coverage=-Math.expm1(-density*1.65);
-  // Surface ridges lift the same hue; their intensity is bounded even after a
-  // large splat. Keep headroom so no channel clips into a white highlight.
-  const ridge=Math.max(0,gradient),highlight=.075*ridge/(1+ridge);
-  const value=coverage*Math.min(.96,.70+.24*clamp(lighting,0,1.25)/1.25+highlight),scale=255*value;
-  const base=1-saturation,boost=saturation/chroma,remaining=1-coverage;
-  out[offset]=7*remaining+scale*(base+(r-min)*boost);
-  out[offset+1]=10*remaining+scale*(base+(g-min)*boost);
-  out[offset+2]=17*remaining+scale*(base+(b-min)*boost);
+  const coverage=-Math.expm1(-density*1.65),ridge=Math.max(0,gradient);
+  // Lighting can gently darken pigment or recover its original brightness. It
+  // cannot oversaturate a swatch, normalize its channels, or add white to it.
+  const brightness=Math.min(1,.84+.16*clamp(lighting,0,1)+.02*ridge/(1+ridge));
+  const scale=255*coverage*brightness,remaining=1-coverage;
+  out[offset]=7*remaining+mapped[0]*scale;
+  out[offset+1]=10*remaining+mapped[1]*scale;
+  out[offset+2]=17*remaining+mapped[2]*scale;
  };
 }
 
-// Pure pixel pass, also used by the renderer checks. The fluid's dye and
-// velocity fields remain untouched, including during session playback.
-export function renderFluidPixels(sim,pixels,time,colorize,{luminance=1,tint=[1,1,1]}={}){
- for(let i=0;i<sim.n;i++){
-  const gradient=i>sim.w&&i<sim.n-sim.w?(sim.r[i+1]+sim.g[i+1]+sim.b[i+1])-(sim.r[i-1]+sim.g[i-1]+sim.b[i-1]):0;
-  const lighting=(.82+.18*Math.sin(i%sim.w*.035+Math.floor(i/sim.w)*.03+time*.12))*luminance;
-  colorize(sim.r[i],sim.g[i],sim.b[i],lighting,gradient,pixels,i*4,tint);pixels[i*4+3]=255;
+// A one-cell Gaussian reconstruction softens solver-grid boundaries before
+// nonlinear density/color mapping. No per-frame buffers or solver mutations.
+function smooth(field,i,left,right,up,down){
+ return (field[i]*4+(field[i+left]+field[i+right]+field[i+up]+field[i+down])*2+field[i+up+left]+field[i+up+right]+field[i+down+left]+field[i+down+right])/16;
+}
+export function renderFluidPixels(sim,pixels,time,colorize,{luminance=1}={}){
+ for(let y=0;y<sim.h;y++)for(let x=0;x<sim.w;x++){
+  const i=x+y*sim.w,left=x>0?-1:0,right=x<sim.w-1?1:0,up=y>0?-sim.w:0,down=y<sim.h-1?sim.w:0;
+  const r=smooth(sim.r,i,left,right,up,down),g=smooth(sim.g,i,left,right,up,down),b=smooth(sim.b,i,left,right,up,down);
+  const gradient=(sim.r[i+right]+sim.g[i+right]+sim.b[i+right])-(sim.r[i+left]+sim.g[i+left]+sim.b[i+left]);
+  const lighting=(.82+.18*Math.sin(x*.035+y*.03+time*.12))*luminance;
+  colorize(r,g,b,lighting,gradient,pixels,i*4);pixels[i*4+3]=255;
  }
  return pixels;
 }

@@ -44,10 +44,10 @@ export class ChordAtmosphere{
   const rgb=this.current.color.map(value=>Math.round(value*255)),color=alpha=>`rgba(${rgb.join(',')},${alpha})`;
   ctx.save();// Soft light preserves the ink's saturation instead of laying pale fog over it.
   ctx.globalCompositeOperation='soft-light';
-  const glow=ctx.createRadialGradient(px,py,0,px,py,size),alpha=this.amount*(.28+this.pulse*.10);
+  const glow=ctx.createRadialGradient(px,py,0,px,py,size),alpha=this.amount*(.10+this.pulse*.04);
   glow.addColorStop(0,color(alpha));glow.addColorStop(.45,color(alpha*.48));glow.addColorStop(1,color(0));ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
   // A broad, feathered breath of light marks arrival without a flash or a label.
-  if(this.pulse>.001&&!this.reducedMotion){const progress=clamp(this.age/3.2),radius=Math.min(w,h)*(.18+progress*.65);ctx.translate(px,py);ctx.scale(1,.6);const wave=ctx.createRadialGradient(0,0,0,0,0,radius);wave.addColorStop(0,color(0));wave.addColorStop(.5,color(0));wave.addColorStop(.76,color(this.amount*this.pulse*.14));wave.addColorStop(1,color(0));ctx.fillStyle=wave;ctx.fillRect(-radius,-radius,radius*2,radius*2);}
+  if(this.pulse>.001&&!this.reducedMotion){const progress=clamp(this.age/3.2),radius=Math.min(w,h)*(.18+progress*.65);ctx.translate(px,py);ctx.scale(1,.6);const wave=ctx.createRadialGradient(0,0,0,0,0,radius);wave.addColorStop(0,color(0));wave.addColorStop(.5,color(0));wave.addColorStop(.76,color(this.amount*this.pulse*.06));wave.addColorStop(1,color(0));ctx.fillStyle=wave;ctx.fillRect(-radius,-radius,radius*2,radius*2);}
   ctx.restore();
  }
 }
