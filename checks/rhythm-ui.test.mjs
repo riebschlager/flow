@@ -15,3 +15,7 @@ fire($('beatLanes'),'click',$('laneMute1'));assert.equal(stored.lanes[1].muted,t
 $('laneLevel2').value='22';fire($('beatLanes'),'input',$('laneLevel2'));assert.equal(stored.lanes[2].level,22);$('rhythmSwing').value='32';fire($('rhythmSwing'),'input');assert.equal(stored.swing,32);$('studioClear').onclick();assert(stored.lanes.every(l=>l.steps.every(v=>v===0)));
 $('studioEnabled').checked=false;fire($('studioEnabled'),'change');assert.equal($('rhythmEnabled').checked,false);assert.equal(stored.enabled,false);$('doneBeats').onclick();assert.equal($('beatDialog').open,false);ui.stop();
 console.log('PASS: UI initialization, studio open/close, optional enable, voice removal, all three step states, preset selection, mute, Euclidean density, rotation, lane levels, swing, clear, and settings persistence.');
+// A failed host API must surface as an error rather than a false Playing status.
+$('rhythmEnabled').checked=true;fire($('rhythmEnabled'),'change');audio.playing=true;audio.ctx={currentTime:0};const originalError=console.error;let logged=0;
+try{console.error=()=>logged++;ui.start();assert.equal(logged,1);assert.match($('rhythmStatus').textContent,/couldn’t start/);ui.transportChanged();assert.match($('rhythmStatus').textContent,/couldn’t start/);}finally{console.error=originalError;audio.playing=false;audio.ctx=null;$('rhythmEnabled').checked=false;fire($('rhythmEnabled'),'change');ui.stop();}
+console.log('PASS: failed audio/scheduler startup is reported visibly and is not overwritten as Playing.');

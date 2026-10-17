@@ -1,17 +1,17 @@
-import {drumVoices,grooves,normalizeRhythm,groovePattern,euclidean,rotatePattern,varyPattern,RhythmEngine} from './rhythm.js';
+import {drumVoices,grooves,normalizeRhythm,groovePattern,euclidean,rotatePattern,varyPattern,RhythmEngine} from './rhythm.js?rev=percussion-audio-2';
 const $=id=>document.getElementById(id);
 const laneColors=['#b7a0ff','#73e2d0','#ff9e9e','#edca82'];
 const anchors=[{x:.25,y:.68},{x:.48,y:.42},{x:.72,y:.66},{x:.77,y:.31}];
 export function createRhythmController({audio,togglePlay,getPosition,onHit}){
  let config;try{config=normalizeRhythm(JSON.parse(localStorage.getItem('chromaflow-rhythm-v1')));}catch{config=normalizeRhythm();}
- let pending=[],pulses=[],currentStep=-1;
+ let pending=[],pulses=[],currentStep=-1,startError=null;
  const engine=new RhythmEngine(audio,()=>config,event=>{pending.push(event);if(pending.length>512)pending.splice(0,pending.length-512);});
  const persist=()=>{try{localStorage.setItem('chromaflow-rhythm-v1',JSON.stringify(config));}catch{}};
  const pulseCount=lane=>lane.steps.filter(v=>v>0).length;
  function clearHead(){document.querySelectorAll('.drum-step.playhead').forEach(el=>el.classList.remove('playhead'));currentStep=-1;$('rhythmStep').textContent='—';}
- function stop(){engine.stop();pending=[];pulses=[];clearHead();syncStatus();}
- function start(){pending=[];pulses=[];engine.start(getPosition());syncStatus();}
- function syncStatus(){for(const id of ['rhythmEnabled','studioEnabled'])$(id).checked=config.enabled;$('rhythmStatus').textContent=!config.enabled?'Off · your fluid stays free to drift':audio.playing?'Playing · locked to the scene’s tempo':'Ready · press Begin listening to hear your beat';$('rhythmStatus').classList.toggle('rhythm-on',config.enabled);$('rhythmBadge').hidden=!config.enabled;$('studioPlay').textContent=audio.playing?'Pause scene':'Play scene';$('studioBpm').textContent=audio.bpm+' BPM';$('rhythmRateLabel').textContent=config.rate===2?'2 beats per loop':config.rate===.5?'8 beats per loop':'4 beats per loop';}
+ function stop(){engine.stop();pending=[];pulses=[];startError=null;clearHead();syncStatus();}
+ function start(){pending=[];pulses=[];startError=null;try{engine.start(getPosition());}catch(error){engine.stop();startError=error;console.error('Percussion could not start:',error);}syncStatus();}
+ function syncStatus(){for(const id of ['rhythmEnabled','studioEnabled'])$(id).checked=config.enabled;$('rhythmStatus').textContent=startError?'Percussion couldn’t start. Turn it off and on to retry.':!config.enabled?'Off · your fluid stays free to drift':audio.playing?'Playing · locked to the scene’s tempo':'Ready · press Begin listening to hear your beat';$('rhythmStatus').classList.toggle('rhythm-on',config.enabled&&!startError);$('rhythmBadge').hidden=!config.enabled;$('studioPlay').textContent=audio.playing?'Pause scene':'Play scene';$('studioBpm').textContent=audio.bpm+' BPM';$('rhythmRateLabel').textContent=config.rate===2?'2 beats per loop':config.rate===.5?'8 beats per loop':'4 beats per loop';}
  function syncControls(){for(const id of ['rhythmVolume','rhythmSwing','rhythmHumanize','rhythmVisual']){const key={rhythmVolume:'volume',rhythmSwing:'swing',rhythmHumanize:'humanize',rhythmVisual:'visual'}[id];$(id).value=config[key];$(id).style.setProperty('--pct',config[key]/Number($(id).max)*100+'%');$(id+'Value').textContent=Math.round(config[key])+'%';}for(const id of ['groove','studioGroove'])$(id).value=config.preset;$('rhythmRate').value=config.rate;$('rhythmVisualMode').value=config.visualMode;syncStatus();}
  function summary(){$('rhythmVoices').innerHTML=config.lanes.map((lane,i)=>`<button class="rhythm-summary" data-edit-lane="${i}" style="--lane:${laneColors[i]}"><span class="voice-dot" style="background:var(--lane)"></span><span>${lane.voice==='off'?'Empty voice':drumVoices[lane.voice].name}</span><small>${lane.voice==='off'?'OFF':lane.muted?'MUTED':pulseCount(lane)+' hits'}</small><span aria-hidden="true">↗</span></button>`).join('');}
  function stepState(lane,step){const v=lane.steps[step];return v>=.85?'accent':v>0?'hit':'off';}

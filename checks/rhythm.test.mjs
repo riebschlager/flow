@@ -32,3 +32,15 @@ const synth=new PercussionSynth(synthAudio);synth.connect();synth.setLevel(55);f
 const f=new Fluid(72,48);f.splat(.5,.5,[.3,.4,.6],.05,0,0);const dye=[f.r.slice(),f.g.slice(),f.b.slice()];f.pulse(.45,.55,.8,.1,-1);assert.deepEqual(f.r,dye[0]);assert.deepEqual(f.g,dye[1]);assert.deepEqual(f.b,dye[2]);assert(f.u.some(v=>Math.abs(v)>1));
 for(let i=0;i<180;i++){if(i%5===0)f.pulse(.25+(i%4)*.15,.5,.6,.07,i%2?-1:1);f.step(1/30);}assert([...f.u,...f.v,...f.r,...f.g,...f.b].every(Number.isFinite));
 console.log('PASS: 272 Euclidean patterns, five grooves, restore validation, audio-clock scheduling, swing, stall recovery, silent/muted lanes, stop, all ten synth voices, and fluid stability without dye injection.');
+// Browser host timers require Window as their receiver. Test the default path,
+// not just the dependency-injected scheduler used by the timing tests above.
+const nativeSet=globalThis.setInterval,nativeClear=globalThis.clearInterval;
+let browserCallback,timerStarts=0,timerClears=0;
+try{
+ globalThis.setInterval=function(callback,delay){assert.equal(this,globalThis,'setInterval must be called on the global host');assert.equal(delay,25);browserCallback=callback;timerStarts++;return 73;};
+ globalThis.clearInterval=function(id){assert.equal(this,globalThis,'clearInterval must be called on the global host');assert.equal(id,73);timerClears++;};
+ const browserConfig=defaultRhythm();browserConfig.enabled=true;const browserAudio={ctx:{currentTime:0},bpm:56,playing:true};const actual=[];const browserEngine=new RhythmEngine(browserAudio,()=>browserConfig,event=>actual.push(event));
+ browserEngine.synth={connect(){},setLevel(){},stop(){},hit(){}};
+ browserEngine.start();assert.equal(timerStarts,1);for(let i=1;i<=200;i++){browserAudio.ctx.currentTime=i*.025;browserCallback();}assert(actual.filter(e=>e.type==='hit').length>10);browserEngine.stop();assert.equal(timerClears,1);assert.equal(browserEngine.timer,null);
+ console.log('PASS: default browser-host timer binding, continuous drum scheduling, and clean stop.');
+}finally{globalThis.setInterval=nativeSet;globalThis.clearInterval=nativeClear;}
