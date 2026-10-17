@@ -14,10 +14,10 @@ assert(ratio>4,'default bass hits must move substantially more dye after pressur
 for(const [voice,{weight}] of Object.entries(drumVoices)){
  const sim=new Fluid(96,64);sim.splat(.5,.5,[.4,.2,.7],.06,0,0);
  const dye=[sim.r.slice(),sim.g.slice(),sim.b.slice()];
- stirPercussion(sim,{x:.5,y:.5,strength:.5,voice,weight,lane:1,step:7});
+ stirPercussion(sim,{x:.5,y:.5,strength:.5,voice,weight,motion:drumVoices[voice].motion,lane:1,step:7});
  assert.deepEqual(sim.r,dye[0]);assert.deepEqual(sim.g,dye[1]);assert.deepEqual(sim.b,dye[2]);
  assert(sim.u.some(v=>Math.abs(v)>1));assert(sim.v.some(v=>Math.abs(v)>1));
- const capped=new Fluid(96,64);stirPercussion(capped,{x:.5,y:.5,strength:1.4,voice,weight,lane:0,step:0});for(let i=0;i<capped.n;i++)assert(Math.hypot(capped.u[i],capped.v[i])<=180.001);
+ const capped=new Fluid(96,64);stirPercussion(capped,{x:.5,y:.5,strength:1.4,voice,weight,motion:drumVoices[voice].motion,lane:0,step:0});for(let i=0;i<capped.n;i++)assert(Math.hypot(capped.u[i],capped.v[i])<=180.001);
  const u=sim.u.slice(),v=sim.v.slice();stirPercussion(sim,{x:.5,y:.5,strength:0,voice,weight});assert.deepEqual(sim.u,u);assert.deepEqual(sim.v,v);
 }
 // Twice the maximum supported hit density: four full-strength hits every frame.
@@ -32,4 +32,4 @@ for(let frame=0;frame<360;frame++){
  for(let i=0;i<stress.n;i++){assert(Number.isFinite(stress.u[i])&&Number.isFinite(stress.v[i]));peak=Math.max(peak,Math.hypot(stress.u[i],stress.v[i]));}
 }
 assert([...stress.r,...stress.g,...stress.b].every(Number.isFinite));assert(peak<500);
-console.log(`PASS: default bass moves ${ratio.toFixed(1)}× as much dye as before; all ten voices stir existing color, zero strength is inert, and 1,440 dense full-strength hits remain bounded and finite.`);
+console.log(`PASS: default bass moves ${ratio.toFixed(1)}× as much dye as before; all twenty voices stir existing color, zero strength is inert, and 1,440 dense full-strength hits remain bounded and finite.`);

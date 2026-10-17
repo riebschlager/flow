@@ -11,7 +11,7 @@ const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
 // Exercise the live app's quantized launch, scheduler, splash, and transport controls.
 const {AmbientAudio}=await import('../dist/music.js?rev=harmonies-18');
-const notes=[],timers=new Map();let timerID=0;
+const notes=[],percussionHits=[],timers=new Map();let timerID=0;
 const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
 try{
  globalThis.setInterval=function(fn,ms){assert.equal(this,globalThis);assert.equal(ms,25);timers.set(++timerID,fn);return timerID;};
@@ -30,8 +30,8 @@ try{
  tap();const count=notes.length;for(let i=0;i<150&&notes.length===count;i++)tick();const old=notes.at(-1);$('quantizeBeats').value='.125';fire('quantizeBeats');assert.equal(old.signal.aborted,true);
  $('quantizeEnabled').checked=false;fire('quantizeEnabled');assert.equal(timers.size,0);assert.equal($('quantizeBeats').disabled,true);for(let i=0;i<60;i++)tick();assert.equal(notes.at(-1).when,null);
  // Run the real percussion scheduler with its synth stubbed, then change tempo.
- const {PercussionSynth}=await import('../dist/rhythm.js?rev=shared-delay-4');
- for(const method of ['connect','setLevel','setEffects','stop','hit'])PercussionSynth.prototype[method]=function(){};
+ const {PercussionSynth}=await import('../dist/rhythm.js?rev=rhythm-palettes-19');
+ for(const method of ['connect','setLevel','setEffects','stop'])PercussionSynth.prototype[method]=function(){};PercussionSynth.prototype.hit=function(voice,time,velocity,options){percussionHits.push({voice,time,velocity,...options});};
  $('clear').onclick();$('quantizeBeats').value='1';$('quantizeEnabled').checked=true;fire('quantizeEnabled');$('rhythmEnabled').checked=true;fire('rhythmEnabled');$('rhythmRate').value='2';fire('rhythmRate');assert.equal(timers.size,2);
  const advanceToNote=(count=notes.length)=>{for(let i=0;i<160&&notes.length===count;i++){tick();for(const fn of timers.values())fn();}assert.equal(notes.length,count+1);return notes.at(-1);};
  tap();const doubleHit=advanceToNote();const doubleStep=60/56/2;assert(Math.abs((doubleHit.when-origin-.04)/doubleStep-Math.round((doubleHit.when-origin-.04)/doubleStep))<1e-8);
@@ -106,5 +106,12 @@ try{
  assert.equal($('bpmLabel').textContent,beforeHarmony.bpm);assert.equal($('rhythmRate').value,beforeHarmony.rate);assert.equal($('voice0').value,beforeHarmony.voice);assert.equal($('reverb').value,beforeHarmony.reverb);assert.equal($('chordLength').value,beforeHarmony.length);
  $('progression').value='custom';fire('progression');$('chordInput').value='Cmaj9, Dm9, G9, Fm6';for(const fn of $('applyChords').listeners.click)fn();tick();assert.equal($('chordError').textContent,'Your progression is ready.');assert.deepEqual(JSON.parse(store.get('chromaflow-v1')).custom,['Cmaj9','Dm9','G9','Fm6']);
  console.log('PASS: eight new progression selections update chord chips, harmonic atmosphere, mood/pairing captions and saved settings; custom extended chords work and suggestions preserve the mix and timing.');
+ $('rhythmKit').value='glassgarden';fire('rhythmKit');$('groove').value='fracture';fire('groove');$('rhythmEnabled').checked=true;fire('rhythmEnabled');const beforePercussion=percussionHits.length;await $('start').listeners.click[0]();
+ for(let i=0;i<140;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}
+ const firstChordHits=percussionHits.slice(beforePercussion).filter(hit=>hit.pitch!==null);assert(firstChordHits.length>0);assert(firstChordHits.every(hit=>[0,4,7,11,2].includes(hit.pitch%12)));
+ const jumpToLast={dataset:{chord:'3'}};for(const fn of $('chords').listeners.click)fn({target:{closest:()=>jumpToLast}});const afterPercussionJump=percussionHits.length;
+ for(let i=0;i<140;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}
+ const changedChordHits=percussionHits.slice(afterPercussionJump).filter(hit=>hit.pitch!==null);assert(changedChordHits.length>0);assert(changedChordHits.every(hit=>[5,8,0,2].includes(hit.pitch%12)));await $('start').listeners.click[0]();assert.equal(timers.size,0);
+ console.log('PASS: live selected kits produce scheduled percussion, tuned objects follow the current custom chord and manual chord jumps, and pausing stops their clock.');
  console.log('PASS: app quantize controls, ahead-of-time scheduling, beat alignment, single visual/audio impact, clear cancellation, live grid/tempo changes, double-speed percussion phase, free mode, pause/resume, and persistence.');
 }finally{globalThis.setInterval=originalSet;globalThis.clearInterval=originalClear;}

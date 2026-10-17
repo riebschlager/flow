@@ -31,7 +31,7 @@ const synth=new PercussionSynth(synthAudio);synth.connect();synth.setLevel(55);f
 // Percussion moves existing dye; it must not inject colors or trigger melodic notes.
 const f=new Fluid(72,48);f.splat(.5,.5,[.3,.4,.6],.05,0,0);const dye=[f.r.slice(),f.g.slice(),f.b.slice()];f.pulse(.45,.55,.8,.1,-1);assert.deepEqual(f.r,dye[0]);assert.deepEqual(f.g,dye[1]);assert.deepEqual(f.b,dye[2]);assert(f.u.some(v=>Math.abs(v)>1));
 for(let i=0;i<180;i++){if(i%5===0)f.pulse(.25+(i%4)*.15,.5,.6,.07,i%2?-1:1);f.step(1/30);}assert([...f.u,...f.v,...f.r,...f.g,...f.b].every(Number.isFinite));
-console.log('PASS: 272 Euclidean patterns, five grooves, restore validation, audio-clock scheduling, swing, stall recovery, silent/muted lanes, stop, all ten synth voices, and fluid stability without dye injection.');
+console.log('PASS: 272 Euclidean patterns, thirteen grooves, restore validation, audio-clock scheduling, swing, stall recovery, silent/muted lanes, stop, all twenty synth voices, and fluid stability without dye injection.');
 // Browser host timers require Window as their receiver. Test the default path,
 // not just the dependency-injected scheduler used by the timing tests above.
 const nativeSet=globalThis.setInterval,nativeClear=globalThis.clearInterval;

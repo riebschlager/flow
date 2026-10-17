@@ -2,7 +2,7 @@
 // Keep this percussion-only so gesture and droplet forces retain their own feel.
 export function stirPercussion(sim,hit){
  const strength=Math.max(0,Math.min(1.4,Number(hit.strength)||0));if(!strength)return;
- const bass=['kick','softkick','tom'].includes(hit.voice),light=['hat','shaker'].includes(hit.voice);
+ const bass=hit.motion==='bass'||['kick','softkick','tom'].includes(hit.voice),light=hit.motion==='light'||['hat','shaker'].includes(hit.voice);
  const weight=Math.max(.25,Math.min(1,Number(hit.weight)||.5));
  const radius=light?.105:bass?(hit.voice==='softkick'?.25:.22):.165;
  const power=(light?145:bass?210:185)*strength*(.65+.35*weight);
