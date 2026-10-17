@@ -1,7 +1,15 @@
+import {resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 // Incompressible, semi-Lagrangian fluid on a collocated grid.
 // Pressure projection, velocity/dye advection, and vorticity confinement.
 export class Fluid {
  constructor(w=144,h=100){this.w=w;this.h=h;this.n=w*h;for(const key of ['u','v','u0','v0','r','g','b','tmp','p','p0','div','curl'])this[key]=new Float32Array(this.n);this.swirl=.6;this.persistence=.7;}
+ resize(w,h){
+  if(w===this.w&&h===this.h)return false;
+  if(!Number.isInteger(w)||!Number.isInteger(h)||w<8||h<8||w*h>50000)throw new Error('Invalid fluid grid dimensions.');
+  const previous={w:this.w,h:this.h,...Object.fromEntries(['u','v','r','g','b'].map(key=>[key,this[key]]))};
+  this.w=w;this.h=h;this.n=w*h;for(const key of ['u','v','u0','v0','r','g','b','tmp','p','p0','div','curl'])this[key]=new Float32Array(this.n);
+  resampleFluidState(previous,this);return true;
+ }
  clear(){for(const key of ['u','v','u0','v0','r','g','b','tmp','p','p0','div','curl'])this[key].fill(0);}
  // A shared dye cap preserves hue when repeated droplets build up.
  splat(x,y,color,size=.05,dx=0,dy=0){const {w,h}=this;const cx=x*w,cy=y*h,rad=size*Math.min(w,h);for(let j=Math.max(1,Math.floor(cy-rad*3));j<Math.min(h-1,cy+rad*3);j++)for(let i=Math.max(1,Math.floor(cx-rad*3));i<Math.min(w-1,cx+rad*3);i++){const a=i-cx,b=j-cy,k=i+j*w,f=Math.exp(-(a*a+b*b)/(rad*rad));const r=this.r[k]+color[0]*f*1.65,g=this.g[k]+color[1]*f*1.65,blue=this.b[k]+color[2]*f*1.65,scale=5/Math.max(5,r,g,blue);this.r[k]=r*scale;this.g[k]=g*scale;this.b[k]=blue*scale;this.u[k]+=(dx-b*1.8)*f;this.v[k]+=(dy+a*1.8)*f;}}

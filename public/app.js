@@ -1,3 +1,4 @@
+import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
 import {createEnvironmentController} from './environment-ui.js?rev=environment-34';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=gestures-32';
@@ -9,7 +10,7 @@ import {ChordAtmosphere} from './chord-atmosphere.js?rev=gestures-32';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=probability-33';
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
-import {Fluid} from './fluid.js?rev=gestures-32';
+import {Fluid} from './fluid.js?rev=aspect-36';
 import {createPerformanceController} from './performance.js?rev=gestures-32';
 import {createRhythmController} from './rhythm-ui.js?rev=workspace-35';
 import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=gestures-32';
@@ -79,9 +80,24 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.class
 // Fluid rendering and the droplet/impact lifecycle.
 const canvas=$('fluid'),ctx=canvas.getContext('2d',{alpha:false});const overlay=$('particles'),fx=overlay.getContext('2d');const stage=$('stage');
 const atmosphere=new ChordAtmosphere({reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false});
-let width=1,height=1,dpr=1;const sim=new Fluid(window.innerWidth>720?224:144,window.innerWidth>720?156:112);const ink=document.createElement('canvas');ink.width=sim.w;ink.height=sim.h;const inkCtx=ink.getContext('2d');const pixels=inkCtx.createImageData(sim.w,sim.h);let drops=[],ripples=[],glows=[],lastFrame=0,rainTimer=0,frameCount=0;let colorBag=[],lastDropColor=-1,dropSerial=0;
+let width=1,height=1,dpr=1;const sim=new Fluid(window.innerWidth>720?224:144,window.innerWidth>720?156:112);const ink=document.createElement('canvas');ink.width=sim.w;ink.height=sim.h;const inkCtx=ink.getContext('2d');let pixels=inkCtx.createImageData(sim.w,sim.h);let drops=[],ripples=[],glows=[],lastFrame=0,rainTimer=0,frameCount=0;let colorBag=[],lastDropColor=-1,dropSerial=0;
 const dust=Array.from({length:65},()=>({x:Math.random(),y:Math.random(),r:.4+Math.random()*.9,p:Math.random()*6}));
-function resize(){const r=stage.getBoundingClientRect();width=r.width;height=r.height;dpr=Math.min(window.devicePixelRatio||1,1.7);canvas.width=overlay.width=Math.round(width*dpr);canvas.height=overlay.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);fx.setTransform(dpr,0,0,dpr,0,0);}
+function resize(){
+ // Canvas bounds exclude the stage border and match the CSS drawing surface.
+ const r=canvas.getBoundingClientRect();if(r.width<=0||r.height<=0)return;
+ width=r.width;height=r.height;dpr=Math.min(window.devicePixelRatio||1,1.7);
+ const backingWidth=Math.round(width*dpr),backingHeight=Math.round(height*dpr);
+ if(canvas.width!==backingWidth||canvas.height!==backingHeight){canvas.width=overlay.width=backingWidth;canvas.height=overlay.height=backingHeight;}
+ ctx.setTransform(canvas.width/width,0,0,canvas.height/height,0,0);fx.setTransform(overlay.width/width,0,0,overlay.height/height,0,0);
+ const mobile=window.innerWidth<=720||!!window.matchMedia?.('(pointer: coarse)').matches,grid=fluidGridSize(width,height,{mobile});
+ // Ignore sub-cell aspect changes from mobile browser chrome to avoid repeatedly
+ // filtering the same dye. Orientation/layout changes still rebuild immediately.
+ const cellAspect=width*sim.h/(height*sim.w),qualityChange=sim.n>(mobile?16128:35000);
+ if((sim.w!==grid.w||sim.h!==grid.h)&&(Math.abs(cellAspect-1)>.0125||qualityChange||sim.n<grid.w*grid.h*.9)){
+  sim.resize(grid.w,grid.h);ink.width=sim.w;ink.height=sim.h;pixels=inkCtx.createImageData(sim.w,sim.h);
+ }
+}
+
 new ResizeObserver(resize).observe(stage);
 function seed(){sim.clear();for(let n=0;n<24;n++){const a=n/24*Math.PI*1.65;const x=.60+Math.cos(a)*(.13+n*.004),y=.55+Math.sin(a)*(.12+n*.005);const c=n<14?colors[0].rgb:colors[1].rgb;sim.splat(x,y,c,.035+n*.0003,Math.sin(a)*20,-Math.cos(a)*18);}for(let n=0;n<9;n++){const a=n/9*2;sim.splat(.74+Math.sin(a)*.10,.36+Math.cos(a)*.15,colors[2].rgb,.022,Math.cos(a)*8,-Math.sin(a)*8);}for(let n=0;n<24;n++)sim.step(1/30);}
 // Draw every palette color once per shuffled round; avoid repeats across rounds.
@@ -151,7 +167,7 @@ sliders();syncAudio();$('bpmLabel').textContent=state.bpm;$('customChords').hidd
 
 function snapshotPerformance(){return {main:{settings:Object.fromEntries(persisted.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),voices:[...state.voices],custom:[...state.custom],bpm:state.bpm,selected:state.selected},rhythm:rhythmUI.getState(),arp:arpUI.getState(),environment:environmentUI.getState(),expression:performanceUI.getState(),position:state.playing?Math.max(0,audio.ctx.currentTime-clockOrigin):state.elapsed,chordIndex:state.chordIndex,performance:{...audio.performance}};}
 function snapshotScene(){return {w:sim.w,h:sim.h,...Object.fromEntries(['u','v','r','g','b'].map(key=>[key,Array.from(sim[key])]))};}
-function restoreScene(scene){sim.clear();for(const key of ['u','v','r','g','b'])for(let y=0;y<sim.h;y++)for(let x=0;x<sim.w;x++)sim[key][x+y*sim.w]=scene[key][Math.min(scene.w-1,Math.floor(x/sim.w*scene.w))+Math.min(scene.h-1,Math.floor(y/sim.h*scene.h))*scene.w];drops=[];ripples=[];glows=[];}
+function restoreScene(scene){sim.clear();resampleFluidState(scene,sim);drops=[];ripples=[];glows=[];}
 function stopLive(){state.playing=false;rhythmUI.stop();arpUI.stop();environmentUI.stop();audio.setPlaying(false);if(dropTimer!==null)globalThis.clearInterval(dropTimer);dropTimer=null;for(const d of drops)d.cancel?.abort();drops=[];performanceUI.reset();updateTransport();}
 function applySnapshot(raw,persistSettings=false){const s=sanitizeSnapshot(raw);Object.assign(state,{voices:s.main.voices,custom:s.main.custom,bpm:s.main.bpm,selected:s.main.selected,progression:s.main.settings.progression,elapsed:s.position,chordIndex:s.chordIndex});for(const [id,value] of Object.entries(s.main.settings)){$(id).type==='checkbox'?$(id).checked=value:$(id).value=String(value);}if(persistSettings||JSON.stringify(s.rhythm)!==JSON.stringify(rhythmUI.getState()))rhythmUI.restore(s.rhythm,persistSettings);if(persistSettings||JSON.stringify(s.arp)!==JSON.stringify(arpUI.getState()))arpUI.restore(s.arp,persistSettings);if(persistSettings||JSON.stringify(s.expression)!==JSON.stringify(performanceUI.getState()))performanceUI.restore(s.expression,persistSettings);$('chordInput').value=state.custom.join(', ');$('customChords').hidden=state.progression!=='custom';$('bpmLabel').textContent=state.bpm;$('scapeDescription').textContent=soundscapes[$('soundscape').value]?.text||'Four colors. Four voices. Entirely your own.';state.voices.forEach((v,i)=>$('voice'+i).value=v);clockOrigin=(audio.ctx?.currentTime||0)-s.position;if(persistSettings||JSON.stringify(s.environment)!==JSON.stringify(environmentUI.getState()))environmentUI.restore(s.environment,persistSettings);audio.setPerformance(s.performance);applyPalette();sliders();syncAudio();syncQuantize();syncColorMode();sim.swirl=Number($('swirl').value)/100;sim.persistence=Number($('persistence').value)/100;document.querySelector('.autopour').classList.toggle('off',!$('autoPour').checked);renderChords();updateTransport();if(persistSettings)save();}
 recorder=createRecorderController({audio,snapshot:snapshotPerformance,scene:snapshotScene,validate:sanitizeTake,applySnapshot,restoreScene,stopLive,

@@ -8,7 +8,7 @@ Install with the Sites dependency helper (or `npm run install:ci` standalone), g
 
 Controls include four editable chord slots (via a comma-separated progression), tempo, chord length, 28 instruments assigned to four colors, nine soundscape collections, reverb, tempo-synchronized delay, master volume, vorticity, color persistence, droplet size, color cycling, and rain density. Settings persist in localStorage.
 
-The solver uses semi-Lagrangian advection, pressure projection (20 Gauss-Seidel iterations), and vorticity confinement. Desktop uses a 224×156 grid and narrow viewports use a 144×112 grid. Canvas2D renders the dye field plus impact ripples and falling droplets. Audio uses locally bundled WebAudioFont with FluidR3 samples, a filtered feedback delay and a stereo convolution impulse generated in the browser.
+The solver uses semi-Lagrangian advection, pressure projection (20 Gauss-Seidel iterations), and vorticity confinement. The grid follows the canvas aspect ratio with approximately square cells. Desktop uses at most 35,000 cells and coarse-pointer/narrow devices use at most 16,128; the longer side is capped at 384/224 cells respectively. Canvas2D renders the dye field plus impact ripples and falling droplets. Audio uses locally bundled WebAudioFont with FluidR3 samples, a filtered feedback delay and a stereo convolution impulse generated in the browser.
 
 Flow source is licensed under GPL-3.0. WebAudioFont is by Sergey Surikov under GPL-3.0; WebAudioFontData has its included notice; FluidR3 GM is by Frank Wen under its included MIT notice. The source download contains all runtime code and sample files. External Google Fonts are optional; system fonts work offline.
 
@@ -31,6 +31,16 @@ The panel keeps its navigation visible on desktop while controls scroll independ
 Mix consolidates the sidebar’s two duplicate shared-echo selectors into one; Beat studio retains its contextual synchronized selector. The existing independent effect sends and all audio timing are unchanged. Automatic droplets now belongs to Perform and is named separately from the synthesized Soft rain environment. Record / Library, Community, transport, the session format, storage keys, defaults, synthesis and fluid algorithms are unchanged. The audit retained every parameter and its bounds; only a redundant sidebar selector was removed.
 
 Structural checks cover unique IDs, label and ARIA references, valid nesting, and preserved control values/ranges/defaults. The full app smoke test exercises navigation, focus, scrolling, disclosures and the existing recording/playback/fork workflow. Full browser interaction and visual QA were unavailable in this environment.
+
+## Canvas aspect and responsive simulation
+
+The old solver grid stayed at a fixed landscape ratio even when mobile CSS made the canvas portrait. Stretching that raster to fill the canvas distorted splats and currents. Resize previously changed only the output backing buffers.
+
+The solver now follows the actual canvas CSS bounds (excluding the container border), with near-square cells and bounded desktop/mobile work budgets. Coarse-pointer devices keep the mobile budget in landscape too. Both drawing canvases use the same DPR-scaled backing dimensions, with exact per-axis transforms for fractional CSS sizes. Hidden/zero-size transitions are ignored. A small aspect hysteresis avoids resampling on every one-pixel browser-toolbar change.
+
+Resizing preserves the existing solver object, bilinearly resamples its dye and velocities, scales velocity components to preserve normalized motion, and rebuilds the offscreen ink raster and scratch fields. It does not reset the canvas or musical transport. Saved-session opening fields use the same smooth resampling and velocity mapping; existing file dimensions remain valid. Palette rendering and sound behavior are unchanged.
+
+Checks cover portrait/landscape phones, desktop, full-screen shapes, fractional DPR, circular splat geometry, cell/workload limits, preserved pigment ratios and dye position, velocity units, stable post-resize stepping and legacy opening scenes. The complete app test exercises ResizeObserver-driven raster/backing-buffer updates and the existing record/playback/fork bridge. Browser/device visual QA was unavailable in this environment.
 
 ## Optional synthesized atmospherics
 
