@@ -3,7 +3,7 @@ import {normalizeArp,arpEnvelope,ArpEngine} from '../dist/arpeggiator.js';
 const migrated=normalizeArp({voice:'newage',count:12,beats:.25});assert.equal(migrated.length,85);assert.equal(migrated.attack,20);assert.equal(migrated.decay,120);assert.equal(migrated.sustain,65);assert.equal(migrated.voice,'newage');
 const invalid=normalizeArp({length:999,attack:-3,decay:'bad',sustain:200});assert.equal(invalid.length,400);assert.equal(invalid.attack,0);assert.equal(invalid.decay,120);assert.equal(invalid.sustain,100);
 let cases=0;
-for(const bpm of [30,56,100])for(const rate of [.5,1,2])for(const beats of [1,.5,.25,.125,1/3])for(const length of [10,85,200,400])for(const attack of [0,20,500,2000])for(const decay of [0,120,500,2000])for(const sustain of [0,65,100]){
+for(const bpm of [30,56,100])for(const rate of [.5,1,2])for(const beats of [4,2,1,.5,.25,.125,1/3])for(const length of [10,85,200,400])for(const attack of [0,20,500,2000])for(const decay of [0,120,500,2000])for(const sustain of [0,65,100]){
  const shape=arpEnvelope({length,attack,decay,sustain},60/bpm/rate*beats),sum=shape.envelope.reduce((n,stage)=>n+stage.duration,0);
  assert(shape.duration>=.02&&shape.duration<=8);assert(Math.abs(sum-shape.duration)<1e-9);assert(shape.envelope.every(stage=>Number.isFinite(stage.duration)&&stage.duration>=0&&stage.volume>=0&&stage.volume<=1));assert.equal(shape.envelope[0].volume,0);assert.equal(shape.envelope.at(-1).volume,0);assert.equal(shape.envelope[2].volume,sustain/100);assert.equal(shape.envelope[3].volume,sustain/100);cases++;
 }

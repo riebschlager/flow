@@ -1,6 +1,6 @@
 import {parseChord,instruments} from './music.js?rev=portamento-16';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
-export const arpRates=[1,.5,.25,.125,1/3];
+export const arpRates=[4,2,1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){
  raw=raw&&typeof raw==='object'?raw:{};
  const number=(value,lo,hi,fallback)=>Number.isFinite(Number(value))?Math.max(lo,Math.min(hi,Number(value))):fallback;

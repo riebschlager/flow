@@ -26,3 +26,16 @@ console.log('PASS: 96 chord/count pools, all ordered patterns, random bags witho
 // Audio failures stop the scheduler and surface one recoverable error.
 let failure=null;const badAudio={...audio,ctx:{...audio.ctx,currentTime:0},note:async()=>{throw new Error('Sample unavailable');}};cfg.enabled=true;const broken=new ArpEngine(badAudio,()=>cfg,()=>({...clock,origin:0,chordOrigin:0}),()=>{},{setTimer:()=>9,clearTimer:()=>{},onError:error=>failure=error});broken.start();badAudio.ctx.currentTime=.2;broken.tick();for(let i=0;i<6;i++)await Promise.resolve();assert.equal(broken.timer,null);assert.match(failure.message,/Sample unavailable/);
 console.log('PASS: an asynchronous voice failure stops arpeggio scheduling and reports an actionable error.');
+
+// Whole/half notes preserve their beat count at all percussion speeds and across chord boundaries.
+for(const beats of [2,4])for(const rate of [.5,1,2]){
+ const config=normalizeArp({enabled:true,beats}),clock={origin:.04,chordOrigin:0,bpm:60,rate,chordBeats:4,chords:['Cmaj7','Am7']},calls=[];
+ assert.equal(config.beats,beats);assert.equal(normalizeArp(JSON.parse(JSON.stringify(config))).beats,beats);
+ const audio={playing:true,ctx:{currentTime:0,createGain:()=>({gain:{setTargetAtTime(){}},connect(){}})},bus:{},note:async(voice,pitch,expression,options)=>{calls.push({pitch,...options});}};
+ const arp=new ArpEngine(audio,()=>config,()=>clock,()=>{},{setTimer:()=>1,clearTimer(){}});arp.start();
+ for(let i=1;i<=1200;i++){audio.ctx.currentTime=i*.025;arp.tick();}
+ assert(calls.length>=4);for(let i=1;i<calls.length;i++)assert(Math.abs(calls[i].when-calls[i-1].when-beats/rate)<1e-8);
+ for(const call of calls){const chord=clock.chords[Math.floor(call.when/4)%2];assert(parseChord(chord).includes(call.pitch));assert.equal(call.noteLength,Math.min(8,beats/rate*.85));}
+ arp.stop();
+}
+console.log('PASS: whole/half note scheduling, saved rate restoration, shared half/normal/double speed, chord-boundary selection and fitted lengths.');

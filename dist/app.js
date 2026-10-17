@@ -1,5 +1,5 @@
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=portamento-16';
-import {createArpeggiatorController} from './arpeggiator-ui.js?rev=portamento-16';
+import {createArpeggiatorController} from './arpeggiator-ui.js?rev=arp-rate-17';
 import {stirPercussion} from './percussion-visuals.js';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=32-8';
 import {Fluid} from './fluid.js?rev=expression-5';

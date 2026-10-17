@@ -73,6 +73,8 @@ try{
  const savedGlide=JSON.parse(store.get('chromaflow-arp-v1'));assert.equal(savedGlide.glideEnabled,true);assert.equal(savedGlide.glideTime,2000);assert.equal(savedGlide.glideAmount,60);
  $('arpGlideEnabled').checked=false;fire('arpGlideEnabled');assert.equal($('arpGlideAmount').disabled,true);assert.match($('arpGlideSummary').textContent,/Off/);
  console.log('PASS: live portamento switch, fitted time, amount, scheduled bend options, disabled controls and saved settings.');
+ for(const rate of ['2','4']){assert($('arpRate').options.some(option=>option.value===rate));$('arpRate').value=rate;fire('arpRate');assert.equal($('arpRate').value,rate);assert.equal(JSON.parse(store.get('chromaflow-arp-v1')).beats,Number(rate));}
+ $('arpRate').value='0.25';fire('arpRate');
  const queued=notes.filter(note=>note.target&&note.when>clock/1000);$('arpVoice').value='vibes';fire('arpVoice');await Promise.resolve();await Promise.resolve();assert(queued.every(note=>note.signal.aborted));
  $('arpVolume').value='0';for(const fn of $('arpVolume').listeners.input)fn();tick();for(const fn of timers.values())fn();await Promise.resolve();const arpBus=notes.filter(note=>note.target).at(-1).target;assert.equal(arpBus.gain.events.at(-1).value,0);
  $('arpEnabled').checked=false;fire('arpEnabled');const stoppedCount=notes.filter(note=>note.target).length;for(let i=0;i<30;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}assert.equal(notes.filter(note=>note.target).length,stoppedCount);assert.match($('arpStatus').textContent,/Off/);await $('start').listeners.click[0]();assert.equal(timers.size,0);
