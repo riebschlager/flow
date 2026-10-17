@@ -9,13 +9,13 @@ await import('../dist/app.js');assert.equal(typeof frame,'function');const $=doc
 const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:500,clientY:350};for(const fn of canvas.listeners.pointerdown)fn(event);for(let i=0;i<60;i++)tick();for(const fn of canvas.listeners.pointerup)fn(event);for(let i=0;i<45;i++)tick();assert.equal($('gestureName').textContent,'Bloom');const coral=all.find(e=>e.dataset.color==='2');for(const fn of coral.listeners.click)fn();assert.equal($('cycleColors').checked,false);assert.equal($('paletteHint').textContent,'CORAL ONLY');assert.equal($('pitchRangeValue').textContent,'Coral: C2 → B3 · 8 notes');$('clear').onclick();tick();
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
 // Exercise the live app's quantized launch, scheduler, splash, and transport controls.
-const {AmbientAudio}=await import('../dist/music.js?rev=octave-range-10');
+const {AmbientAudio}=await import('../dist/music.js?rev=arpeggiator-11');
 const notes=[],timers=new Map();let timerID=0;
 const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
 try{
  globalThis.setInterval=function(fn,ms){assert.equal(this,globalThis);assert.equal(ms,25);timers.set(++timerID,fn);return timerID;};
  globalThis.clearInterval=function(id){assert.equal(this,globalThis);timers.delete(id);};
- AmbientAudio.prototype.initialize=async function(){this.ctx={get currentTime(){return clock/1000;}};};
+ AmbientAudio.prototype.initialize=async function(){this.ctx={get currentTime(){return clock/1000;},createGain(){return {gain:{value:0,events:[],setTargetAtTime(value,time){this.events.push({value,time});}},connect(){}};}};};
  AmbientAudio.prototype.load=async()=>({});
  AmbientAudio.prototype.note=async function(key,pitch,expression,options={}){notes.push({key,pitch,expression,...options,observedAt:clock/1000});};
  const fire=id=>{for(const fn of $(id).listeners.change||[])fn();};
@@ -53,5 +53,15 @@ try{
  $('clear').onclick();await $('start').listeners.click[0]();
  const savedRange=JSON.parse(store.get('chromaflow-v1')).settings;assert.equal(Number(savedRange.octavesDown),3);assert.equal(Number(savedRange.octavesUp),0);
  console.log('PASS: live octave controls and preview, true canvas-edge pitches, retuning pending quantized notes, preserved color voicing, and saved range settings.');
+ // The independent arpeggio must use one chosen voice and its own ordered pool.
+ $('arpVoice').value='celesta';fire('arpVoice');$('arpPattern').value='bounce';fire('arpPattern');$('arpRate').value='0.25';fire('arpRate');$('arpCount').value='7';for(const fn of $('arpCount').listeners.input)fn();$('arpEnabled').checked=true;fire('arpEnabled');
+ assert.match($('arpStatus').textContent,/Ready/);const arpStart=notes.length;await $('start').listeners.click[0]();await Promise.resolve();$('clear').onclick();
+ for(let i=0;i<140;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}
+ const arpeggio=notes.slice(arpStart).filter(note=>note.target);assert(arpeggio.length>=12);assert(arpeggio.every(note=>note.key==='celesta'));assert.deepEqual(arpeggio.slice(0,12).map(note=>note.pitch),[48,52,55,59,60,64,67,64,60,59,55,52]);assert.match($('arpPoolLabel').textContent,/7 chord tones/);assert.notEqual($('arpCurrent').textContent,'—');
+ const queued=arpeggio.filter(note=>note.when>clock/1000);$('arpVoice').value='vibes';fire('arpVoice');await Promise.resolve();await Promise.resolve();assert(queued.every(note=>note.signal.aborted));
+ $('arpVolume').value='0';for(const fn of $('arpVolume').listeners.input)fn();tick();for(const fn of timers.values())fn();await Promise.resolve();const arpBus=notes.filter(note=>note.target).at(-1).target;assert.equal(arpBus.gain.events.at(-1).value,0);
+ $('arpEnabled').checked=false;fire('arpEnabled');const stoppedCount=notes.filter(note=>note.target).length;for(let i=0;i<30;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}assert.equal(notes.filter(note=>note.target).length,stoppedCount);assert.match($('arpStatus').textContent,/Off/);await $('start').listeners.click[0]();assert.equal(timers.size,0);
+ const arpSettings=JSON.parse(store.get('chromaflow-arp-v1'));assert.equal(arpSettings.count,7);assert.equal(arpSettings.pattern,'bounce');assert.equal(arpSettings.voice,'vibes');assert.equal(arpSettings.enabled,false);
+ console.log('PASS: app arpeggiator enable, chosen voice, bounce pattern, seven-note pool, timed preview, voice-change cancellation, independent mute, disable, pause, and persistence.');
  console.log('PASS: app quantize controls, ahead-of-time scheduling, beat alignment, single visual/audio impact, clear cancellation, live grid/tempo changes, double-speed percussion phase, free mode, pause/resume, and persistence.');
 }finally{globalThis.setInterval=originalSet;globalThis.clearInterval=originalClear;}
