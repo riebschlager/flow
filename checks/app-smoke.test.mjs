@@ -26,7 +26,7 @@ try{
  assert.equal(notes.length,1,'one scheduled note and no duplicate at impact');const hit=notes[0],step=60/56;assert(Math.abs((hit.when-origin)/step-Math.round((hit.when-origin)/step))<1e-8);assert(hit.when>hit.observedAt);assert(hit.when-hit.observedAt<=.12);assert($('noteToast').textContent.includes('·'));
  tap();const prior=notes.length;for(let i=0;i<150&&notes.length===prior;i++){tick();for(const fn of timers.values())fn();}assert.equal(notes.length,prior+1);const waiting=notes.at(-1);assert(clock/1000<waiting.when);$('clear').onclick();assert.equal(waiting.signal.aborted,true);
  // A grid edit replaces pending audio instead of leaving a ghost note behind.
- tap();const count=notes.length;for(let i=0;i<150&&notes.length===count;i++)tick();const old=notes.at(-1);$('quantizeBeats').value='.25';fire('quantizeBeats');assert.equal(old.signal.aborted,true);
+ tap();const count=notes.length;for(let i=0;i<150&&notes.length===count;i++)tick();const old=notes.at(-1);$('quantizeBeats').value='.125';fire('quantizeBeats');assert.equal(old.signal.aborted,true);
  $('quantizeEnabled').checked=false;fire('quantizeEnabled');assert.equal(timers.size,0);assert.equal($('quantizeBeats').disabled,true);for(let i=0;i<60;i++)tick();assert.equal(notes.at(-1).when,null);
  // Run the real percussion scheduler with its synth stubbed, then change tempo.
  const {PercussionSynth}=await import('../dist/rhythm.js?rev=shared-delay-4');
@@ -36,7 +36,7 @@ try{
  tap();const doubleHit=advanceToNote();const doubleStep=60/56/2;assert(Math.abs((doubleHit.when-origin-.04)/doubleStep-Math.round((doubleHit.when-origin-.04)/doubleStep))<1e-8);
  const noteCountBeforeEdit=notes.length,editTime=clock/1000,newOrigin=editTime-(editTime-origin)*56/58;$('faster').onclick();tick();assert.equal(doubleHit.signal.aborted,true);const changed=advanceToNote(noteCountBeforeEdit),newStep=60/58/2;assert(Math.abs((changed.when-newOrigin-.04)/newStep-Math.round((changed.when-newOrigin-.04)/newStep))<1e-8);
  await $('start').listeners.click[0]();tick();assert.equal(changed.signal.aborted,true);assert.equal(timers.size,0);$('clear').onclick();await $('start').listeners.click[0]();assert.equal(timers.size,2);$('clear').onclick();
- await $('start').listeners.click[0]();assert.equal(timers.size,0);$('clear').onclick();$('quantizeEnabled').checked=false;fire('quantizeEnabled');$('quantizeBeats').value='.25';fire('quantizeBeats');
- const settings=JSON.parse(store.get('chromaflow-v1')).settings;assert.equal(settings.quantizeEnabled,false);assert.equal(Number(settings.quantizeBeats),.25);
+ await $('start').listeners.click[0]();assert.equal(timers.size,0);$('clear').onclick();$('quantizeEnabled').checked=false;fire('quantizeEnabled');$('quantizeBeats').value='.125';fire('quantizeBeats');
+ const settings=JSON.parse(store.get('chromaflow-v1')).settings;assert.equal(settings.quantizeEnabled,false);assert.equal(Number(settings.quantizeBeats),.125);
  console.log('PASS: app quantize controls, ahead-of-time scheduling, beat alignment, single visual/audio impact, clear cancellation, live grid/tempo changes, double-speed percussion phase, free mode, pause/resume, and persistence.');
 }finally{globalThis.setInterval=originalSet;globalThis.clearInterval=originalClear;}

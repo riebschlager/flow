@@ -1,4 +1,4 @@
-import {landingTime,quantizeDivisions} from './quantize.js';
+import {landingTime,quantizeDivisions} from './quantize.js?rev=32-8';
 import {Fluid} from './fluid.js?rev=expression-5';
 import {createPerformanceController} from './performance.js';
 import {createRhythmController} from './rhythm-ui.js?rev=quantize-7';
