@@ -42,7 +42,8 @@ export class ChordAtmosphere{
   if(!this.amount||!this.current)return;
   const {x,y}=this.center,px=x*w,py=y*h,size=Math.max(w,h)*.67*this.current.width;
   const rgb=this.current.color.map(value=>Math.round(value*255)),color=alpha=>`rgba(${rgb.join(',')},${alpha})`;
-  ctx.save();ctx.globalCompositeOperation='screen';
+  ctx.save();// Soft light preserves the ink's saturation instead of laying pale fog over it.
+  ctx.globalCompositeOperation='soft-light';
   const glow=ctx.createRadialGradient(px,py,0,px,py,size),alpha=this.amount*(.28+this.pulse*.10);
   glow.addColorStop(0,color(alpha));glow.addColorStop(.45,color(alpha*.48));glow.addColorStop(1,color(0));ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
   // A broad, feathered breath of light marks arrival without a flash or a label.

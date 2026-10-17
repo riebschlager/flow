@@ -147,7 +147,13 @@ Production references informing our own patterns and synthesis:
 
 In Fluid → Color palette, choose Original glow, Aurora, Desert dusk, Tidal blue, Ember, Botanical, Afterglow or Porcelain. The four-color preview and descriptions make the choices visible. A palette updates the existing fluid, droplets, voice swatches and labels, gesture marks, percussion rings and arpeggio accents; the harmonic glow blends into the chosen colors. Color lock and shuffled non-repeating cycling retain the same four voice slots. Changing palettes does not clear or disturb the simulation, restart music, or change instruments.
 
-The solver and session visual events retain their original dye basis. A two-cone linear render transform recolors all four original dye anchors without modifying stored fields. Original glow uses the original identity transform. The selected palette is saved locally and in the opening session, captured in timed settings changes, validated by the server, and retained by setup forks. Older sessions without a palette use Original glow. Existing short gesture trails fade naturally during a switch; chord lighting eases over roughly one second.
+The solver and session visual events retain their original dye basis. The renderer interprets dye chromaticity inside the four-color palette polygon, projects outlying mixtures onto its nearest edge, and blends supported palette colors without extrapolating negative channels. All eight palettes use the same vivid rendering. The selected palette is saved locally and in the opening session, captured in timed settings changes, validated by the server, and retained by setup forks. Older sessions without a palette use Original glow. Existing short gesture trails fade naturally during a switch; chord lighting eases over roughly one second.
+
+## Saturated fluid rendering
+
+`public/fluid-renderer.js` separates ink hue from dye density. A shared exposure curve controls brightness without compressing each RGB channel toward white. A saturation floor keeps dense mixtures colorful; nearly neutral blends ease toward the palette’s primary hue to avoid unstable hue changes. Highlights brighten the ink’s own color within bounded headroom. The chord atmosphere uses soft-light compositing rather than screening pale light over the canvas; its harmonic breathing, movement and intensity remain active.
+
+This is a display change: dye and velocity fields, captured visual events and all audio behavior are unchanged. Existing local and community sessions use the updated rendering automatically. No session migration or new setting is needed. Renderer checks cover all eight palettes, dense/capped/opposing mixtures, hue stability, bounded highlights, palette families, empty-canvas behavior and unchanged simulation arrays. Numerical before/after image comparisons were inspected; full browser visual QA was unavailable in the current environment.
 
 ## Playable session loops
 

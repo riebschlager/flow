@@ -16,7 +16,7 @@ const unchanged=[fluid.u.slice(),fluid.v.slice()];atmosphere.frame(.1,{chord:'G'
 atmosphere.frame(.1,{chord:'G',index:3,playing:true,amount:0});atmosphere.stir(fluid,.1);assert.deepEqual(atmosphere.light,{brightness:1,tint:[1,1,1]});assert.deepEqual(fluid.u,unchanged[0]);
 let draws=0,waves=0,colorsSeen=[];const ctx={save(){},restore(){},translate(){waves++;},scale(){},createRadialGradient(){return {addColorStop(position,color){colorsSeen.push(color);}};},fillRect(){draws++;},fillText(){throw new Error('Atmosphere must not draw chord labels');}};
 atmosphere.draw(ctx,900,600);assert.equal(draws,0);
-atmosphere.frame(.1,{chord:'Cmaj7',index:0,playing:true,amount:65});atmosphere.draw(ctx,900,600);assert(draws>0);assert(waves>0);assert(colorsSeen.every(color=>color.startsWith('rgba(')));
+atmosphere.frame(.1,{chord:'Cmaj7',index:0,playing:true,amount:65});atmosphere.draw(ctx,900,600);assert(draws>0);assert.equal(ctx.globalCompositeOperation,'soft-light','atmosphere must not screen pale light over the fluid');assert(waves>0);assert(colorsSeen.every(color=>color.startsWith('rgba(')));
 const still=new ChordAtmosphere({reducedMotion:true});still.frame(0,{chord:'Cmaj7',amount:65});still.frame(.1,{chord:'Am7',index:1,playing:true,amount:65});const initialU=fluid.u.slice();still.stir(fluid,.1);assert.deepEqual(fluid.u,initialU);assert.deepEqual(still.center,{x:.5,y:.48});waves=0;still.draw(ctx,900,600);assert.equal(waves,0);
 for(let i=0;i<300;i++){const chords=['Cmaj7','Am7','Fmaj7','G'],index=Math.floor(i/75)%4;atmosphere.frame(1/30,{chord:chords[index],index,playing:true,amount:100});atmosphere.stir(fluid,1/30);fluid.step(1/30);}
 assert([...fluid.u,...fluid.v,...fluid.r,...fluid.g,...fluid.b].every(Number.isFinite));
