@@ -66,6 +66,12 @@ Sound → Arpeggiator adds an optional, separately chosen WebAudioFont voice. Pa
 
 Whole, half, quarter, eighth, sixteenth, thirty-second, and eighth-triplet rates follow the shared audio clock and effective percussion speed. The chord is computed at each scheduled note time, including progression boundaries; patterns restart on each chord. An independent Arpeggio mix controls its bus before the shared melodic reverb/delay and master effects. Per-note envelopes scale to the rhythmic spacing for bounded polyphony. Starting playback preloads the enabled voice. Pausing, disabling, or changing voice cancels pending notes; live timing/pattern/pool edits replace future events. Stalls skip missed notes rather than bursting them. Clear canvas clears the visual traces; transport and the arpeggiator continue. Settings persist under `chromaflow-arp-v1`, with the feature off by default.
 
+### Arpeggio note probability
+
+Note probability is the chance each grid step plays: 100% (the default, including older sessions) plays all steps, 50% plays roughly half and 0% rests. A skipped step still advances the selected pitch pattern and shared rhythm clock; it does not consume a voice or create a note ripple. The preview clears its current-note highlight on rests. Probability uses a separate random stream from random pitch ordering, so changing density does not change that pattern’s random choices. Portamento connects the notes actually scheduled, without using skipped pitches.
+
+Live changes apply to steps not yet scheduled by the 120 ms lookahead, with no pattern or transport reset; sounding notes and effect tails continue. Probability persists in browser settings and session snapshots/automation, including forks and community files. Recordings retain the actual played-note events and visual rest events, so loop playback and WAV export reproduce the same result without rolling probability again.
+
 ## Visual chord atmosphere
 
 Every chord has a repeatable atmosphere based on its root and quality: a soft color cast, broad light source, brightness, and direction of slow current. Chord transitions crossfade over a few seconds with a feathered bloom rather than text or hard flashes. Major/minor/suspended qualities shape the mood; natural progression changes, manual chord jumps, and custom progression edits use the same transition. Pausing holds the current harmony and stops its added currents.

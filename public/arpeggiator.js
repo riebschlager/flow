@@ -4,7 +4,7 @@ export const arpRates=[4,2,1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){
  raw=raw&&typeof raw==='object'?raw:{};
  const number=(value,lo,hi,fallback)=>Number.isFinite(Number(value))?Math.max(lo,Math.min(hi,Number(value))):fallback;
- return {enabled:raw.enabled===true,voice:Object.hasOwn(instruments,raw.voice)?raw.voice:'vibes',pattern:Object.hasOwn(arpPatterns,raw.pattern)?raw.pattern:'up',count:Math.round(number(raw.count,1,16,8)),beats:arpRates.includes(Number(raw.beats))?Number(raw.beats):.5,volume:number(raw.volume,0,100,55),length:number(raw.length,10,400,85),attack:number(raw.attack,0,2000,20),decay:number(raw.decay,0,2000,120),sustain:number(raw.sustain,0,100,65),glideEnabled:raw.glideEnabled===true,glideTime:number(raw.glideTime,0,2000,180),glideAmount:number(raw.glideAmount,0,100,100)};
+ return {enabled:raw.enabled===true,voice:Object.hasOwn(instruments,raw.voice)?raw.voice:'vibes',pattern:Object.hasOwn(arpPatterns,raw.pattern)?raw.pattern:'up',count:Math.round(number(raw.count,1,16,8)),beats:arpRates.includes(Number(raw.beats))?Number(raw.beats):.5,volume:number(raw.volume,0,100,55),probability:number(raw.probability??100,0,100,100),length:number(raw.length,10,400,85),attack:number(raw.attack,0,2000,20),decay:number(raw.decay,0,2000,120),sustain:number(raw.sustain,0,100,65),glideEnabled:raw.glideEnabled===true,glideTime:number(raw.glideTime,0,2000,180),glideAmount:number(raw.glideAmount,0,100,100)};
 }
 export function arpEnvelope(raw={},step=.5){
  const cfg=normalizeArp(raw),duration=Math.max(.02,Math.min(8,(Number(step)||.5)*cfg.length/100));
@@ -43,9 +43,15 @@ export class ArpPattern{
   this.last=index;this.step++;return index;
  }
 }
+// Keep density rolls independent of Math.random used by pitch patterns.
+function probabilitySource(){
+ if(globalThis.crypto?.getRandomValues){const word=new Uint32Array(1);return ()=>globalThis.crypto.getRandomValues(word)[0]/4294967296;}
+ let state=(Date.now()|0)||1;
+ return ()=>{state^=state<<13;state^=state>>>17;state^=state<<5;return (state>>>0)/4294967296;};
+}
 export class ArpEngine{
- constructor(audio,getConfig,getClock,onEvent,{setTimer=(fn,ms)=>globalThis.setInterval(fn,ms),clearTimer=id=>globalThis.clearInterval(id),random=Math.random,onError=()=>{}}={}){
-  Object.assign(this,{audio,getConfig,getClock,onEvent,setTimer,clearTimer,onError});this.pattern=new ArpPattern(random);this.timer=null;this.bus=null;this.notes=[];this.key=null;this.chordKey=null;this.nextStep=0;this.previousPitch=null;this.lastStartedPitch=null;this.lastStartedTime=-Infinity;
+ constructor(audio,getConfig,getClock,onEvent,{setTimer=(fn,ms)=>globalThis.setInterval(fn,ms),clearTimer=id=>globalThis.clearInterval(id),random=Math.random,probabilityRandom=probabilitySource(),onError=()=>{}}={}){
+  Object.assign(this,{audio,getConfig,getClock,onEvent,setTimer,clearTimer,onError,probabilityRandom});this.pattern=new ArpPattern(random);this.timer=null;this.bus=null;this.notes=[];this.key=null;this.chordKey=null;this.nextStep=0;this.previousPitch=null;this.lastStartedPitch=null;this.lastStartedTime=-Infinity;
  }
  connect(){if(this.bus)return;this.bus=this.audio.ctx.createGain();this.bus.gain.value=0;this.bus.connect(this.audio.bus);}
  setVolume(){const volume=this.getConfig().volume;if(this.bus&&this.volume!==volume){this.bus.gain.setTargetAtTime(volume/100,this.audio.ctx.currentTime,.025);this.volume=volume;}}
@@ -72,7 +78,12 @@ export class ArpEngine{
    // Start each chord's pattern from its first step, even at a progression wrap.
    const chordKey=chordIndex+'|'+Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm));
    if(this.chordKey!==chordKey){this.chordKey=chordKey;this.pattern.reset();}
-   const pool=arpNotes(chord,cfg.count),index=this.pattern.next(pool.length,cfg.pattern),pitch=pool[index],shape=arpEnvelope(cfg,step),length=shape.duration;
+   const pool=arpNotes(chord,cfg.count),index=this.pattern.next(pool.length,cfg.pattern),pitch=pool[index];
+   // A rest still consumes its pattern step. Probability uses a separate random
+   // stream, and never changes the rhythmic grid or the last sounded glide pitch.
+   const probability=cfg.probability??100;
+   if(probability<=0||(probability<100&&this.probabilityRandom()*100>=probability)){this.onEvent({type:'rest',rest:true,time,pitch,index,count:pool.length,chord,voice:cfg.voice});continue;}
+   const shape=arpEnvelope(cfg,step),length=shape.duration;
    const glide=arpGlide(cfg,step),pitchGlide=glide.enabled&&this.previousPitch!==null?{from:this.previousPitch,time:glide.time,amount:glide.amount}:null;this.previousPitch=pitch;
    const note={pitch,time,end:time+length+.15,cancel:new AbortController(),envelope:null};this.notes.push(note);
    const expression={velocity:.9,sustain:1,pan:pool.length===1?0:(index/(pool.length-1)*2-1)*.45,cutoff:11000,energy:.15};
