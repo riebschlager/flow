@@ -1,4 +1,4 @@
-import {parseChord,instruments} from './music.js?rev=experimental-scapes-13';
+import {parseChord,instruments} from './music.js?rev=pad-balance-14';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRates=[1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){

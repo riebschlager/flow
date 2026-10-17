@@ -17,7 +17,7 @@ export const instruments={
  flute:{name:'Flute',file:'0730',gain:.25,group:'Air & woodwind',attack:.18,duration:3.8,release:1},
  panflute:{name:'Pan flute',file:'0750',gain:.23,group:'Air & woodwind',attack:.22,duration:3.8,release:1},
  ocarina:{name:'Ocarina',file:'0790',gain:.22,group:'Air & woodwind',attack:.25,duration:4,release:1.1},
- newage:{name:'New age pad',file:'0880',gain:.22,group:'Pads & atmosphere',attack:.5,duration:5,release:1.5},
+ newage:{name:'New age pad',file:'0880',gain:.075,group:'Pads & atmosphere',attack:.75,duration:3.8,release:1.15,tone:{type:'lowpass',from:2800,to:1700,time:1.8,q:.45}},
  choirpad:{name:'Choir pad',file:'0910',gain:.19,group:'Pads & atmosphere',attack:.65,duration:5.2,release:1.6},
  bowedpad:{name:'Bowed pad',file:'0920',gain:.20,group:'Pads & atmosphere',attack:.6,duration:5.2,release:1.6},
  halo:{name:'Halo pad',file:'0940',gain:.21,group:'Pads & atmosphere',attack:.7,duration:5.4,release:1.7},
