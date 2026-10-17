@@ -34,7 +34,66 @@ export const instruments={
 };
 // A gradual swell and long release keep the new sustained voices gentle.
 export function softEnvelope(voice){return [{duration:0,volume:0},{duration:voice.attack,volume:1},{duration:.65,volume:.82},{duration:voice.duration-voice.attack-.65-voice.release,volume:.68},{duration:voice.release,volume:0}];}
-export const progressions={daydream:['Cmaj7','Am7','Fmaj7','G'],weightless:['Dmaj7','A','Bm7','Gmaj7'],afterhours:['Am7','Fmaj7','Cmaj7','Em7'],openwater:['Fmaj7','Cmaj7','Em7','Am7']};
+export const progressions={daydream:['Cmaj7','Am7','Fmaj7','G'],weightless:['Dmaj7','A','Bm7','Gmaj7'],afterhours:['Am7','Fmaj7','Cmaj7','Em7'],openwater:['Fmaj7','Cmaj7','Em7','Am7'],
+ stilllight:["Dbmaj9","Fm7","Bbm9","Gbmaj9"],
+ tidalglass:["Dsus2","Aadd9","Gmaj7","Esus4"],
+ bluehour:["Dm9","G9","Cmaj9","Am9"],
+ dorianbloom:["Dm9","G6","Em7","G6"],
+ velvetundertow:["Am9","Fmaj9","Dm9","Em7"],
+ borrowedlight:["Cmaj9","Em7","Fmaj9","Fm6"],
+ chromaticorbit:["Cmaj9","Abmaj9","Emaj9","Abmaj9"],
+ slowdescent:["Fmaj9","Em7","Dm9","C6"]
+};
+export const progressionDetails={
+ "stilllight": {
+  "name": "Still light",
+  "text": "Warm ninths and shared tones, with a soft return to the beginning.",
+  "pair": "Night garden",
+  "length": 8
+ },
+ "tidalglass": {
+  "name": "Tidal glass",
+  "text": "Open, suspended harmony; the last chord leaves a little air in the loop.",
+  "pair": "Glass organisms",
+  "length": 16
+ },
+ "bluehour": {
+  "name": "Blue hour",
+  "text": "A jazz-rooted ii–V–I–vi turnaround, softened with ninths.",
+  "pair": "Night garden",
+  "length": 8
+ },
+ "dorianbloom": {
+  "name": "Dorian bloom",
+  "text": "Minor warmth with a bright Dorian sixth, circling without a strong cadence.",
+  "pair": "Breathing room",
+  "length": 16
+ },
+ "velvetundertow": {
+  "name": "Velvet undertow",
+  "text": "A darker minor loop with warm extensions and a gentle pull back home.",
+  "pair": "Submerged cinema",
+  "length": 16
+ },
+ "borrowedlight": {
+  "name": "Borrowed light",
+  "text": "A borrowed minor-IV chord brings a wistful turn before the loop opens again.",
+  "pair": "Soft horizon",
+  "length": 8
+ },
+ "chromaticorbit": {
+  "name": "Chromatic orbit",
+  "text": "Parallel major ninths travel through distant keys. Expect deliberate tension in long echoes.",
+  "pair": "Strange attractor",
+  "length": 16
+ },
+ "slowdescent": {
+  "name": "Slow descent",
+  "text": "A falling IV–iii–ii–I bass outline, settling into an open major-sixth color.",
+  "pair": "Still water",
+  "length": 8
+ }
+};
 export const soundscapes={
  stillwater:{voices:['piano','vibes','strings','celesta'],reverb:65,delay:35,text:'Soft keys, warm strings, and a little shimmer.'},
  glasshouse:{voices:['celesta','musicbox','vibes','bells'],reverb:78,delay:45,text:'Delicate glass tones in a wide, luminous space.'},
@@ -47,7 +106,7 @@ export const soundscapes={
  orbitalrelay:{voices:['echofragments','prismaticair','newage','oohs'],reverb:72,delay:84,text:'Echo fragments, opening spectral air, and voices relayed through space.'}
 };
 const roots={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
-export function parseChord(symbol){const m=/^([A-G])([#b]?)(maj7|m7|m|7|sus2|sus4|add9)?$/.exec(symbol.trim());if(!m)throw new Error('Use chords such as C, Dm, G7, Am7, or Fmaj7.');let root=roots[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0);root=(root+12)%12;const shape={maj7:[0,4,7,11],m7:[0,3,7,10],m:[0,3,7],7:[0,4,7,10],sus2:[0,2,7],sus4:[0,5,7],add9:[0,4,7,14]}[m[3]]||[0,4,7];return shape.map(n=>48+root+n);}
+export function parseChord(symbol){const m=/^([A-G])([#b]?)(maj9|maj7|m9|m7|m6|m|9|7|6|sus2|sus4|add9)?$/.exec(symbol.trim());if(!m)throw new Error('Use chords such as Cmaj9, Dm9, G9, Fm6, C6, or Dsus2.');let root=roots[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0);root=(root+12)%12;const shape={maj9:[0,4,7,11,14],m9:[0,3,7,10,14],9:[0,4,7,10,14],6:[0,4,7,9],m6:[0,3,7,9],maj7:[0,4,7,11],m7:[0,3,7,10],m:[0,3,7],7:[0,4,7,10],sus2:[0,2,7],sus4:[0,5,7],add9:[0,4,7,14]}[m[3]]||[0,4,7];return shape.map(n=>48+root+n);}
 export function normalizeOctaveRange({down=0,up=1}={}){
  const octave=(value,fallback)=>Number.isFinite(Number(value))?Math.max(0,Math.min(3,Math.round(Number(value)))):fallback;
  return {down:octave(down,0),up:octave(up,1)};

@@ -5,12 +5,12 @@ function make(tag='div',a={}){const classes=new Set((a.class||'').split(/\s+/));
 function attrs(raw){const a=Object.fromEntries([...raw.matchAll(/([\w-]+)="([^"]*)"/g)].map(m=>[m[1],m[2]]));a.checked=/\bchecked\b/.test(raw);a.hidden=/\bhidden\b/.test(raw);return a;}
 function parse(html){for(const t of html.matchAll(/<([\w-]+)(\s[^>]*?)?>/g))make(t[1],attrs(t[2]||''));for(const s of html.matchAll(/<select([^>]*)>([\s\S]*?)<\/select>/g)){const a=attrs(s[1]);if(!a.id)continue;const node=ids.get(a.id);node.options=[...s[2].matchAll(/<option([^>]*)>([\s\S]*?)<\/option>/g)].map(o=>({value:attrs(o[1]).value,textContent:o[2],selected:/\bselected\b/.test(o[1])}));node.value=(node.options.find(o=>o.selected)||node.options[0])?.value||'';}}
 const body=make('body',{id:'body'});globalThis.document={body,activeElement:body,events:{},getElementById:id=>{assert(ids.has(id),'Missing ID: '+id);return ids.get(id);},querySelectorAll:selector=>all.filter(e=>selector.split('.').filter(Boolean).every(c=>e.classList.contains(c))),querySelector(selector){return this.querySelectorAll(selector)[0];},addEventListener(k,fn){(this.events[k]??=[]).push(fn);},createElement:tag=>make(tag)};globalThis.window={innerWidth:1200,devicePixelRatio:1};globalThis.ResizeObserver=class{observe(){}};globalThis.requestAnimationFrame=fn=>{frame=fn;return 1;};Object.defineProperty(globalThis,'performance',{value:{now:()=>clock},configurable:true});const store=new Map();globalThis.localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};parse(fs.readFileSync(new URL('../dist/index.html',import.meta.url),'utf8'));
-const {ChordAtmosphere}=await import('../dist/chord-atmosphere.js?rev=portamento-16');let atmosphereFrame;const atmosphereStep=ChordAtmosphere.prototype.frame;ChordAtmosphere.prototype.frame=function(dt,options){atmosphereStep.call(this,dt,options);atmosphereFrame={...options,light:this.light,pulse:this.pulse};};
+const {ChordAtmosphere}=await import('../dist/chord-atmosphere.js?rev=harmonies-18');let atmosphereFrame;const atmosphereStep=ChordAtmosphere.prototype.frame;ChordAtmosphere.prototype.frame=function(dt,options){atmosphereStep.call(this,dt,options);atmosphereFrame={...options,light:this.light,pulse:this.pulse};};
 await import('../dist/app.js');assert.equal(typeof frame,'function');const $=document.getElementById;function tick(){clock+=16;frame(clock);}for(let i=0;i<3;i++)tick();$('performTab').onclick();assert.equal($('performPanel').hidden,false);assert.equal($('rhythmPanel').hidden,true);
 const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:500,clientY:350};for(const fn of canvas.listeners.pointerdown)fn(event);for(let i=0;i<60;i++)tick();for(const fn of canvas.listeners.pointerup)fn(event);for(let i=0;i<45;i++)tick();assert.equal($('gestureName').textContent,'Bloom');const coral=all.find(e=>e.dataset.color==='2');for(const fn of coral.listeners.click)fn();assert.equal($('cycleColors').checked,false);assert.equal($('paletteHint').textContent,'CORAL ONLY');assert.equal($('pitchRangeValue').textContent,'Coral: C2 → B3 · 8 notes');$('clear').onclick();tick();
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
 // Exercise the live app's quantized launch, scheduler, splash, and transport controls.
-const {AmbientAudio}=await import('../dist/music.js?rev=portamento-16');
+const {AmbientAudio}=await import('../dist/music.js?rev=harmonies-18');
 const notes=[],timers=new Map();let timerID=0;
 const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
 try{
@@ -88,7 +88,7 @@ try{
  const soundCount=notes.length;$('chordAtmosphere').value='0';for(const fn of $('chordAtmosphere').listeners.input)fn();tick();assert.deepEqual(atmosphereFrame.light,{brightness:1,tint:[1,1,1]});assert.equal(notes.length,soundCount);assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.chordAtmosphere,'0');
  console.log('PASS: canvas atmosphere tracks automatic chord boundaries and paused manual jumps, with a persisted zero setting and no extra audio events.');
  // Selecting new soundscapes applies all four voices/effects without changing timing.
- const {soundscapes,instruments}=await import('../dist/music.js?rev=portamento-16');
+ const {soundscapes,instruments}=await import('../dist/music.js?rev=harmonies-18');
  const beforeScapes={bpm:$('bpmLabel').textContent,rate:$('rhythmRate').value,spacing:$('voiceDelayBeats').value,notes:notes.length};
  for(const key of ['glassorganisms','submergedcinema','strangeattractor','orbitalrelay']){
   $('soundscape').value=key;for(const fn of $('soundscape').listeners.change)await fn();const scape=soundscapes[key];
@@ -97,5 +97,14 @@ try{
  for(const key of Object.keys(instruments).filter(key=>instruments[key].group==='Experimental textures')){assert($('voices').html.includes('value="'+key+'"'));assert($('arpVoice').html.includes('value="'+key+'"'));}
  assert.equal($('bpmLabel').textContent,beforeScapes.bpm);assert.equal($('rhythmRate').value,beforeScapes.rate);assert.equal($('voiceDelayBeats').value,beforeScapes.spacing);assert.equal(notes.length,beforeScapes.notes);
  console.log('PASS: all experimental preset selections update four voices, effects, description, and saved settings; new voices appear in color and arpeggio menus without changing timing or triggering extra notes.');
+ const {progressions,progressionDetails}=await import('../dist/music.js?rev=harmonies-18');
+ const beforeHarmony={bpm:$('bpmLabel').textContent,rate:$('rhythmRate').value,voice:$('voice0').value,reverb:$('reverb').value,length:$('chordLength').value};
+ for(const [key,detail] of Object.entries(progressionDetails)){
+  assert($('progression').options.some(option=>option.value===key));$('progression').value=key;fire('progression');tick();
+  assert($('chords').html.includes(progressions[key][0]));assert.equal(atmosphereFrame.chord,progressions[key][0]);assert($('progressionDescription').textContent.includes(detail.text));assert($('progressionDescription').textContent.includes(detail.pair));assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.progression,key);
+ }
+ assert.equal($('bpmLabel').textContent,beforeHarmony.bpm);assert.equal($('rhythmRate').value,beforeHarmony.rate);assert.equal($('voice0').value,beforeHarmony.voice);assert.equal($('reverb').value,beforeHarmony.reverb);assert.equal($('chordLength').value,beforeHarmony.length);
+ $('progression').value='custom';fire('progression');$('chordInput').value='Cmaj9, Dm9, G9, Fm6';for(const fn of $('applyChords').listeners.click)fn();tick();assert.equal($('chordError').textContent,'Your progression is ready.');assert.deepEqual(JSON.parse(store.get('chromaflow-v1')).custom,['Cmaj9','Dm9','G9','Fm6']);
+ console.log('PASS: eight new progression selections update chord chips, harmonic atmosphere, mood/pairing captions and saved settings; custom extended chords work and suggestions preserve the mix and timing.');
  console.log('PASS: app quantize controls, ahead-of-time scheduling, beat alignment, single visual/audio impact, clear cancellation, live grid/tempo changes, double-speed percussion phase, free mode, pause/resume, and persistence.');
 }finally{globalThis.setInterval=originalSet;globalThis.clearInterval=originalClear;}

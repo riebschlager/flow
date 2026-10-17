@@ -92,3 +92,25 @@ Attack and decay proportionally fit the available duration when necessary; the c
 Sound → Arpeggiator → Portamento adds optional pitch glide, off by default. Glide time is 0–2000 ms (default 180 ms); glide amount is 0–100% (default 100%). A full-interval glide starts each note at the previous arpeggio pitch, then reaches the current chord tone. Smaller amounts start closer to the target. The first note after starting or changing voice begins at its own pitch. Zero time or amount bypasses bending.
 
 Glides use exponential playback-rate ramps for even movement in semitones, keeping the selected WebAudioFont sample zone, note envelope, voice balance, stereo position, and shared effects. Effective time fits before the automatic release; the caption shows actual milliseconds and updates with note length, tempo, rate, and percussion speed. Notes retain their rhythmic onset and may overlap according to Note length. Natural chord changes carry the previous pitch into the next chord. Live glide edits affect newly scheduled notes without restarting the pattern. Timing/pattern replans use the last started pitch, never a cancelled future note; stop/voice changes clear that history. Settings persist with the existing arpeggio configuration, and older settings migrate to glide off.
+
+## Additional harmonic palettes
+
+Eight original four-chord loops are available under New · Ambient & exploratory in Sound → Chord progression. A short caption explains the harmonic character and suggests an existing soundscape and 8/16-beat chord length; these are listening suggestions, not automatic setting changes. All original progressions and saved selections remain available. The new loops persist through the existing progression setting and feed droplets, quantized impacts, the arpeggiator, octave mapping, and chord atmosphere.
+
+| Loop | Chords | Approach |
+| --- | --- | --- |
+| Still light | Dbmaj9 → Fm7 → Bbm9 → Gbmaj9 | Warm ninths and shared tones, with a soft return to the beginning. |
+| Tidal glass | Dsus2 → Aadd9 → Gmaj7 → Esus4 | Open, suspended harmony; the last chord leaves a little air in the loop. |
+| Blue hour | Dm9 → G9 → Cmaj9 → Am9 | A jazz-rooted ii–V–I–vi turnaround, softened with ninths. |
+| Dorian bloom | Dm9 → G6 → Em7 → G6 | Minor warmth with a bright Dorian sixth, circling without a strong cadence. |
+| Velvet undertow | Am9 → Fmaj9 → Dm9 → Em7 | A darker minor loop with warm extensions and a gentle pull back home. |
+| Borrowed light | Cmaj9 → Em7 → Fmaj9 → Fm6 | A borrowed minor-IV chord brings a wistful turn before the loop opens again. |
+| Chromatic orbit | Cmaj9 → Abmaj9 → Emaj9 → Abmaj9 | Parallel major ninths travel through distant keys. Expect deliberate tension in long echoes. |
+| Slow descent | Fmaj9 → Em7 → Dm9 → C6 | A falling IV–iii–ii–I bass outline, settling into an open major-sixth color. |
+
+The chord parser now accepts maj9, m9, dominant 9, major 6 and minor 6 in presets and custom loops, in addition to the previous vocabulary. Ninths use the actual 14-semitone extension above the root. The same MIDI range bounds and deduplicated ascending pools still apply. No automatic inversion or voice-leading engine is added: these are chord-tone pools for the generative performance, with shared pitch classes chosen to soften most transitions. Chromatic orbit intentionally makes a more unsettled alternative.
+
+Design references (the loops are our own compositions, not endorsements by the authors):
+- Ableton / Dennis DeSantis, Parallel Harmony: https://makingmusic.ableton.com/parallel-harmony — common-tone connections and parallel chord movement in electronic music.
+- Native Instruments / Dean Salant, How to use authentic lo-fi chord progressions: https://blog.native-instruments.com/lo-fi-chord-progressions/ — cyclical harmony, unresolved loops, seventh/ninth extensions.
+- Native Instruments, How to add depth to your music with textures and patterns: https://blog.native-instruments.com/depth-in-music/ — extended harmony in a slow ambient production.

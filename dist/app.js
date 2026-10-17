@@ -1,11 +1,11 @@
-import {ChordAtmosphere} from './chord-atmosphere.js?rev=portamento-16';
-import {createArpeggiatorController} from './arpeggiator-ui.js?rev=arp-rate-17';
+import {ChordAtmosphere} from './chord-atmosphere.js?rev=harmonies-18';
+import {createArpeggiatorController} from './arpeggiator-ui.js?rev=harmonies-18';
 import {stirPercussion} from './percussion-visuals.js';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=32-8';
 import {Fluid} from './fluid.js?rev=expression-5';
 import {createPerformanceController} from './performance.js';
 import {createRhythmController} from './rhythm-ui.js?rev=percussion-motion-9';
-import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=portamento-16';
+import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=harmonies-18';
 const $=id=>document.getElementById(id);
 const colors=[{name:'Lilac',hex:'#b7a0ff',rgb:[.50,.20,1]},{name:'Sea glass',hex:'#73e2d0',rgb:[.10,.86,.67]},{name:'Coral',hex:'#ff9e9e',rgb:[1,.19,.26]},{name:'Amber',hex:'#edca82',rgb:[1,.57,.12]}];
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
@@ -27,7 +27,7 @@ function syncPitchRange(){
  $('pitchRangeValue').textContent=`${cycling?'Base range':colors[voice].name}: ${noteName(notes[0])} → ${noteName(notes.at(-1))} · ${notes.length} notes`;
 }
 for(const id of ['octavesDown','octavesUp'])$(id).addEventListener('change',()=>{syncPitchRange();syncDropScheduler();save();});
-function renderChords(){const list=activeChords();$('chords').innerHTML=list.map((c,i)=>`${i?'<span class="chord-arrow" aria-hidden="true">→</span>':''}<button class="chord-chip ${i===state.chordIndex?'active':''}" data-chord="${i}" aria-label="Jump to ${c}" ${i===state.chordIndex?'aria-current="true"':''}>${c}<span class="progress"></span></button>`).join('');syncPitchRange();}
+function renderChords(){const list=activeChords(),detail=progressionDetails[state.progression],descriptions={daydream:'Familiar major-seventh warmth with a gentle lift at the end.',weightless:'A clear major-key circle, balanced between lift and repose.',afterhours:'Soft minor colors, without a strong dominant resolution.',openwater:'An unhurried major-to-minor drift with shared chord tones.',custom:'Your own four-chord loop. Ninths, sixths and suspended chords are welcome.'};$('progressionDescription').textContent=detail?`${detail.text} Try ${detail.pair} · ${detail.length} beats per chord.`:descriptions[state.progression];$('chords').innerHTML=list.map((c,i)=>`${i?'<span class="chord-arrow" aria-hidden="true">→</span>':''}<button class="chord-chip ${i===state.chordIndex?'active':''}" data-chord="${i}" aria-label="Jump to ${c}" ${i===state.chordIndex?'aria-current="true"':''}>${c}<span class="progress"></span></button>`).join('');syncPitchRange();}
 function syncColorMode(){const cycling=$('cycleColors').checked;document.querySelectorAll('.color').forEach((el,j)=>{const selected=!cycling&&state.selected===j;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});$('paletteHint').textContent=cycling?'RANDOM COLORS':colors[state.selected].name.toUpperCase()+' ONLY';$('cursor').style.borderColor=cycling?'#d1bcff80':colors[state.selected].hex+'80';syncPitchRange();}
 function selectColor(i){state.selected=i;colorBag=[];$('cycleColors').checked=false;syncColorMode();save();}
 document.querySelectorAll('.color').forEach(el=>el.addEventListener('click',()=>selectColor(Number(el.dataset.color))));
