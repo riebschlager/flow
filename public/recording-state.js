@@ -1,6 +1,6 @@
-import {instruments,progressions,soundscapes,parseChord} from './music.js?rev=recorder-20';
-import {normalizeRhythm,drumVoices} from './rhythm.js?rev=recorder-20';
-import {normalizeArp} from './arpeggiator.js?rev=recorder-20';
+import {instruments,progressions,soundscapes,parseChord} from './music.js?rev=session-22';
+import {normalizeRhythm,drumVoices} from './rhythm.js?rev=session-22';
+import {normalizeArp} from './arpeggiator.js?rev=session-22';
 import {normalizeGestureSettings} from './gestures.js';
 const number=(n,lo,hi,fallback)=>Number.isFinite(Number(n))?Math.max(lo,Math.min(hi,Number(n))):fallback;
 export const mainDefaults={soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:55,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65};
@@ -17,6 +17,15 @@ export function sanitizeSnapshot(raw){
 const requireNumber=(value,lo,hi)=>{if(typeof value!=='number'||!Number.isFinite(value)||value<lo||value>hi)throw new Error('The performance contains an invalid visual action.');return value;};
 export function sanitizeTake(take){take.snapshot=sanitizeSnapshot(take.snapshot);for(const event of take.events){const d=event.data;
  if(event.kind==='settings')event.data=sanitizeSnapshot(d);
+ else if(event.kind==='note'){
+  if(!Object.hasOwn(instruments,d.voice)||!['voices','arp'].includes(d.bus))throw new Error('Invalid session voice.');requireNumber(d.id,0,1000000);requireNumber(d.pitch,0,127);requireNumber(d.levelScale,.1,1.5);
+  if(d.expression!==null){if(!d.expression||typeof d.expression!=='object')throw new Error('Invalid note expression.');const ranges={velocity:[.15,1.25],sustain:[.35,2.7],cutoff:[350,18000],pan:[-.9,.9],energy:[0,1]};d.expression=Object.fromEntries(Object.entries(ranges).filter(([k])=>d.expression[k]!==undefined).map(([k,r])=>[k,requireNumber(d.expression[k],...r)]));}
+  if(d.noteLength!==null)requireNumber(d.noteLength,.001,9);
+  if(d.noteEnvelope!==null){if(!Array.isArray(d.noteEnvelope)||d.noteEnvelope.length>16||!d.noteEnvelope.length)throw new Error('Invalid note envelope.');d.noteEnvelope=d.noteEnvelope.map(stage=>({duration:requireNumber(stage.duration,0,9),volume:requireNumber(stage.volume,0,1)}));if(d.noteEnvelope.reduce((n,s)=>n+s.duration,0)>9)throw new Error('Invalid envelope length.');}
+  if(d.pitchGlide!==null)d.pitchGlide={from:requireNumber(d.pitchGlide.from,0,127),time:requireNumber(d.pitchGlide.time,0,2),amount:requireNumber(d.pitchGlide.amount,0,1)};
+ }else if(event.kind==='drum'){if(!Object.hasOwn(drumVoices,d.voice))throw new Error('Invalid session drum.');requireNumber(d.id,0,1000000);requireNumber(d.velocity,0,2);if(d.pitch!==null)requireNumber(d.pitch,0,127);}
+ else if(event.kind==='noteOff'||event.kind==='drumOff')requireNumber(d.id,0,1000000);
+
  else if(event.kind==='fluid'){
   if(!['splat','pulse','force','clear'].includes(d.op)||!Array.isArray(d.args))throw new Error('The performance contains an unknown fluid action.');const a=d.args;
   if(d.op==='clear'){if(a.length)throw new Error('Invalid clear action.');continue;}
@@ -25,7 +34,9 @@ export function sanitizeTake(take){take.snapshot=sanitizeSnapshot(take.snapshot)
   if(d.op==='pulse'){if(a.length!==5)throw new Error('Invalid current action.');requireNumber(a[2],0,5);requireNumber(a[3],.001,1);requireNumber(a[4],-1,1);}
   if(d.op==='force'){if(a.length!==5)throw new Error('Invalid force action.');requireNumber(a[2],-1000,1000);requireNumber(a[3],-1000,1000);requireNumber(a[4],.001,1);}
  }else if(event.kind==='drop'){requireNumber(d.x,0,1);requireNumber(d.y,0,1);requireNumber(d.color,0,3);if(!Number.isInteger(d.color))throw new Error('Invalid droplet color.');requireNumber(d.flight,0,30);requireNumber(d.progress,0,1);if(typeof d.id!=='number')throw new Error('Invalid droplet identifier.');}
- else if(event.kind==='percussion'){if(!Object.hasOwn(drumVoices,d.voice))throw new Error('Unknown percussion voice.');for(const key of ['x','y'])requireNumber(d[key],0,1);requireNumber(d.strength,0,2);requireNumber(d.weight,0,1);requireNumber(d.lane,0,3);requireNumber(d.step,0,15);}
+ else if(event.kind==='percussion'){if(!Object.hasOwn(drumVoices,d.voice))throw new Error('Unknown percussion voice.');for(const key of ['x','y'])requireNumber(d[key],0,1);requireNumber(d.strength,0,2);requireNumber(d.weight,0,1);requireNumber(d.lane,0,3);requireNumber(d.step,0,15);if(d.velocity!==undefined)requireNumber(d.velocity,0,2);if(d.pitch!==undefined&&d.pitch!==null)requireNumber(d.pitch,0,127);}
  else if(event.kind==='arpeggio'){requireNumber(d.pitch,0,127);requireNumber(d.count,1,16);requireNumber(d.index,0,d.count-1);parseChord(d.chord);if(!Object.hasOwn(instruments,d.voice))throw new Error('Unknown arpeggio voice.');}
- else if(event.kind==='gesture'){if(d.active){requireNumber(d.x,0,1);requireNumber(d.y,0,1);}if(d.performance)d.performance=sanitizeSnapshot({...take.snapshot,performance:d.performance}).performance;for(const key of ['x','y','energy','held','orbit'])if(d[key]!==undefined)requireNumber(d[key],0,1);}
- }return take;}
+ else if(event.kind==='gesture'){d.active=d.active===true;d.ended=d.ended===true;if(d.active){requireNumber(d.x,0,1);requireNumber(d.y,0,1);}if(d.performance)d.performance=sanitizeSnapshot({...take.snapshot,performance:d.performance}).performance;for(const key of ['x','y','energy','held','orbit'])if(d[key]!==undefined)requireNumber(d[key],0,1);}
+ }
+ if(take.version===2){const keys={fluid:['op','args'],drop:['id','x','y','color','flight','progress'],gesture:['active','ended','x','y','energy','held','orbit','kind','performance'],percussion:['voice','x','y','strength','weight','lane','step','velocity','motion','pitch'],arpeggio:['voice','pitch','count','index','chord'],note:['id','voice','pitch','expression','bus','noteLength','noteEnvelope','pitchGlide','levelScale'],drum:['id','voice','velocity','pitch'],noteOff:['id'],drumOff:['id']};for(const e of take.events){if(keys[e.kind])e.data=Object.fromEntries(keys[e.kind].filter(k=>e.data[k]!==undefined).map(k=>[k,e.data[k]]));if(e.kind==='gesture'&&!['touch','hold','orbit','rush','ribbon','bloom','flick','cancel'].includes(e.data.kind))delete e.data.kind;if(e.kind==='percussion'&&!['sweep','light','bass'].includes(e.data.motion))delete e.data.motion;}}
+ return take;}

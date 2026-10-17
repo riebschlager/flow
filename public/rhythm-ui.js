@@ -1,5 +1,5 @@
 import {echoLabel} from './timing.js';
-import {drumVoices,grooves,grooveDetails,drumKits,applyDrumKit,normalizeRhythm,groovePattern,euclidean,rotatePattern,varyPattern,RhythmEngine} from './rhythm.js?rev=recorder-20';
+import {drumVoices,grooves,grooveDetails,drumKits,applyDrumKit,normalizeRhythm,groovePattern,euclidean,rotatePattern,varyPattern,RhythmEngine} from './rhythm.js?rev=session-22';
 const $=id=>document.getElementById(id);
 const laneColors=['#b7a0ff','#73e2d0','#ff9e9e','#edca82'];
 const anchors=[{x:.25,y:.68},{x:.48,y:.42},{x:.72,y:.66},{x:.77,y:.31}];

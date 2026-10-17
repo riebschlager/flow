@@ -1,4 +1,4 @@
-import {parseChord,instruments} from './music.js?rev=recorder-20';
+import {parseChord,instruments} from './music.js?rev=session-22';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRates=[4,2,1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){
