@@ -1,4 +1,4 @@
-import {parseChord,instruments} from './music.js?rev=harmonies-18';
+import {parseChord,instruments} from './music.js?rev=recorder-20';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRates=[4,2,1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){
@@ -55,6 +55,8 @@ export class ArpEngine{
   for(const note of this.notes){note.cancel.abort();if(note.time<=now){note.envelope?.cancel();try{note.envelope?.audioBufferSourceNode?.stop(now+.1);}catch{}}}
   this.notes=[];this.previousPitch=null;this.lastStartedPitch=null;this.lastStartedTime=-Infinity;this.volume=null;if(this.bus)this.bus.gain.setTargetAtTime(0,now,.02);this.key=null;this.chordKey=null;this.pattern.reset();this.onEvent({type:'reset'});
  }
+ trim(at){for(const note of this.notes)if(note.time>=at)note.cancel.abort();this.notes=this.notes.filter(note=>note.time<at);}
+ freeze(at){if(this.timer!==null)this.clearTimer(this.timer);this.timer=null;this.cancelFuture(at-1e-7);}
  fail(error){this.stop();this.onError(error);}
  tick(){
   if(!this.audio.playing||!this.getConfig().enabled){this.stop();return;}

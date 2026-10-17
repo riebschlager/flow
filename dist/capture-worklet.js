@@ -1,0 +1,6 @@
+class ChromaflowCapture extends AudioWorkletProcessor{
+ constructor(){super();this.active=false;this.offset=0;this.chunks=[new Float32Array(4096),new Float32Array(4096)];this.port.onmessage=({data})=>{if(data.type==='start'){this.id=data.id;this.start=data.start;this.end=data.end;this.tail=data.tail;this.active=true;this.offset=0;this.sentCut=false;}if(data.type==='end')this.end=data.end;if(data.type==='cancel'){this.active=false;this.offset=0;}};}
+ flush(){if(!this.offset)return;const channels=this.chunks.map(c=>c.slice(0,this.offset));this.port.postMessage({type:'chunk',id:this.id,channels},channels.map(c=>c.buffer));this.offset=0;}
+ process(inputs,outputs){const input=inputs[0]||[],size=outputs[0]?.[0]?.length||input[0]?.length||128;if(!this.active)return true;for(let i=0;i<size;i++){const frame=currentFrame+i;if(frame<this.start)continue;if(frame>=this.end&&!this.sentCut){this.sentCut=true;this.port.postMessage({type:'cut',id:this.id,end:this.end});}if(frame>=this.end+this.tail){this.flush();this.active=false;this.port.postMessage({type:'done',id:this.id,start:this.start,end:this.end,frames:frame-this.start});break;}for(let ch=0;ch<2;ch++)this.chunks[ch][this.offset]=input[ch]?.[i]??input[0]?.[i]??0;if(++this.offset===4096)this.flush();}return true;}
+}
+registerProcessor('chromaflow-capture',ChromaflowCapture);
