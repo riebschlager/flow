@@ -6,10 +6,10 @@ function attrs(raw){const a=Object.fromEntries([...raw.matchAll(/([\w-]+)="([^"]
 function parse(html){for(const t of html.matchAll(/<([\w-]+)(\s[^>]*?)?>/g))make(t[1],attrs(t[2]||''));for(const s of html.matchAll(/<select([^>]*)>([\s\S]*?)<\/select>/g)){const a=attrs(s[1]);if(!a.id)continue;const node=ids.get(a.id);node.options=[...s[2].matchAll(/<option([^>]*)>([\s\S]*?)<\/option>/g)].map(o=>({value:attrs(o[1]).value,textContent:o[2],selected:/\bselected\b/.test(o[1])}));node.value=(node.options.find(o=>o.selected)||node.options[0])?.value||'';}}
 const body=make('body',{id:'body'});globalThis.document={body,activeElement:body,events:{},getElementById:id=>{assert(ids.has(id),'Missing ID: '+id);return ids.get(id);},querySelectorAll:selector=>all.filter(e=>selector.split('.').filter(Boolean).every(c=>e.classList.contains(c))),querySelector(selector){return this.querySelectorAll(selector)[0];},addEventListener(k,fn){(this.events[k]??=[]).push(fn);},createElement:tag=>make(tag)};globalThis.window={innerWidth:1200,devicePixelRatio:1};globalThis.ResizeObserver=class{observe(){}};globalThis.requestAnimationFrame=fn=>{frame=fn;return 1;};Object.defineProperty(globalThis,'performance',{value:{now:()=>clock},configurable:true});const store=new Map();globalThis.localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};parse(fs.readFileSync(new URL('../dist/index.html',import.meta.url),'utf8'));
 await import('../dist/app.js');assert.equal(typeof frame,'function');const $=document.getElementById;function tick(){clock+=16;frame(clock);}for(let i=0;i<3;i++)tick();$('performTab').onclick();assert.equal($('performPanel').hidden,false);assert.equal($('rhythmPanel').hidden,true);
-const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:500,clientY:350};for(const fn of canvas.listeners.pointerdown)fn(event);for(let i=0;i<60;i++)tick();for(const fn of canvas.listeners.pointerup)fn(event);for(let i=0;i<45;i++)tick();assert.equal($('gestureName').textContent,'Bloom');const coral=all.find(e=>e.dataset.color==='2');for(const fn of coral.listeners.click)fn();assert.equal($('cycleColors').checked,false);assert.equal($('paletteHint').textContent,'CORAL ONLY');$('clear').onclick();tick();
+const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:500,clientY:350};for(const fn of canvas.listeners.pointerdown)fn(event);for(let i=0;i<60;i++)tick();for(const fn of canvas.listeners.pointerup)fn(event);for(let i=0;i<45;i++)tick();assert.equal($('gestureName').textContent,'Bloom');const coral=all.find(e=>e.dataset.color==='2');for(const fn of coral.listeners.click)fn();assert.equal($('cycleColors').checked,false);assert.equal($('paletteHint').textContent,'CORAL ONLY');assert.equal($('pitchRangeValue').textContent,'Coral: C2 → B3 · 8 notes');$('clear').onclick();tick();
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
 // Exercise the live app's quantized launch, scheduler, splash, and transport controls.
-const {AmbientAudio}=await import('../dist/music.js?rev=quantize-7');
+const {AmbientAudio}=await import('../dist/music.js?rev=octave-range-10');
 const notes=[],timers=new Map();let timerID=0;
 const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
 try{
@@ -38,5 +38,20 @@ try{
  await $('start').listeners.click[0]();tick();assert.equal(changed.signal.aborted,true);assert.equal(timers.size,0);$('clear').onclick();await $('start').listeners.click[0]();assert.equal(timers.size,2);$('clear').onclick();
  await $('start').listeners.click[0]();assert.equal(timers.size,0);$('clear').onclick();$('quantizeEnabled').checked=false;fire('quantizeEnabled');$('quantizeBeats').value='.125';fire('quantizeBeats');
  const settings=JSON.parse(store.get('chromaflow-v1')).settings;assert.equal(settings.quantizeEnabled,false);assert.equal(Number(settings.quantizeBeats),.125);
+ // The actual edge clicks must reach the complete expanded range, despite visual margins.
+ $('rhythmEnabled').checked=false;fire('rhythmEnabled');$('progression').value='daydream';fire('progression');
+ for(const fn of all.find(e=>e.dataset.color==='0').listeners.click)fn();
+ $('octavesDown').value='3';$('octavesUp').value='3';fire('octavesDown');fire('octavesUp');
+ assert.equal($('pitchRangeValue').textContent,'Lilac: C0 → B6 · 28 notes');
+ await $('start').listeners.click[0]();$('clear').onclick();
+ const tapAt=x=>{const e={...event,clientX:x};for(const fn of canvas.listeners.pointerdown)fn(e);for(const fn of canvas.listeners.pointerup)fn(e);};
+ tapAt(0);for(let i=0;i<60;i++)tick();assert.equal(notes.at(-1).pitch,12);
+ tapAt(1000);for(let i=0;i<60;i++)tick();assert.equal(notes.at(-1).pitch,95);
+ $('quantizeEnabled').checked=true;fire('quantizeEnabled');tapAt(1000);const future=advanceToNote();const beforeRangeEdit=notes.length;
+ $('octavesUp').value='0';fire('octavesUp');assert.equal(future.signal.aborted,true);const retuned=advanceToNote(beforeRangeEdit);assert.equal(retuned.pitch,59);
+ assert.equal($('pitchRangeValue').textContent,'Lilac: C0 → B3 · 16 notes');
+ $('clear').onclick();await $('start').listeners.click[0]();
+ const savedRange=JSON.parse(store.get('chromaflow-v1')).settings;assert.equal(Number(savedRange.octavesDown),3);assert.equal(Number(savedRange.octavesUp),0);
+ console.log('PASS: live octave controls and preview, true canvas-edge pitches, retuning pending quantized notes, preserved color voicing, and saved range settings.');
  console.log('PASS: app quantize controls, ahead-of-time scheduling, beat alignment, single visual/audio impact, clear cancellation, live grid/tempo changes, double-speed percussion phase, free mode, pause/resume, and persistence.');
 }finally{globalThis.setInterval=originalSet;globalThis.clearInterval=originalClear;}

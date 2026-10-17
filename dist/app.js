@@ -3,13 +3,13 @@ import {landingTime,quantizeDivisions} from './quantize.js?rev=32-8';
 import {Fluid} from './fluid.js?rev=expression-5';
 import {createPerformanceController} from './performance.js';
 import {createRhythmController} from './rhythm-ui.js?rev=percussion-motion-9';
-import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,parseChord,pitchForPosition,noteName} from './music.js?rev=quantize-7';
+import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=octave-range-10';
 const $=id=>document.getElementById(id);
 const colors=[{name:'Lilac',hex:'#b7a0ff',rgb:[.50,.20,1]},{name:'Sea glass',hex:'#73e2d0',rgb:[.10,.86,.67]},{name:'Coral',hex:'#ff9e9e',rgb:[1,.19,.26]},{name:'Amber',hex:'#edca82',rgb:[1,.57,.12]}];
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
 const audio=new AmbientAudio();let busy=false,noteTimer,clockOrigin=0,dropTimer=null;
 $('voices').innerHTML=colors.map((c,i)=>`<div class="voice-row" style="--color:${c.hex}"><span class="voice-dot"></span><label for="voice${i}">${c.name}</label><select id="voice${i}" aria-label="${c.name} instrument">${instrumentGroups.map(group=>`<optgroup label="${group}">${Object.entries(instruments).filter(([,v])=>v.group===group).map(([k,v])=>`<option value="${k}" ${state.voices[i]===k?'selected':''}>${v.name}</option>`).join('')}</optgroup>`).join('')}</select></div>`).join('');
-const persisted=['soundscape','progression','chordLength','reverb','delay','volume','swirl','persistence','dropSize','rain','cycleColors','autoPour','quantizeEnabled','quantizeBeats'];
+const persisted=['soundscape','progression','chordLength','reverb','delay','volume','swirl','persistence','dropSize','rain','cycleColors','autoPour','quantizeEnabled','quantizeBeats','octavesDown','octavesUp'];
 function save(){try{localStorage.setItem('chromaflow-v1',JSON.stringify({settings:Object.fromEntries(persisted.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),voices:state.voices,custom:state.custom,bpm:state.bpm,selected:state.selected}));}catch{}}
 function restore(){try{const s=JSON.parse(localStorage.getItem('chromaflow-v1'));if(!s)return;for(const [id,value] of Object.entries(s.settings||{})){if(!persisted.includes(id))continue;const el=$(id);if(el.type==='checkbox')el.checked=!!value;else el.value=value;}if(s.voices?.length===4&&s.voices.every(v=>instruments[v]))state.voices=s.voices;if(s.custom?.length===4){s.custom.forEach(parseChord);state.custom=s.custom;$('chordInput').value=s.custom.join(', ');}if(Number.isInteger(s.selected)&&s.selected>=0&&s.selected<4)state.selected=s.selected;state.bpm=Math.max(30,Math.min(100,Number(s.bpm)||56));if(!$('progression').value)$('progression').value='daydream';if(!$('soundscape').value)$('soundscape').value='stillwater';state.progression=$('progression').value;state.voices.forEach((v,i)=>$('voice'+i).value=v);}catch{}}
 restore();
@@ -18,8 +18,15 @@ function syncQuantize(){const on=$('quantizeEnabled').checked;$('quantizeBeats')
 for(const id of ['quantizeEnabled','quantizeBeats'])$(id).addEventListener('change',()=>{syncQuantize();syncDropScheduler();save();});
 syncQuantize();
 function activeChords(){return state.progression==='custom'?state.custom:progressions[state.progression];}
-function renderChords(){const list=activeChords();$('chords').innerHTML=list.map((c,i)=>`${i?'<span class="chord-arrow" aria-hidden="true">→</span>':''}<button class="chord-chip ${i===state.chordIndex?'active':''}" data-chord="${i}" aria-label="Jump to ${c}" ${i===state.chordIndex?'aria-current="true"':''}>${c}<span class="progress"></span></button>`).join('');}
-function syncColorMode(){const cycling=$('cycleColors').checked;document.querySelectorAll('.color').forEach((el,j)=>{const selected=!cycling&&state.selected===j;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});$('paletteHint').textContent=cycling?'RANDOM COLORS':colors[state.selected].name.toUpperCase()+' ONLY';$('cursor').style.borderColor=cycling?'#d1bcff80':colors[state.selected].hex+'80';}
+function octaveRange(){return normalizeOctaveRange({down:$('octavesDown').value,up:$('octavesUp').value});}
+function syncPitchRange(){
+ const range=octaveRange();$('octavesDown').value=String(range.down);$('octavesUp').value=String(range.up);
+ const cycling=$('cycleColors').checked,voice=cycling?0:state.selected,notes=pitchesForRange(activeChords()[state.chordIndex],voice,range);
+ $('pitchRangeValue').textContent=`${cycling?'Base range':colors[voice].name}: ${noteName(notes[0])} → ${noteName(notes.at(-1))} · ${notes.length} notes`;
+}
+for(const id of ['octavesDown','octavesUp'])$(id).addEventListener('change',()=>{syncPitchRange();syncDropScheduler();save();});
+function renderChords(){const list=activeChords();$('chords').innerHTML=list.map((c,i)=>`${i?'<span class="chord-arrow" aria-hidden="true">→</span>':''}<button class="chord-chip ${i===state.chordIndex?'active':''}" data-chord="${i}" aria-label="Jump to ${c}" ${i===state.chordIndex?'aria-current="true"':''}>${c}<span class="progress"></span></button>`).join('');syncPitchRange();}
+function syncColorMode(){const cycling=$('cycleColors').checked;document.querySelectorAll('.color').forEach((el,j)=>{const selected=!cycling&&state.selected===j;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});$('paletteHint').textContent=cycling?'RANDOM COLORS':colors[state.selected].name.toUpperCase()+' ONLY';$('cursor').style.borderColor=cycling?'#d1bcff80':colors[state.selected].hex+'80';syncPitchRange();}
 function selectColor(i){state.selected=i;colorBag=[];$('cycleColors').checked=false;syncColorMode();save();}
 document.querySelectorAll('.color').forEach(el=>el.addEventListener('click',()=>selectColor(Number(el.dataset.color))));
 function loadFail(e){$('audioState').textContent=e.message||'Sound could not load. Try again.';$('audioState').style.color='#e5a0ac';}
@@ -67,7 +74,7 @@ function dropClock(){
  const enabled=$('quantizeEnabled').checked,beats=Number($('quantizeBeats').value),rate=audio.rhythmRate;
  const now=state.playing&&audio.ctx?audio.ctx.currentTime:performance.now()/1000;
  const origin=state.playing?(rhythmUI.timingOrigin??clockOrigin):0;
- return {now,origin,bpm:state.bpm,rate,beats,enabled,key:[state.playing,origin,state.bpm,rate,enabled,beats].join('|')};
+ return {now,origin,bpm:state.bpm,rate,beats,enabled,key:[state.playing,origin,state.bpm,rate,enabled,beats,octaveRange().down,octaveRange().up].join('|')};
 }
 function prepareDrop(d,clock){
  if(d.timingKey===clock.key)return;
@@ -80,7 +87,7 @@ function prepareDrop(d,clock){
 function playDrop(d,when=null,signal=null){
  if(!state.playing)return;
  const chordIndex=when===null?state.chordIndex:Math.floor(Math.max(0,when-clockOrigin)/(Number($('chordLength').value)*60/state.bpm))%4;
- d.pitch=pitchForPosition(activeChords()[chordIndex],d.x,d.color);d.voice=state.voices[d.color];
+ d.pitch=pitchForPosition(activeChords()[chordIndex],(d.x-.04)/.92,d.color,octaveRange());d.voice=state.voices[d.color];
  audio.note(d.voice,d.pitch,d.expression,{when,signal}).catch(loadFail);
 }
 function serviceDrops(){

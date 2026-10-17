@@ -29,7 +29,20 @@ export const progressions={daydream:['Cmaj7','Am7','Fmaj7','G'],weightless:['Dma
 export const soundscapes={stillwater:{voices:['piano','vibes','strings','celesta'],reverb:65,delay:35,text:'Soft keys, warm strings, and a little shimmer.'},glasshouse:{voices:['celesta','musicbox','vibes','bells'],reverb:78,delay:45,text:'Delicate glass tones in a wide, luminous space.'},nightgarden:{voices:['rhodes','pad','strings','vibes'],reverb:82,delay:28,text:'Velvety keys and slow, moonlit textures.'},softhorizon:{voices:['pad','halo','slowstrings','choir'],reverb:74,delay:35,text:'Slow strings, distant voices, and softly rising pads.'},breathingroom:{voices:['flute','panflute','oohs','sweeppad'],reverb:76,delay:27,text:'Breathy winds and voices drifting through a slow swell.'}};
 const roots={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 export function parseChord(symbol){const m=/^([A-G])([#b]?)(maj7|m7|m|7|sus2|sus4|add9)?$/.exec(symbol.trim());if(!m)throw new Error('Use chords such as C, Dm, G7, Am7, or Fmaj7.');let root=roots[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0);root=(root+12)%12;const shape={maj7:[0,4,7,11],m7:[0,3,7,10],m:[0,3,7],7:[0,4,7,10],sus2:[0,2,7],sus4:[0,5,7],add9:[0,4,7,14]}[m[3]]||[0,4,7];return shape.map(n=>48+root+n);}
-export function pitchForPosition(chord,x,voice=0){const base=parseChord(chord),notes=[...base,...base.map(n=>n+12)];let pitch=notes[Math.min(notes.length-1,Math.floor(Math.max(0,Math.min(.999,x))*notes.length))];if(voice===2)pitch-=12;return pitch;}
+export function normalizeOctaveRange({down=0,up=1}={}){
+ const octave=(value,fallback)=>Number.isFinite(Number(value))?Math.max(0,Math.min(3,Math.round(Number(value)))):fallback;
+ return {down:octave(down,0),up:octave(up,1)};
+}
+export function pitchesForRange(chord,voice=0,range={}){
+ const {down,up}=normalizeOctaveRange(range),base=parseChord(chord),notes=[];
+ for(let octave=-down;octave<=up;octave++)for(const note of base)notes.push(note+octave*12-(voice===2?12:0));
+ // Extended chords can overlap registers; always move upward from left to right.
+ return [...new Set(notes)].filter(note=>note>=0&&note<=127).sort((a,b)=>a-b);
+}
+export function pitchForPosition(chord,x,voice=0,range={}){
+ const notes=pitchesForRange(chord,voice,range),position=Number.isFinite(x)?Math.max(0,Math.min(1,x)):0;
+ return notes[Math.min(notes.length-1,Math.floor(position*notes.length))];
+}
 export function noteName(pitch){return ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'][pitch%12]+(Math.floor(pitch/12)-1);}
 export class AmbientAudio{
  constructor(){this.ctx=null;this.player=null;this.loaded=new Map();this.playing=false;this.volume=.55;this.reverb=.65;this.delay=.35;this.bpm=56;this.rhythmRate=1;this.delayBeats=.75;this.echoTimeValue=null;this.performance={cutoff:18000,resonance:.4,pan:0,gain:1};this.performanceApplied={};}
