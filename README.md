@@ -1,4 +1,6 @@
-# Chromaflow
+# Flow
+
+Created by [Chris Riebschlager](https://the816.com).
 
 An ambient instrument combining an incompressible fluid solver and WebAudioFont sampled instruments, with browser-local recording and an optional shared community library. The original HTML/CSS/ES-module instrument is preserved in `app/instrument.html` and `public/`; Vinext serves it alongside a Worker API backed by Sites-managed D1 and R2.
 
@@ -8,7 +10,7 @@ Controls include four editable chord slots (via a comma-separated progression), 
 
 The solver uses semi-Lagrangian advection, pressure projection (20 Gauss-Seidel iterations), and vorticity confinement. Desktop uses a 224×156 grid and narrow viewports use a 144×112 grid. Canvas2D renders the dye field plus impact ripples and falling droplets. Audio uses locally bundled WebAudioFont with FluidR3 samples, a filtered feedback delay and a stereo convolution impulse generated in the browser.
 
-Chromaflow source is licensed under GPL-3.0. WebAudioFont is by Sergey Surikov under GPL-3.0; WebAudioFontData has its included notice; FluidR3 GM is by Frank Wen under its included MIT notice. The source download contains all runtime code and sample files. External Google Fonts are optional; system fonts work offline.
+Flow source is licensed under GPL-3.0. WebAudioFont is by Sergey Surikov under GPL-3.0; WebAudioFontData has its included notice; FluidR3 GM is by Frank Wen under its included MIT notice. The source download contains all runtime code and sample files. External Google Fonts are optional; system fonts work offline.
 
 The 12 added voices focus on soft attacks: slow strings, synth strings, choir aahs, voice oohs, flute, pan flute, ocarina, and new age, choir, bowed, halo, and sweep pads. Their custom WebAudioFont envelopes swell over 180–750 ms, sustain gently, and release over 1–1.7 seconds. Existing voices retain their original envelopes. The menu groups voices by family, and Soft horizon and Breathing room showcase the new palette. Instruments are loaded and decoded only when selected.
 

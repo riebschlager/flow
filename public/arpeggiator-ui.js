@@ -1,5 +1,5 @@
-import {instruments,instrumentGroups,noteName} from './music.js?rev=session-22';
-import {arpNotes,arpPatterns,normalizeArp,arpEnvelope,arpGlide,ArpEngine} from './arpeggiator.js?rev=session-22';
+import {instruments,instrumentGroups,noteName} from './music.js?rev=flow-23';
+import {arpNotes,arpPatterns,normalizeArp,arpEnvelope,arpGlide,ArpEngine} from './arpeggiator.js?rev=flow-23';
 const $=id=>document.getElementById(id);
 export function createArpeggiatorController({audio,getClock,getChord,onChange=()=>{},onNote=()=>{}}){
  let config;try{config=normalizeArp(JSON.parse(localStorage.getItem('chromaflow-arp-v1')));}catch{config=normalizeArp();}

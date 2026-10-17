@@ -1,6 +1,6 @@
-import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=session-22';
-import {PercussionSynth} from './rhythm.js?rev=session-22';
-import {PerformanceAudio} from './recorder-audio.js?rev=session-22';
+import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=flow-23';
+import {PercussionSynth} from './rhythm.js?rev=flow-23';
+import {PerformanceAudio} from './recorder-audio.js?rev=flow-23';
 import {delaySeconds} from './timing.js';
 const soundKinds=new Set(['settings','gesture','note','drum','noteOff','drumOff']);
 const parameter=(p,value,at,smooth=.02)=>p?.setTargetAtTime(value,at,smooth);

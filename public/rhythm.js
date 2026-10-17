@@ -1,4 +1,4 @@
-import {parseChord} from './music.js?rev=session-22';
+import {parseChord} from './music.js?rev=flow-23';
 import {delaySeconds,delayGlide} from './timing.js';
 // Beat patterns and audio-clock scheduling. One loop is sixteen sixteenth notes.
 export const drumVoices={

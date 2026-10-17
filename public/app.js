@@ -1,14 +1,14 @@
-import {createCommunityController} from './community-ui.js?rev=session-22';
-import {createRecorderController} from './recorder-ui.js?rev=session-22';
-import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=session-22';
-import {ChordAtmosphere} from './chord-atmosphere.js?rev=session-22';
-import {createArpeggiatorController} from './arpeggiator-ui.js?rev=session-22';
+import {createCommunityController} from './community-ui.js?rev=flow-23';
+import {createRecorderController} from './recorder-ui.js?rev=flow-23';
+import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=flow-23';
+import {ChordAtmosphere} from './chord-atmosphere.js?rev=flow-23';
+import {createArpeggiatorController} from './arpeggiator-ui.js?rev=flow-23';
 import {stirPercussion} from './percussion-visuals.js?rev=rhythm-palettes-19';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=32-8';
 import {Fluid} from './fluid.js?rev=expression-5';
-import {createPerformanceController} from './performance.js?rev=session-22';
-import {createRhythmController} from './rhythm-ui.js?rev=session-22';
-import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=session-22';
+import {createPerformanceController} from './performance.js?rev=flow-23';
+import {createRhythmController} from './rhythm-ui.js?rev=flow-23';
+import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=flow-23';
 const $=id=>document.getElementById(id);
 const colors=[{name:'Lilac',hex:'#b7a0ff',rgb:[.50,.20,1]},{name:'Sea glass',hex:'#73e2d0',rgb:[.10,.86,.67]},{name:'Coral',hex:'#ff9e9e',rgb:[1,.19,.26]},{name:'Amber',hex:'#edca82',rgb:[1,.57,.12]}];
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
@@ -37,7 +37,7 @@ function selectColor(i){state.selected=i;colorBag=[];$('cycleColors').checked=fa
 document.querySelectorAll('.color').forEach(el=>el.addEventListener('click',()=>selectColor(Number(el.dataset.color))));
 function loadFail(e){$('audioState').textContent=e.message||'Sound could not load. Try again.';$('audioState').style.color='#e5a0ac';}
 async function togglePlay(){if(recorder?.phase!=='idle'&&recorder){if(recorder.recording)recorder.finish();else if(recorder.replaying)recorder.stopPlayback();return;}if(busy)return;if(state.playing){state.elapsed=Math.max(0,audio.ctx.currentTime-clockOrigin);state.playing=false;rhythmUI.stop();arpUI.stop();audio.setPlaying(false);syncDropScheduler();updateTransport();return;}busy=true;$('start').disabled=true;$('audioState').style.color='';$('audioState').textContent='Preparing your instruments…';try{await audio.initialize();await Promise.all([...state.voices,...(arpUI.requiredVoice?[arpUI.requiredVoice]:[])].map(v=>audio.load(v)));clockOrigin=audio.ctx.currentTime-state.elapsed;state.playing=true;audio.setPlaying(true);rhythmUI.start();arpUI.start();syncDropScheduler();updateTransport();$('intro').classList.add('faded');drop(.4+Math.random()*.2,.5+Math.random()*.12,0);rainTimer=0;}catch(e){loadFail(e);}finally{busy=false;$('start').disabled=false;}}
-function updateTransport(){const replay=!!recorder?.replaying;$('start').querySelector('use').setAttribute('href',state.playing?'#pause':'#play');$('start').setAttribute('aria-label',state.playing?'Pause listening':'Begin listening');$('playLabel').textContent=replay?'Recorded performance':state.playing?'In the flow':'Begin listening';$('audioState').textContent=replay?'Session loop · Chromaflow plays the notes':state.playing?`${activeChords()[state.chordIndex]} · ${$('soundscape').selectedOptions[0].textContent}`:'Sound is waiting for you';$('sessionState').textContent=replay?'A MOMENT, RETURNING':state.playing?'LISTEN. WANDER. REPEAT.':'YOUR MOMENT OF STILLNESS';document.querySelector('.transport').classList.toggle('paused',!state.playing&&!replay);rhythmUI.transportChanged();arpUI.transportChanged();}
+function updateTransport(){const replay=!!recorder?.replaying;$('start').querySelector('use').setAttribute('href',state.playing?'#pause':'#play');$('start').setAttribute('aria-label',state.playing?'Pause listening':'Begin listening');$('playLabel').textContent=replay?'Recorded performance':state.playing?'In the flow':'Begin listening';$('audioState').textContent=replay?'Session loop · Flow plays the notes':state.playing?`${activeChords()[state.chordIndex]} · ${$('soundscape').selectedOptions[0].textContent}`:'Sound is waiting for you';$('sessionState').textContent=replay?'A MOMENT, RETURNING':state.playing?'LISTEN. WANDER. REPEAT.':'YOUR MOMENT OF STILLNESS';document.querySelector('.transport').classList.toggle('paused',!state.playing&&!replay);rhythmUI.transportChanged();arpUI.transportChanged();}
 $('start').addEventListener('click',togglePlay);
 function syncAudio(){audio.volume=Number($('volume').value)/100;audio.reverb=Number($('reverb').value)/100;audio.delay=Number($('delay').value)/100;audio.bpm=state.bpm;audio.update();}
 function sliders(){for(const id of ['reverb','delay','volume','swirl','persistence','dropSize','rain','chordAtmosphere']){const el=$(id);el.style.setProperty('--pct',((el.value-el.min)/(el.max-el.min)*100)+'%');if($(id+'Value'))$(id+'Value').textContent=id==='rain'?(el.value<28?'Occasional':el.value<60?'Unhurried':'Abundant'):el.value+'%';}}
