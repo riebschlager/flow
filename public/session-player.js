@@ -1,15 +1,16 @@
-import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=flow-23';
-import {PercussionSynth} from './rhythm.js?rev=flow-23';
-import {PerformanceAudio} from './recorder-audio.js?rev=flow-23';
-import {delaySeconds} from './timing.js';
+import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=gestures-32';
+import {PercussionSynth} from './rhythm.js?rev=gestures-32';
+import {PerformanceAudio} from './recorder-audio.js?rev=gestures-32';
+import {normalizePerformance} from './gestures.js?rev=gestures-32';
+import {delaySeconds} from './timing.js?rev=gestures-32';
 const soundKinds=new Set(['settings','gesture','note','drum','noteOff','drumOff']);
 const parameter=(p,value,at,smooth=.02)=>p?.setTargetAtTime(value,at,smooth);
 export class SessionPlayer{
  constructor(audio,{setTimer=(fn,ms)=>globalThis.setInterval(fn,ms),clearTimer=id=>globalThis.clearInterval(id),onError=()=>{}}={}){Object.assign(this,{audio,setTimer,clearTimer,onError});this.timer=null;this.generation=0;this.sounds=new Map();}
  async prepare(take){await this.audio.initialize();await Promise.all([...new Set(take.events.filter(e=>e.kind==='note').map(e=>e.data.voice))].map(key=>this.audio.load(key)));}
  async play(take,{loop=true,tail=0,onEnded=()=>{}}={}){this.stop();const generation=++this.generation;await this.prepare(take);if(generation!==this.generation)return null;const c=this.audio.ctx;this.take=take;this.duration=takeDuration(take);this.loop=loop;this.tail=tail;this.onEnded=onEnded;this.events=[{t:0,kind:'settings',data:take.snapshot},...take.events.filter(e=>soundKinds.has(e.kind))];this.cycle=0;this.index=0;this.start=c.currentTime+.16;this.abort=new AbortController();this.audio.recordingEnd=null;this.audio.setPlaying(true);this.drums=new PercussionSynth(this.audio);this.drums.connect();this.arp=c.createGain();this.arp.gain.value=0;this.arp.connect(this.audio.bus);this.tick();this.timer=this.setTimer(()=>{try{this.tick();}catch(e){this.fail(e);}},25);return this.start;}
- settings(s,at){const a=this.audio,c=a.ctx,m=s.main.settings,r=s.rhythm;a.bpm=s.main.bpm;a.rhythmRate=r.rate;a.delayBeats=r.delayBeats;parameter(a.master?.gain,Number(m.volume)/100*.65,at,.08);parameter(a.wet?.gain,Number(m.reverb)/100*.9,at,.12);parameter(a.echoWet?.gain,Number(m.delay)/100*.7,at,.1);parameter(a.echo?.delayTime,delaySeconds(a.bpm,r.rate,r.delayBeats),at,.12);parameter(this.arp?.gain,s.arp.volume/100,at,.025);parameter(this.drums?.output?.gain,r.volume/100*.7,at);parameter(this.drums?.room?.gain,r.reverb/100*.9,at,.08);parameter(this.drums?.echoWet?.gain,r.delay/100*.7,at,.08);parameter(this.drums?.echo?.delayTime,delaySeconds(a.bpm,r.rate,r.delayBeats),at,.12);this.expression(s.performance,at);}
- expression(p,at){if(!p)return;const a=this.audio;parameter(a.sceneFilter?.frequency,Math.min(p.cutoff,a.ctx.sampleRate*.45),at,.08);parameter(a.sceneFilter?.Q,p.resonance,at,.08);parameter(a.scenePan?.pan,p.pan,at,.08);parameter(a.sceneGain?.gain,p.gain,at,.08);}
+ settings(s,at){const a=this.audio,c=a.ctx,m=s.main.settings,r=s.rhythm;a.bpm=s.main.bpm;a.rhythmRate=r.rate;a.delayBeats=r.delayBeats;parameter(a.master?.gain,Number(m.volume)/100*.65,at,.08);parameter(a.wet?.gain,Number(m.reverb)/100*.9,at,.12);parameter(a.echoWet?.gain,Number(m.delay)/100*.7,at,.1);parameter(a.echo?.delayTime,delaySeconds(a.bpm,r.rate,r.delayBeats),at,.12);parameter(a.gestureEcho?.delayTime,delaySeconds(a.bpm,r.rate,r.delayBeats),at,.12);parameter(this.arp?.gain,s.arp.volume/100,at,.025);parameter(this.drums?.output?.gain,r.volume/100*.7,at);parameter(this.drums?.room?.gain,r.reverb/100*.9,at,.08);parameter(this.drums?.echoWet?.gain,r.delay/100*.7,at,.08);parameter(this.drums?.echo?.delayTime,delaySeconds(a.bpm,r.rate,r.delayBeats),at,.12);this.expression(s.performance,at);}
+ expression(p,at){if(!p)return;p=normalizePerformance(p);const a=this.audio;parameter(a.sceneFilter?.frequency,Math.min(p.cutoff,a.ctx.sampleRate*.45),at,.08);parameter(a.sceneFilter?.Q,p.resonance,at,.08);parameter(a.scenePan?.pan,p.pan,at,.08);parameter(a.sceneGain?.gain,p.gain,at,.08);parameter(a.gestureRoom?.gain,p.space,at,.15);parameter(a.gestureEchoWet?.gain,p.echo,at,.15);}
  schedule(event,at,cycle){const d=event.data,a=this.audio,key=cycle+':'+d.id;
   if(event.kind==='settings')this.settings(d,at);
   else if(event.kind==='gesture')this.expression(d.performance,at);
@@ -27,7 +28,7 @@ export class SessionPlayer{
  }
  fail(error){this.stop();this.onError(error);}
  stop(){this.generation++;this.abort?.abort();if(this.timer!==null)this.clearTimer(this.timer);this.timer=null;const a=this.audio,now=a.ctx?.currentTime||0;for(const entry of this.sounds.values())this.release(entry,now);this.sounds.clear();this.drums?.stop();for(const key of ['bus','output','room','verb','echo','echoWet','echoTone','feedback'])this.drums?.[key]?.disconnect?.();this.drums=null;this.arp?.disconnect();this.arp=null;this.take=null;
-  for(const param of [a.master?.gain,a.wet?.gain,a.echoWet?.gain,a.echo?.delayTime,a.sceneFilter?.frequency,a.sceneFilter?.Q,a.scenePan?.pan,a.sceneGain?.gain])param?.cancelScheduledValues(now);
+  for(const param of [a.master?.gain,a.wet?.gain,a.echoWet?.gain,a.echo?.delayTime,a.sceneFilter?.frequency,a.sceneFilter?.Q,a.scenePan?.pan,a.sceneGain?.gain,a.gestureRoom?.gain,a.gestureEchoWet?.gain,a.gestureEcho?.delayTime])param?.cancelScheduledValues(now);
   a.performanceApplied={};a.echoTimeValue=null;if(a.playing)a.setPlaying(false);
  }
 }

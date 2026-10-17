@@ -1,4 +1,4 @@
-import {canonicalDyes,getPalette,hexRGB} from './palettes.js?rev=palettes-29';
+import {canonicalDyes,getPalette,hexRGB} from './palettes.js?rev=gestures-32';
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
 // Interpret the original RGB dye as a point in the four-color palette polygon.

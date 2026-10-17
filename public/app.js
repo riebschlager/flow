@@ -1,16 +1,16 @@
-import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=faithful-31';
-import {getPalette,normalizePalette} from './palettes.js?rev=palettes-29';
-import {createCommunityController} from './community-ui.js?rev=fork-24';
-import {createRecorderController} from './recorder-ui.js?rev=fork-24';
-import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=palettes-29';
-import {ChordAtmosphere} from './chord-atmosphere.js?rev=faithful-31';
-import {createArpeggiatorController} from './arpeggiator-ui.js?rev=palettes-29';
-import {stirPercussion} from './percussion-visuals.js?rev=rhythm-palettes-19';
-import {landingTime,quantizeDivisions} from './quantize.js?rev=32-8';
-import {Fluid} from './fluid.js?rev=faithful-31';
-import {createPerformanceController} from './performance.js?rev=flow-23';
-import {createRhythmController} from './rhythm-ui.js?rev=palettes-29';
-import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=flow-23';
+import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=gestures-32';
+import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
+import {createCommunityController} from './community-ui.js?rev=gestures-32';
+import {createRecorderController} from './recorder-ui.js?rev=gestures-32';
+import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=gestures-32';
+import {ChordAtmosphere} from './chord-atmosphere.js?rev=gestures-32';
+import {createArpeggiatorController} from './arpeggiator-ui.js?rev=gestures-32';
+import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
+import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
+import {Fluid} from './fluid.js?rev=gestures-32';
+import {createPerformanceController} from './performance.js?rev=gestures-32';
+import {createRhythmController} from './rhythm-ui.js?rev=gestures-32';
+import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=gestures-32';
 const $=id=>document.getElementById(id);
 let paletteKey=null,colors=getPalette('classic').colors,colorizeFluid=createFluidColorizer('classic');
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
@@ -108,6 +108,7 @@ function playDrop(d,when=null,signal=null){
  if(!state.playing)return;
  const chordIndex=when===null?state.chordIndex:Math.floor(Math.max(0,when-clockOrigin)/(Number($('chordLength').value)*60/state.bpm))%4;
  d.pitch=pitchForPosition(activeChords()[chordIndex],(d.x-.04)/.92,d.color,octaveRange());d.voice=state.voices[d.color];
+ if(Number.isInteger(d.expression?.chordTone)){const chord=parseChord(activeChords()[chordIndex]),i=d.expression.chordTone,shift=Math.floor((d.pitch-chord[0])/12)*12;d.pitch=Math.max(0,Math.min(127,chord[i%chord.length]+Math.floor(i/chord.length)*12+shift));}
  audio.note(d.voice,d.pitch,d.expression,{when,signal}).catch(loadFail);
 }
 function serviceDrops(){

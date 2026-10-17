@@ -1,6 +1,6 @@
-import {CaptureTimeline,VisualTimeline,MAX_SECONDS,encodePerformance,decodePerformance,wavFile,clone,isSession,takeDuration,forkSession,isSetupDraft} from './recorder-core.js?rev=fork-24';
-import {SessionBackend} from './session-player.js?rev=flow-23';
-import {PerformanceStore,takeSummary} from './performance-store.js?rev=flow-23';
+import {CaptureTimeline,VisualTimeline,MAX_SECONDS,encodePerformance,decodePerformance,wavFile,clone,isSession,takeDuration,forkSession,isSetupDraft} from './recorder-core.js?rev=gestures-32';
+import {SessionBackend} from './session-player.js?rev=gestures-32';
+import {PerformanceStore,takeSummary} from './performance-store.js?rev=gestures-32';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const time=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 export function createRecorderController(bridge,{store=new PerformanceStore(),makeAudio=(audio,callbacks)=>new SessionBackend(audio,callbacks)}={}){

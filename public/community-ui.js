@@ -1,4 +1,4 @@
-import {encodePerformance,decodePerformance,isSession,takeDuration} from './recorder-core.js?rev=fork-24';
+import {encodePerformance,decodePerformance,isSession,takeDuration} from './recorder-core.js?rev=gestures-32';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const duration=ms=>`${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}`,mb=n=>(n/1048576).toFixed(1)+' MB';
 export function createCommunityController(recorder,{request=fetch,upload=uploadFile}={}){
