@@ -4,7 +4,7 @@ A browser-local ambient instrument combining an incompressible fluid solver and 
 
 Serve `dist/` with any static HTTP server. Audio starts only after pressing Begin listening. Click or drag to drop color, choose voices and progressions in the panel, or enable automatic rain. Selecting a palette swatch (or pressing 1–4) locks all new painting, rain, and bloom droplets to that color and voice. Enable Cycle colors beside the palette to shuffle all four colors and voices: each appears once per random round, with no consecutive repeats between rounds. This applies to painting, rain, and blooms. The color mode and selected color are remembered. The horizontal impact location selects a chord tone and color chooses the instrument. Space toggles sound, 1–4 selects color, Enter drops when the canvas is focused, and Escape exits Zen view.
 
-Controls include four editable chord slots (via a comma-separated progression), tempo, chord length, 20 instruments assigned to four colors, five soundscape collections, reverb, tempo-synchronized delay, master volume, vorticity, color persistence, droplet size, color cycling, and rain density. Settings persist in localStorage.
+Controls include four editable chord slots (via a comma-separated progression), tempo, chord length, 28 instruments assigned to four colors, nine soundscape collections, reverb, tempo-synchronized delay, master volume, vorticity, color persistence, droplet size, color cycling, and rain density. Settings persist in localStorage.
 
 The solver uses semi-Lagrangian advection, pressure projection (20 Gauss-Seidel iterations), and vorticity confinement. Desktop uses a 224×156 grid and narrow viewports use a 144×112 grid. Canvas2D renders the dye field plus impact ripples and falling droplets. Audio uses locally bundled WebAudioFont with FluidR3 samples, a filtered feedback delay and a stereo convolution impulse generated in the browser.
 
@@ -60,3 +60,14 @@ Quarter, eighth, sixteenth, thirty-second, and eighth-triplet rates follow the s
 Every chord has a repeatable atmosphere based on its root and quality: a soft color cast, broad light source, brightness, and direction of slow current. Chord transitions crossfade over a few seconds with a feathered bloom rather than text or hard flashes. Major/minor/suspended qualities shape the mood; natural progression changes, manual chord jumps, and custom progression edits use the same transition. Pausing holds the current harmony and stops its added currents.
 
 Fluid → Chord atmosphere → Harmonic glow sets the effect from 0–100% (default 65%) and persists with the composition. Zero restores the original lighting and stops this added motion. Lighting does not change the solver's dye or palette assignments; the current only moves existing dye. Percussion, gestures, note timing, and sound are independent. Reduced-motion preferences retain color crossfades while disabling atmospheric currents, drift, and expanding blooms.
+
+## Experimental soundscapes
+
+Four additional soundscapes keep the existing five intact:
+
+- Glass organisms: Crystal bloom, Prism rain, Bowed pad, Halo pad; reverb 86%, delay 63%.
+- Submerged cinema: Distant soundtrack, Deep atmosphere, Choir pad, Slow strings; reverb 91%, delay 32%.
+- Strange attractor: Alien chorus, Orbital signal, Sweep pad, Synth strings; reverb 75%, delay 57%.
+- Orbital relay: Echo fragments, Prismatic air, New age pad, Voice oohs; reverb 72%, delay 84%.
+
+Eight new FluidR3 GM FX voices (programs 96–103, zero-based) are bundled locally with the existing notices, under Experimental textures in both color-voice and arpeggiator menus. They have individual soft envelopes and gentle low-pass or band-pass sweeps, applied per note before its envelope. Gesture tone changes scale the sweep, and arpeggiated notes shorten it to their note length. Temporary nodes disconnect when notes end. Selecting a soundscape changes its four voices and reverb/delay amounts; shared rhythmic spacing, progression, percussion, arpeggiator, and canvas settings stay as set. Samples load only when selected.

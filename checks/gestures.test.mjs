@@ -12,4 +12,4 @@ for(const spin of [-1,1]){tracker.begin(.62,.5,0);let m;for(let i=1;i<=80;i++){c
 tracker.begin(.4,.8,0);let m;for(let i=1;i<=10;i++)m=tracker.move(.4,.8-i*.045,i*40);assert(m.vertical);assert.equal(m.orbit,0);
 assert.equal(normalizeGestureSettings({amount:999}).amount,100);assert.equal(normalizeGestureSettings({enabled:false}).enabled,false);
 const fluid=new Fluid(72,48);for(let i=0;i<180;i++){fluid.force(.5,.5,18,-15);if(i%4===0)fluid.pulse(.5,.5,.4,.08);fluid.step(1/30);}assert([...fluid.u,...fluid.v].every(Number.isFinite));assert(fluid.r.every(v=>v===0));assert(fluid.u.some(v=>Math.abs(v)>.1));
-console.log('PASS: depth, speed, stereo, intensity, envelopes for all 20 voices, hold/bloom, flick, both circle directions, vertical sweeps, and bounded dye-free fluid forces.');
+console.log('PASS: depth, speed, stereo, intensity, envelopes for all 28 voices, hold/bloom, flick, both circle directions, vertical sweeps, and bounded dye-free fluid forces.');

@@ -1,11 +1,11 @@
-import {ChordAtmosphere} from './chord-atmosphere.js';
-import {createArpeggiatorController} from './arpeggiator-ui.js';
+import {ChordAtmosphere} from './chord-atmosphere.js?rev=experimental-scapes-13';
+import {createArpeggiatorController} from './arpeggiator-ui.js?rev=experimental-scapes-13';
 import {stirPercussion} from './percussion-visuals.js';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=32-8';
 import {Fluid} from './fluid.js?rev=expression-5';
 import {createPerformanceController} from './performance.js';
 import {createRhythmController} from './rhythm-ui.js?rev=percussion-motion-9';
-import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=arpeggiator-11';
+import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=experimental-scapes-13';
 const $=id=>document.getElementById(id);
 const colors=[{name:'Lilac',hex:'#b7a0ff',rgb:[.50,.20,1]},{name:'Sea glass',hex:'#73e2d0',rgb:[.10,.86,.67]},{name:'Coral',hex:'#ff9e9e',rgb:[1,.19,.26]},{name:'Amber',hex:'#edca82',rgb:[1,.57,.12]}];
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
