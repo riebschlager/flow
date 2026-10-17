@@ -21,3 +21,18 @@ Percussion follows the shared tempo at half, normal, or double speed, with swing
 Each rhythm voice sends a pulse from its own place in the canvas. Choose ripples, fluid stirring, or both, and set their strength independently from sound. Stirring adds local vortices to the velocity field without adding dye or triggering melodic notes. Color locking therefore continues to govern all melodic droplets. Percussion settings are saved separately in localStorage under `chromaflow-rhythm-v1`; it is off by default and never starts sound before the scene is played.
 
 Both melodic and percussion delay lines use the same timing function and transition speed. Delay capacity covers the slowest half-time quarter-note setting (four seconds at 30 BPM). Timing remains shared when percussion is switched off.
+
+## Expressive canvas
+
+The Perform tab adds optional expression (on by default at 65% intensity) with a gesture guide, playing-field map, live gesture readout, and an independent Conduct the whole scene switch.
+
+- Position: horizontal placement still chooses a chord tone and now also places it in stereo. High placement is light/bright; low placement adds weight, a warmer low-pass tone, longer sustain, and a larger ink bloom.
+- Silk: slow strokes make softer, longer notes and connected fluid ribbons.
+- Rush / Spark: speed adds velocity, brighter filtering, shorter envelopes, larger splats, and stronger jets. A fast release sends one final accented droplet.
+- Orbit: coherent circular movement creates local vortices. With whole-scene conducting on, it also opens the master filter and moves the composition in stereo.
+- Gather / Bloom: hold nearly still for about a second, then release four long, soft chord tones across a small cloud of droplets.
+- Conduct: vertical sweeps shape a low-pass filter across both voices and percussion. Downward sweeps warm/darken the composition; upward sweeps open it. Filter, stereo motion, and a gentle level response settle back after release.
+
+Gesture intensity controls the response depth; turning expression off restores basic painting. Reset gesture effects with Let the scene settle. Arrow keys move the canvas's virtual cursor; Enter taps and Shift+Enter releases a bloom. Pointer cancel does not release a bloom; additional concurrent pointers are ignored. Gesture settings persist separately as `chromaflow-expression-v1`.
+
+Manual expressive notes use per-note envelopes, low-pass filters, and stereo positioning, while automatic droplets keep their original note behavior. Filters are inserted before the reusable WebAudioFont gain envelope so its target bus remains stable, and temporary nodes are disconnected when the source ends. Note lengths are bounded at nine seconds; excess polyphony fades older notes. Master gesture filters are separate from the user's volume/effect settings and do not alter the shared delay clock or percussion patterns. Fluid forces are bounded and add no dye. Color locking still applies to every newly launched droplet, including blooms and flicks.
