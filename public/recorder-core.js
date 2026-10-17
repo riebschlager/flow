@@ -33,6 +33,13 @@ export function validateTake(take){
  for(const c of take.channels)for(const sample of c)if(!finite(sample,-8,8))throw new Error('The recording contains invalid audio samples.');
  return take;
 }
+// A fork retains the opening composition and canvas, never the performance timeline or PCM.
+export const isSetupDraft=take=>isSession(take)&&take.events?.length===0;
+export function forkSession(source){
+ const original=clone(source.snapshot),duration=takeDuration(source),cycleBeats=Number(original.main.settings.chordLength)*4;
+ original.position=0;original.chordIndex=0;
+ return validateTakeMetadata({format:'chromaflow-session',version:2,id:globalThis.crypto?.randomUUID?.()||'fork-'+Date.now()+'-'+Math.random().toString(36).slice(2),name:(String(source.name||'Untitled').slice(0,73)+' — fork').slice(0,80),created:new Date().toISOString(),duration,beats:Number.isFinite(source.beats)?source.beats:duration*original.main.bpm/60,cycleBeats:Number.isFinite(source.cycleBeats)?source.cycleBeats:cycleBeats,snapshot:original,scene:clone(source.scene),events:[]});
+}
 export function loopChannels(take,seamMs=take.seamMs){
  const count=Math.min(take.tailFrames,Math.round(take.sampleRate*Math.max(0,Math.min(500,seamMs))/1000),Math.floor(take.frames/4));
  return take.channels.map(raw=>{const out=raw.slice(0,take.frames);for(let i=0;i<count;i++){const x=count===1?1:i/(count-1),blend=x*x*(3-2*x);out[i]=raw[take.frames+i]*(1-blend)+raw[i]*blend;}return out;});

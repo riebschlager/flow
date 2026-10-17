@@ -1,5 +1,5 @@
-import {createCommunityController} from './community-ui.js?rev=flow-23';
-import {createRecorderController} from './recorder-ui.js?rev=flow-23';
+import {createCommunityController} from './community-ui.js?rev=fork-24';
+import {createRecorderController} from './recorder-ui.js?rev=fork-24';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=flow-23';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=flow-23';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=flow-23';

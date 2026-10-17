@@ -159,6 +159,12 @@ Export loop WAV is an explicit, local-only audio render. It plays one cycle thro
 
 Compatibility: previous version-1 `CFLOOP01` files and existing browser takes still import, play from their stored PCM and export WAV locally. Their 0–500 ms seam blend remains available. They are identified as Legacy audio takes and cannot be shared as new community sessions, because those earlier files did not capture a complete musical event stream. Record a new session to share the performance data. No existing browser recordings are deleted or silently approximated.
 
+## Forking a track
+
+While listening, choose Fork track beside Stop playback. It is also available in the local library and on Community track cards. Forking creates an independent browser-local setup draft with a fresh ID and a title ending in “— fork”. It copies the original opening instruments, chord progression, effects, tempo, percussion kit and patterns, arpeggiator, expression/fluid/color/rain settings, and opening canvas. Transport resets to chord one. All recorded notes, drum hits, gestures, fluid actions, releases and timed setting changes are removed; any legacy PCM is omitted. The original track is unchanged. Forking uses the opening setup rather than the current moment’s automation.
+
+The fork’s setup is loaded for editing and its name fills the recorder. Close the library to adjust the controls and perform, then record your version. A completed recording updates that same fork draft, instead of creating an additional draft or changing the source track. Setup-only drafts can be renamed, downloaded and imported; use Edit fork setup to return to one later. Playback, WAV export and publication become available once a new performance has been recorded. Forking itself needs no sign-in and does not publish anything. If browser storage is full, the new draft remains available in memory for downloading.
+
 ## Shared community library
 
 Community offers Today, This week, All time, New discoveries and My shared tracks. Anyone can open, follow a track link and play a session’s notes with its opening canvas and settings/visual automation. Save copy creates an independent IndexedDB copy. Publication and likes require Sign in with ChatGPT; browsing and listening remain public. Artist names and titles are entered separately from account identity, and emails are never returned by the API. Creators can remove their public tracks without changing browser originals.
