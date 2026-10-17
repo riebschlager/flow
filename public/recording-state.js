@@ -1,12 +1,14 @@
+import {normalizePalette} from './palettes.js?rev=palettes-29';
 import {instruments,progressions,soundscapes,parseChord} from './music.js?rev=flow-23';
 import {normalizeRhythm,drumVoices} from './rhythm.js?rev=flow-23';
 import {normalizeArp} from './arpeggiator.js?rev=flow-23';
 import {normalizeGestureSettings} from './gestures.js';
 const number=(n,lo,hi,fallback)=>Number.isFinite(Number(n))?Math.max(lo,Math.min(hi,Number(n))):fallback;
-export const mainDefaults={soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:55,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65};
+export const mainDefaults={colorPalette:'classic',soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:55,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65};
 export function sanitizeSnapshot(raw){
  if(!raw?.main||!Array.isArray(raw.main.voices)||raw.main.voices.length!==4||raw.main.voices.some(v=>!Object.hasOwn(instruments,v)))throw new Error('A performance references an unknown melodic voice.');
  const main=raw.main,settings={...mainDefaults,...Object.fromEntries(Object.entries(main.settings||{}).filter(([k])=>Object.hasOwn(mainDefaults,k)))};
+ settings.colorPalette=normalizePalette(settings.colorPalette);
  if(settings.soundscape!=='custom'&&!Object.hasOwn(soundscapes,settings.soundscape))throw new Error('Unknown soundscape in performance.');if(settings.progression!=='custom'&&!Object.hasOwn(progressions,settings.progression))throw new Error('Unknown progression in performance.');
  if(!Array.isArray(main.custom)||main.custom.length!==4)throw new Error('The custom chord setup is incomplete.');main.custom.forEach(parseChord);
  for(const key of ['cycleColors','autoPour','quantizeEnabled'])settings[key]=settings[key]===true;

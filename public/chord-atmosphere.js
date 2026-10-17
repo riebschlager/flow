@@ -1,19 +1,23 @@
+import {getPalette,hexRGB,normalizePalette} from './palettes.js?rev=palettes-29';
 import {parseChord} from './music.js?rev=flow-23';
 const clamp=(value,lo=0,hi=1)=>Math.max(lo,Math.min(hi,value));
 const mix=(a,b,t)=>a+(b-a)*t;
 function hueColor(hue){const h=((hue%360)+360)%360/60,c=.58,x=c*(1-Math.abs(h%2-1)),m=.24;const rgb=h<1?[c,x,0]:h<2?[x,c,0]:h<3?[0,c,x]:h<4?[0,x,c]:h<5?[x,0,c]:[c,0,x];return rgb.map(value=>value+m);}
-export function chordMood(symbol){
+export function chordMood(symbol,palette='classic'){
  const notes=parseChord(symbol),root=notes[0]%12,intervals=notes.map(note=>(note-notes[0])%12),minor=intervals.includes(3),suspended=!minor&&!intervals.includes(4),seventh=intervals.includes(10)||intervals.includes(11);
- const angle=root/12*Math.PI*2;
- return {color:hueColor(255+root*137.508+(minor?-12:0)),brightness:minor?.91:suspended?.98:1.055,x:.5+Math.sin(angle)*.21,y:.47+Math.cos(angle)*.12,spin:minor?-.8:suspended?.35:.8,width:seventh?1.12:1,breath:minor?.045:.07};
+ const angle=root/12*Math.PI*2,key=normalizePalette(palette),position=root/12*4,slot=Math.floor(position),fraction=position-slot;
+ const colors=getPalette(key).colors,a=hexRGB(colors[slot].hex),b=hexRGB(colors[(slot+1)%4].hex);
+ const color=key==='classic'?hueColor(255+root*137.508+(minor?-12:0)):a.map((v,i)=>mix(v,b[i],fraction));
+ return {color,brightness:minor?.91:suspended?.98:1.055,x:.5+Math.sin(angle)*.21,y:.47+Math.cos(angle)*.12,spin:minor?-.8:suspended?.35:.8,width:seventh?1.12:1,breath:minor?.045:.07};
 }
 export class ChordAtmosphere{
  constructor({reducedMotion=false}={}){this.reducedMotion=reducedMotion;this.current=null;this.key=null;this.age=10;this.pulseValue=0;this.time=0;this.amount=0;this.forceTime=0;this.playing=false;}
- frame(dt,{chord='Cmaj7',index=0,playing=false,amount=65}={}){
+ frame(dt,{chord='Cmaj7',index=0,playing=false,amount=65,palette='classic'}={}){
   dt=clamp(Number(dt)||0,0,.1);this.time+=dt;this.playing=playing;this.amount=clamp((Number(amount)||0)/100);
   const key=chord+'|'+index;
-  if(!this.current){this.current=chordMood(chord);this.target=chordMood(chord);this.key=key;}
-  else if(key!==this.key){this.key=key;this.target=chordMood(chord);this.age=0;}
+  if(!this.current){this.current=chordMood(chord,palette);this.target=chordMood(chord,palette);this.key=key;}
+  else if(key!==this.key){this.key=key;this.target=chordMood(chord,palette);this.age=0;}
+  if(this.palette!==palette){this.palette=palette;this.target=chordMood(chord,palette);}
   this.age=Math.min(10,this.age+dt);
   const pulseTarget=this.age<3.2?Math.sin(Math.PI*this.age/3.2)**2:0;this.pulseValue=mix(this.pulseValue,pulseTarget,1-Math.exp(-dt/.22));
   const blend=1-Math.exp(-dt/1.05);

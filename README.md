@@ -143,6 +143,12 @@ Production references informing our own patterns and synthesis:
 - Native Instruments, How to make MIDI drums sound realistic: https://blog.native-instruments.com/midi-drums/ — ghost notes, accents, timing and velocity variation.
 - Native Instruments, Behind the beats: https://blog.native-instruments.com/behind-the-beats/ — human feel and unusual textures in beat production.
 
+## Visual palettes
+
+In Fluid → Color palette, choose Original glow, Aurora, Desert dusk, Tidal blue, Ember, Botanical, Afterglow or Porcelain. The four-color preview and descriptions make the choices visible. A palette updates the existing fluid, droplets, voice swatches and labels, gesture marks, percussion rings and arpeggio accents; the harmonic glow blends into the chosen colors. Color lock and shuffled non-repeating cycling retain the same four voice slots. Changing palettes does not clear or disturb the simulation, restart music, or change instruments.
+
+The solver and session visual events retain their original dye basis. A two-cone linear render transform recolors all four original dye anchors without modifying stored fields. Original glow uses the original identity transform. The selected palette is saved locally and in the opening session, captured in timed settings changes, validated by the server, and retained by setup forks. Older sessions without a palette use Original glow. Existing short gesture trails fade naturally during a switch; chord lighting eases over roughly one second.
+
 ## Playable session loops
 
 Use Record / Library to capture a session loop. New `.chromaflow` files use `format: chromaflow-session`, version 2, encoded as UTF-8 JSON. They contain no audio buffers, samples, embedded media or PCM. They store loop duration and musical beat counts, the opening composition settings and fluid field, and timed musical/visual/settings events. The instrument samples remain bundled application assets, referenced by supported voice names.

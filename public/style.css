@@ -38,3 +38,5 @@
 .art-footer{flex-wrap:wrap}.footer-credits{display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-left:auto;padding:9px 0}.art-footer .creator-credit{font-size:10px;color:#b8a8cc;letter-spacing:.1px}.art-footer .creator-credit:hover{color:#e2d2f4}
 
 .record-bar strong{overflow-wrap:anywhere}.record-bar #recordBarFork{color:#d5c1ed;border-color:#85649b;background:#b7a0ff0c}
+
+.palette-preview{display:grid;grid-template-columns:repeat(4,1fr);height:24px;gap:4px;margin:14px 0 10px}.palette-preview span{background:var(--color);border-radius:4px;opacity:.9}.palette-preview + .helper{margin-top:0}
