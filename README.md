@@ -2,7 +2,7 @@
 
 A browser-local ambient instrument combining an incompressible fluid solver and WebAudioFont sampled instruments. Static HTML, CSS and ES modules; no build step or server-side data.
 
-Serve `dist/` with any static HTTP server. Audio starts only after pressing Begin listening. Click or drag to drop color, choose voices and progressions in the panel, or enable automatic rain. The horizontal impact location selects a chord tone and color chooses the instrument. Space toggles sound, 1–4 selects color, Enter drops when the canvas is focused, and Escape exits Zen view.
+Serve `dist/` with any static HTTP server. Audio starts only after pressing Begin listening. Click or drag to drop color, choose voices and progressions in the panel, or enable automatic rain. Selecting a palette swatch (or pressing 1–4) locks all new painting, rain, and bloom droplets to that color and voice. Enable Cycle colors beside the palette to restore automatic variety. The color mode and selected color are remembered. The horizontal impact location selects a chord tone and color chooses the instrument. Space toggles sound, 1–4 selects color, Enter drops when the canvas is focused, and Escape exits Zen view.
 
 Controls include four editable chord slots (via a comma-separated progression), tempo, chord length, eight instruments assigned to four colors, three soundscape collections, reverb, tempo-synchronized delay, master volume, vorticity, color persistence, droplet size, color cycling, and rain density. Settings persist in localStorage.
 
