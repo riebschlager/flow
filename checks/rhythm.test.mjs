@@ -11,7 +11,7 @@ assert.equal(corrupt.enabled,false);assert.equal(corrupt.rate,1);assert.equal(co
 const cfg=defaultRhythm();cfg.enabled=true;cfg.swing=0;cfg.humanize=0;cfg.lanes.forEach(l=>{l.steps=Array(16).fill(1);l.level=100;});
 const audio={ctx:{currentTime:0},bpm:120,playing:true};let events=[],hits=[],timerFn,cleared=0;
 const engine=new RhythmEngine(audio,()=>cfg,e=>events.push(e),{setTimer:fn=>{timerFn=fn;return 1;},clearTimer:()=>cleared++,random:()=>.5});
-engine.synth={connect(){},setLevel(){},stop(){},hit:(voice,time,velocity)=>hits.push({voice,time,velocity})};engine.start();
+engine.synth={connect(){},setLevel(){},setEffects(){},stop(){},hit:(voice,time,velocity)=>hits.push({voice,time,velocity})};engine.start();
 for(let i=1;i<80;i++){audio.ctx.currentTime=i*.025;timerFn();}
 const firstBar=events.filter(e=>e.type==='step'&&e.time<2.04-1e-5);assert.equal(firstBar.length,16);assert.deepEqual(firstBar.map(e=>e.step),Array.from({length:16},(_,i)=>i));assert.equal(hits.filter(e=>e.time<2.04-1e-5).length,64);
 for(let i=1;i<firstBar.length;i++)assert(Math.abs(firstBar[i].time-firstBar[i-1].time-.125)<1e-9);
@@ -24,9 +24,9 @@ cfg.lanes[0].muted=true;cfg.lanes[1].voice='off';cfg.lanes[2].level=0;hits=[];au
 cfg.enabled=false;const hitCount=hits.length;timerFn();assert.equal(hits.length,hitCount);assert.equal(engine.timer,null);cfg.enabled=true;audio.playing=false;engine.start();assert.equal(engine.timer,null);assert(cleared>0);
 // Exercise all synthesis branches with real scheduling arguments and mock AudioNodes.
 const params=[],sources=[];function param(){const events=[];const p={value:0,events,setValueAtTime(v,t){assert(Number.isFinite(v)&&Number.isFinite(t));events.push([v,t]);},linearRampToValueAtTime(v,t){assert(Number.isFinite(v)&&Number.isFinite(t));events.push([v,t]);},exponentialRampToValueAtTime(v,t){assert(v>0&&Number.isFinite(t));events.push([v,t]);},setTargetAtTime(v,t,c){assert(Number.isFinite(v)&&Number.isFinite(t)&&c>0);events.push([v,t]);}};params.push(p);return p;}
-function node(){return {gain:param(),frequency:param(),Q:{value:0},connect(){},disconnect(){}};}
+function node(){return {gain:param(),frequency:param(),delayTime:param(),Q:{value:0},connect(){},disconnect(){}};}
 function source(){const n={...node(),start(t){assert(t>=0);},stop(t){if(t!==undefined)assert(Number.isFinite(t)&&t>=0);}};sources.push(n);return n;}
-const synthAudio={ctx:{currentTime:0,sampleRate:1000,createGain:node,createBiquadFilter:node,createOscillator:source,createBufferSource:source,createBuffer:()=>({getChannelData:()=>new Float32Array(1000)})},limiter:node(),verb:node()};
+const synthAudio={bpm:56,ctx:{currentTime:0,sampleRate:1000,createGain:node,createBiquadFilter:node,createConvolver:node,createDelay:node,createOscillator:source,createBufferSource:source,createBuffer:()=>({getChannelData:()=>new Float32Array(1000)})},limiter:node(),verb:node()};
 const synth=new PercussionSynth(synthAudio);synth.connect();synth.setLevel(55);for(const key of Object.keys(drumVoices))synth.hit(key,.2,.7);assert(sources.length>=10);for(const p of params)for(let i=1;i<p.events.length;i++)assert(p.events[i][1]>=p.events[i-1][1]);synth.stop();assert.equal(synth.sources.size,0);
 // Percussion moves existing dye; it must not inject colors or trigger melodic notes.
 const f=new Fluid(72,48);f.splat(.5,.5,[.3,.4,.6],.05,0,0);const dye=[f.r.slice(),f.g.slice(),f.b.slice()];f.pulse(.45,.55,.8,.1,-1);assert.deepEqual(f.r,dye[0]);assert.deepEqual(f.g,dye[1]);assert.deepEqual(f.b,dye[2]);assert(f.u.some(v=>Math.abs(v)>1));
@@ -40,7 +40,13 @@ try{
  globalThis.setInterval=function(callback,delay){assert.equal(this,globalThis,'setInterval must be called on the global host');assert.equal(delay,25);browserCallback=callback;timerStarts++;return 73;};
  globalThis.clearInterval=function(id){assert.equal(this,globalThis,'clearInterval must be called on the global host');assert.equal(id,73);timerClears++;};
  const browserConfig=defaultRhythm();browserConfig.enabled=true;const browserAudio={ctx:{currentTime:0},bpm:56,playing:true};const actual=[];const browserEngine=new RhythmEngine(browserAudio,()=>browserConfig,event=>actual.push(event));
- browserEngine.synth={connect(){},setLevel(){},stop(){},hit(){}};
+ browserEngine.synth={connect(){},setLevel(){},setEffects(){},stop(){},hit(){}};
  browserEngine.start();assert.equal(timerStarts,1);for(let i=1;i<=200;i++){browserAudio.ctx.currentTime=i*.025;browserCallback();}assert(actual.filter(e=>e.type==='hit').length>10);browserEngine.stop();assert.equal(timerClears,1);assert.equal(browserEngine.timer,null);
  console.log('PASS: default browser-host timer binding, continuous drum scheduling, and clean stop.');
 }finally{globalThis.setInterval=nativeSet;globalThis.clearInterval=nativeClear;}
+
+// Old stored beats gain defaults; new effects are independent and bounded.
+const migrated=normalizeRhythm({volume:55});assert.equal(migrated.reverb,10);assert.equal(migrated.delay,0);assert.equal(migrated.delayBeats,.75);
+const effects=normalizeRhythm({reverb:140,delay:-10,delayBeats:99});assert.equal(effects.reverb,100);assert.equal(effects.delay,0);assert.equal(effects.delayBeats,.75);
+synth.setEffects({reverb:75,delay:100,delayBeats:.5},60);assert(Math.abs(synth.room.gain.events.at(-1)[0]-.675)<1e-9);assert.equal(synth.echoWet.gain.events.at(-1)[0],.7);assert.equal(synth.echo.delayTime.events.at(-1)[0],.5);synth.setEffects({reverb:0,delay:0,delayBeats:1},60);assert.equal(synth.room.gain.events.at(-1)[0],0);assert.equal(synth.echoWet.gain.events.at(-1)[0],0);assert.equal(synth.echo.delayTime.events.at(-1)[0],1);
+console.log('PASS: percussion FX defaults, migration, clamping, wet gains, zero settings, and tempo-synced spacing.');

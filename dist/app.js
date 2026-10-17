@@ -1,5 +1,5 @@
 import {Fluid} from './fluid.js';
-import {createRhythmController} from './rhythm-ui.js?rev=percussion-audio-2';
+import {createRhythmController} from './rhythm-ui.js?rev=percussion-fx-3';
 import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,parseChord,pitchForPosition,noteName} from './music.js';
 const $=id=>document.getElementById(id);
 const colors=[{name:'Lilac',hex:'#b7a0ff',rgb:[.50,.20,1]},{name:'Sea glass',hex:'#73e2d0',rgb:[.10,.86,.67]},{name:'Coral',hex:'#ff9e9e',rgb:[1,.19,.26]},{name:'Amber',hex:'#edca82',rgb:[1,.57,.12]}];
