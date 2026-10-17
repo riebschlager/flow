@@ -8,3 +8,35 @@ const body=make('body',{id:'body'});globalThis.document={body,activeElement:body
 await import('../dist/app.js');assert.equal(typeof frame,'function');const $=document.getElementById;function tick(){clock+=16;frame(clock);}for(let i=0;i<3;i++)tick();$('performTab').onclick();assert.equal($('performPanel').hidden,false);assert.equal($('rhythmPanel').hidden,true);
 const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:500,clientY:350};for(const fn of canvas.listeners.pointerdown)fn(event);for(let i=0;i<60;i++)tick();for(const fn of canvas.listeners.pointerup)fn(event);for(let i=0;i<45;i++)tick();assert.equal($('gestureName').textContent,'Bloom');const coral=all.find(e=>e.dataset.color==='2');for(const fn of coral.listeners.click)fn();assert.equal($('cycleColors').checked,false);assert.equal($('paletteHint').textContent,'CORAL ONLY');$('clear').onclick();tick();
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
+// Exercise the live app's quantized launch, scheduler, splash, and transport controls.
+const {AmbientAudio}=await import('../dist/music.js?rev=quantize-7');
+const notes=[],timers=new Map();let timerID=0;
+const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
+try{
+ globalThis.setInterval=function(fn,ms){assert.equal(this,globalThis);assert.equal(ms,25);timers.set(++timerID,fn);return timerID;};
+ globalThis.clearInterval=function(id){assert.equal(this,globalThis);timers.delete(id);};
+ AmbientAudio.prototype.initialize=async function(){this.ctx={get currentTime(){return clock/1000;}};};
+ AmbientAudio.prototype.load=async()=>({});
+ AmbientAudio.prototype.note=async function(key,pitch,expression,options={}){notes.push({key,pitch,expression,...options,observedAt:clock/1000});};
+ const fire=id=>{for(const fn of $(id).listeners.change||[])fn();};
+ $('autoPour').checked=false;fire('autoPour');$('clear').onclick();$('quantizeBeats').value='1';$('quantizeEnabled').checked=true;fire('quantizeEnabled');assert.equal($('quantizeBeats').disabled,false);
+ const origin=clock/1000;await $('start').listeners.click[0]();assert.equal(timers.size,1);$('clear').onclick();
+ const tap=()=>{for(const fn of canvas.listeners.pointerdown)fn(event);for(const fn of canvas.listeners.pointerup)fn(event);};tap();
+ for(let i=0;i<85;i++){tick();for(const fn of timers.values())fn();}
+ assert.equal(notes.length,1,'one scheduled note and no duplicate at impact');const hit=notes[0],step=60/56;assert(Math.abs((hit.when-origin)/step-Math.round((hit.when-origin)/step))<1e-8);assert(hit.when>hit.observedAt);assert(hit.when-hit.observedAt<=.12);assert($('noteToast').textContent.includes('·'));
+ tap();const prior=notes.length;for(let i=0;i<150&&notes.length===prior;i++){tick();for(const fn of timers.values())fn();}assert.equal(notes.length,prior+1);const waiting=notes.at(-1);assert(clock/1000<waiting.when);$('clear').onclick();assert.equal(waiting.signal.aborted,true);
+ // A grid edit replaces pending audio instead of leaving a ghost note behind.
+ tap();const count=notes.length;for(let i=0;i<150&&notes.length===count;i++)tick();const old=notes.at(-1);$('quantizeBeats').value='.25';fire('quantizeBeats');assert.equal(old.signal.aborted,true);
+ $('quantizeEnabled').checked=false;fire('quantizeEnabled');assert.equal(timers.size,0);assert.equal($('quantizeBeats').disabled,true);for(let i=0;i<60;i++)tick();assert.equal(notes.at(-1).when,null);
+ // Run the real percussion scheduler with its synth stubbed, then change tempo.
+ const {PercussionSynth}=await import('../dist/rhythm.js?rev=shared-delay-4');
+ for(const method of ['connect','setLevel','setEffects','stop','hit'])PercussionSynth.prototype[method]=function(){};
+ $('clear').onclick();$('quantizeBeats').value='1';$('quantizeEnabled').checked=true;fire('quantizeEnabled');$('rhythmEnabled').checked=true;fire('rhythmEnabled');$('rhythmRate').value='2';fire('rhythmRate');assert.equal(timers.size,2);
+ const advanceToNote=(count=notes.length)=>{for(let i=0;i<160&&notes.length===count;i++){tick();for(const fn of timers.values())fn();}assert.equal(notes.length,count+1);return notes.at(-1);};
+ tap();const doubleHit=advanceToNote();const doubleStep=60/56/2;assert(Math.abs((doubleHit.when-origin-.04)/doubleStep-Math.round((doubleHit.when-origin-.04)/doubleStep))<1e-8);
+ const noteCountBeforeEdit=notes.length,editTime=clock/1000,newOrigin=editTime-(editTime-origin)*56/58;$('faster').onclick();tick();assert.equal(doubleHit.signal.aborted,true);const changed=advanceToNote(noteCountBeforeEdit),newStep=60/58/2;assert(Math.abs((changed.when-newOrigin-.04)/newStep-Math.round((changed.when-newOrigin-.04)/newStep))<1e-8);
+ await $('start').listeners.click[0]();tick();assert.equal(changed.signal.aborted,true);assert.equal(timers.size,0);$('clear').onclick();await $('start').listeners.click[0]();assert.equal(timers.size,2);$('clear').onclick();
+ await $('start').listeners.click[0]();assert.equal(timers.size,0);$('clear').onclick();$('quantizeEnabled').checked=false;fire('quantizeEnabled');$('quantizeBeats').value='.25';fire('quantizeBeats');
+ const settings=JSON.parse(store.get('chromaflow-v1')).settings;assert.equal(settings.quantizeEnabled,false);assert.equal(Number(settings.quantizeBeats),.25);
+ console.log('PASS: app quantize controls, ahead-of-time scheduling, beat alignment, single visual/audio impact, clear cancellation, live grid/tempo changes, double-speed percussion phase, free mode, pause/resume, and persistence.');
+}finally{globalThis.setInterval=originalSet;globalThis.clearInterval=originalClear;}
