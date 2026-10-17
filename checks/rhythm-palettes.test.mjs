@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {drumVoices,drumKits,grooves,grooveDetails,groovePattern,defaultRhythm,normalizeRhythm,applyDrumKit,percussionPitch,RhythmEngine} from '../dist/rhythm.js';
-import {parseChord,progressions} from '../dist/music.js';
+import {drumVoices,drumKits,grooves,grooveDetails,groovePattern,defaultRhythm,normalizeRhythm,applyDrumKit,percussionPitch,RhythmEngine} from '../public/rhythm.js';
+import {parseChord,progressions} from '../public/music.js';
 assert.equal(Object.keys(drumVoices).length,20);assert.equal(Object.keys(drumKits).length,8);assert.equal(Object.keys(grooves).length,13);assert.equal(Object.keys(grooveDetails).length,8);
 const source=defaultRhythm();source.lanes[1].muted=true;source.lanes[2].rotation=4;source.reverb=67;source.delay=80;source.delayBeats=.5;source.rate=2;
 for(const [key,kit] of Object.entries(drumKits)){

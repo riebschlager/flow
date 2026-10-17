@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {normalizeOctaveRange,pitchesForRange,pitchForPosition,parseChord,progressions} from '../dist/music.js';
+import {normalizeOctaveRange,pitchesForRange,pitchForPosition,parseChord,progressions} from '../public/music.js';
 assert.deepEqual(normalizeOctaveRange(),{down:0,up:1});
 assert.deepEqual(normalizeOctaveRange({down:-9,up:99}),{down:0,up:3});
 assert.deepEqual(normalizeOctaveRange({down:'bad',up:NaN}),{down:0,up:1});

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {euclidean,rotatePattern,groovePattern,grooves,varyPattern,normalizeRhythm,defaultRhythm,stepTime,RhythmEngine,PercussionSynth,drumVoices} from '../dist/rhythm.js';
-import {Fluid} from '../dist/fluid.js';
+import {euclidean,rotatePattern,groovePattern,grooves,varyPattern,normalizeRhythm,defaultRhythm,stepTime,RhythmEngine,PercussionSynth,drumVoices} from '../public/rhythm.js';
+import {Fluid} from '../public/fluid.js';
 for(let hits=0;hits<=16;hits++)for(let rotation=0;rotation<16;rotation++){
  const pattern=euclidean(hits,rotation);assert.equal(pattern.length,16);assert.equal(pattern.filter(Boolean).length,hits);assert(pattern.every(v=>v>=0&&v<=1));assert.deepEqual(rotatePattern(pattern,16),pattern);
 }

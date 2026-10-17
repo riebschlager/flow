@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {normalizeArp,arpEnvelope,ArpEngine} from '../dist/arpeggiator.js';
+import {normalizeArp,arpEnvelope,ArpEngine} from '../public/arpeggiator.js';
 const migrated=normalizeArp({voice:'newage',count:12,beats:.25});assert.equal(migrated.length,85);assert.equal(migrated.attack,20);assert.equal(migrated.decay,120);assert.equal(migrated.sustain,65);assert.equal(migrated.voice,'newage');
 const invalid=normalizeArp({length:999,attack:-3,decay:'bad',sustain:200});assert.equal(invalid.length,400);assert.equal(invalid.attack,0);assert.equal(invalid.decay,120);assert.equal(invalid.sustain,100);
 let cases=0;

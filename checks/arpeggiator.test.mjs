@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {normalizeArp,arpNotes,patternOrder,ArpPattern,ArpEngine} from '../dist/arpeggiator.js';
-import {parseChord} from '../dist/music.js';
+import {normalizeArp,arpNotes,patternOrder,ArpPattern,ArpEngine} from '../public/arpeggiator.js';
+import {parseChord} from '../public/music.js';
 const invalid=normalizeArp({voice:'__proto__',pattern:'__proto__',count:200,beats:9,volume:-3});assert.equal(invalid.voice,'vibes');assert.equal(invalid.pattern,'up');assert.equal(invalid.count,16);assert.equal(invalid.beats,.5);assert.equal(invalid.volume,0);assert.equal(normalizeArp(null).enabled,false);
 for(const chord of ['C','B','Cmaj7','Am7','Badd9','F#sus2'])for(let count=1;count<=16;count++){
  const pool=arpNotes(chord,count),classes=new Set(parseChord(chord).map(p=>p%12));assert.equal(pool.length,count);assert.equal(new Set(pool).size,count);assert(pool.every((p,i)=>p>=0&&p<=127&&classes.has(p%12)&&(i===0||p>pool[i-1])));

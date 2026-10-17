@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import {DatabaseSync} from 'node:sqlite';
+import {communityRequest} from '../lib/community-server.mjs';import {publicLabel,windowStart,MAX_HEADER} from '../lib/community-validation.mjs';
+import {encodePerformance,decodePerformance} from '../public/recorder-core.js';import {mainDefaults} from '../public/recording-state.js';import {defaultRhythm} from '../public/rhythm.js';import {normalizeArp} from '../public/arpeggiator.js';
+const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON');sql.exec(fs.readFileSync(new URL('../drizzle/0000_dapper_namorita.sql',import.meta.url),'utf8'));
+const DB={prepare(query){const statement=sql.prepare(query);return {args:[],bind(...args){this.args=args;return this;},async first(){return statement.get(...this.args)||null;},async all(){return {results:statement.all(...this.args)};},async run(){if(failInsert&&query.startsWith('INSERT INTO tracks'))throw new Error('database failure');const result=statement.run(...this.args);return {success:true,meta:{changes:Number(result.changes)}};}};}};
+const objects=new Map(),aborted=[];let failInsert=false,failPart=false;
+const BUCKET={async createMultipartUpload(key){const parts=[];return {async uploadPart(number,bytes){if(failPart)throw new Error('storage failure');parts[number-1]=new Uint8Array(bytes).slice();return {partNumber:number,etag:String(number)};},async complete(){objects.set(key,new Blob(parts));},async abort(){aborted.push(key);}};},async get(key){const blob=objects.get(key);return blob?{body:blob.stream(),size:blob.size}:null;},async delete(key){objects.delete(key);}};
+const env={DB,BUCKET},at=Date.UTC(2026,9,17,12),origin='https://chromaflow.test';
+async function call(path,method='GET',user=null,body=null,headers={},now=at){const req=new Request(origin+'/api/community/'+path,{method,body,headers:{...(method!=='GET'?{origin}:{}),...headers},...(body instanceof ReadableStream?{duplex:'half'}:{})});return communityRequest(req,env,user,{now});}
+const setup={main:{settings:{...mainDefaults,chordLength:'4'},voices:['piano','vibes','strings','celesta'],custom:['Cmaj7','Am7','Fmaj7','G'],bpm:60,selected:0},rhythm:defaultRhythm(),arp:normalizeArp({}),expression:{}};
+const take={format:'chromaflow-performance',version:1,id:'local-only',name:'untrusted original name',created:'bad',sampleRate:8000,frames:8000,tailFrames:4000,channels:[new Float32Array(12000).fill(.1),new Float32Array(12000).fill(.2)],snapshot:setup,scene:{w:8,h:8,...Object.fromEntries(['u','v','r','g','b'].map(k=>[k,Array(64).fill(0)]))},events:[{t:.2,kind:'fluid',data:{op:'pulse',args:[.5,.5,.2,.1,1]}}],seamMs:80};
+function uploadHeaders(file,title='Quiet current',artist='River composer'){return {'content-type':'application/octet-stream','x-file-size':String(file.size),'x-track-title':encodeURIComponent(title),'x-artist-name':encodeURIComponent(artist)};}
+async function publish(user='composer',title='Quiet current',file=encodePerformance(structuredClone(take)),now=at){return call('tracks','POST',user,file,uploadHeaders(file,title),now);}
+assert.equal(publicLabel('  Classical glass  ','track title',80),'Classical glass');assert.equal(publicLabel('Scunthorpe tides','track title',80),'Scunthorpe tides');assert.equal(publicLabel('José Rivera','artist name',40),'José Rivera');
+for(const label of ['f.u.c.k','f u c k','ＦＵＣＫ','sh!t','n1gg3r','fаggot','a$$hole','kill yourself','white power','<script>','River\u200bman','https://evil.com'])assert.throws(()=>publicLabel(label,'track title',80),label);
+assert.equal(windowStart('today',at),Date.UTC(2026,9,17));assert.equal(windowStart('week',at),at-7*86400000);
+assert.equal((await call('me')).status,200);assert.equal((await call('me')).headers.get('cache-control'),'no-store');assert.equal((await publish(null)).status,401);
+const f=encodePerformance(take);assert.equal((await call('tracks','POST','x',f,{...uploadHeaders(f),origin:'https://elsewhere.test'})).status,403);
+assert.equal((await publish('rude','f.u.c.k')).status,400);assert.equal(objects.size,0);
+const published=await publish();assert.equal(published.status,201);const track=(await published.json()).track;assert(track.mine);assert.equal(objects.size,1);
+const list=await(await call('tracks?window=today')).json();assert.equal(list.tracks.length,1);assert.equal(list.tracks[0].likes,0);assert.equal(list.tracks[0].mine,false);assert(!('owner'in list.tracks[0]));assert(!('object_key'in list.tracks[0]));
+const download=await call('tracks/'+track.id+'/performance');assert.equal(download.headers.get('content-type'),'application/octet-stream');const roundtrip=await decodePerformance(await download.blob());assert.equal(roundtrip.name,'Quiet current');assert.equal(roundtrip.id,track.id);assert.deepEqual(roundtrip.channels[0],take.channels[0]);assert.deepEqual(roundtrip.events,take.events);
+// An anonymous listener can browse/play, but voting is authenticated and idempotent.
+assert.equal((await call('tracks/'+track.id+'/like','PUT')).status,401);
+for(let i=0;i<2;i++)assert.equal((await call('tracks/'+track.id+'/like','PUT','listener')).status,200);
+let row=(await(await call('tracks/'+track.id,'GET','listener')).json()).track;assert.equal(row.likes,1);assert(row.liked);
+assert.equal((await call('tracks/'+track.id+'/like','DELETE','listener')).status,200);row=(await(await call('tracks/'+track.id)).json()).track;assert.equal(row.likes,0);
+// Reactivation preserves the first vote date, instead of refreshing it into today's chart.
+await call('tracks/'+track.id+'/like','PUT','listener',null,{},at+2*86400000);row=(await(await call('tracks?window=today','GET',null,null,{},at+2*86400000)).json()).tracks[0];assert.equal(row.score,0);assert.equal(row.likes,1);
+const second=(await(await publish('composer2','Old tide',undefined,at-9*86400000)).json()).track;await call('tracks/'+second.id+'/like','PUT','older',null,{},at-8*86400000);await call('tracks/'+second.id+'/like','PUT','weekly',null,{},at-2*86400000);
+let chart=(await(await call('tracks?window=today')).json()).tracks;assert.equal(chart[0].id,track.id);assert.equal(chart[0].score,1);assert.equal(chart[1].score,0);
+chart=(await(await call('tracks?window=week')).json()).tracks;assert.equal(chart.find(t=>t.id===second.id).score,1);
+chart=(await(await call('tracks?window=all')).json()).tracks;assert.equal(chart[0].id,second.id);assert.equal(chart[0].score,2);
+assert.equal((await call('tracks?sort=mine')).status,401);assert.equal((await(await call('tracks?sort=mine','GET','composer')).json()).tracks.length,1);assert.equal((await call('tracks?page=-1')).status,400);
+assert.equal((await call('tracks/'+track.id,'DELETE','stranger')).status,404);assert.equal(objects.size,2);
+assert.equal((await call('tracks/'+track.id,'DELETE','composer')).status,200);assert.equal(objects.size,1);assert.equal((await call('tracks/'+track.id+'/performance')).status,404);assert.equal(sql.prepare('SELECT count(*) n FROM likes WHERE track=?').get(track.id).n,0);
+// Streaming validation handles arbitrary boundaries, full multipart parts, bad samples and size mismatches.
+const big={...structuredClone(take),frames:800000,tailFrames:0,channels:[new Float32Array(800000).fill(.02),new Float32Array(800000).fill(-.02)]};const large=encodePerformance(big),all=new Uint8Array(await large.arrayBuffer());let offset=0;const stream=new ReadableStream({pull(controller){if(offset===all.length)return controller.close();const end=Math.min(all.length,offset+(offset<50?3:123457));controller.enqueue(all.slice(offset,end));offset=end;}});const streamed=await call('tracks','POST','streamer',stream,uploadHeaders(large,'Long current'));assert.equal(streamed.status,201);const bigTrack=(await streamed.json()).track;assert(objects.get('performances/'+bigTrack.id+'.chromaflow').size>5*1024*1024);
+const bad=all.slice();new DataView(bad.buffer).setFloat32(bad.length-4,NaN,true);const badFile=new Blob([bad]);assert.equal((await publish('bad-audio','Invalid',badFile)).status,400);assert(aborted.length>0);
+const short=all.slice(0,-4),shortFile=new Blob([short]);assert.equal((await publish('short','Short',shortFile)).status,400);
+const beforeFailure=objects.size;failInsert=true;assert.equal((await publish('db-fail')).status,503);failInsert=false;assert.equal(objects.size,beforeFailure);
+failPart=true;assert.equal((await publish('storage-fail')).status,503);failPart=false;
+for(let i=0;i<4;i++)await publish('rate-limited','More tide');assert.equal((await publish('rate-limited','Too many')).status,429);
+console.log('PASS: real SQLite migrations and queries, public reads, authenticated same-origin writes, profanity/obfuscation gates, canonical streamed PCM upload/download, malformed data rejection and multipart cleanup, unique voting, vote timestamps, all chart windows, ownership/deletion, upload limits, and failure recovery.');

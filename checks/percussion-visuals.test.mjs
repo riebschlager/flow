@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {Fluid} from '../dist/fluid.js';
-import {stirPercussion} from '../dist/percussion-visuals.js';
-import {drumVoices} from '../dist/rhythm.js';
+import {Fluid} from '../public/fluid.js';
+import {stirPercussion} from '../public/percussion-visuals.js';
+import {drumVoices} from '../public/rhythm.js';
 const sims=Array.from({length:3},()=>new Fluid(112,78));
 for(const sim of sims)for(let i=0;i<8;i++){const a=i/8*Math.PI*2;sim.splat(.5+Math.cos(a)*.14,.5+Math.sin(a)*.14,[.6,.3,.8],.06,0,0);}
 const [quiet,old,current]=sims;

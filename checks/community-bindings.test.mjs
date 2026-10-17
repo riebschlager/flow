@@ -1,0 +1,15 @@
+// Requires a current build; uses ephemeral local D1/R2 bindings, with no preview server or remote data.
+import assert from 'node:assert/strict';import fs from 'node:fs';import {getPlatformProxy} from 'wrangler';
+import {communityRequest} from '../lib/community-server.mjs';import {encodePerformance,decodePerformance} from '../public/recorder-core.js';import {mainDefaults} from '../public/recording-state.js';import {defaultRhythm} from '../public/rhythm.js';import {normalizeArp} from '../public/arpeggiator.js';
+process.env.CLOUDFLARE_CF_FETCH_ENABLED='false';process.env.WRANGLER_SEND_METRICS='false';
+const proxy=await getPlatformProxy({configPath:'dist/server/wrangler.json',persist:false,remoteBindings:false,envFiles:[]});
+try{
+ for(const statement of fs.readFileSync(new URL('../drizzle/0000_dapper_namorita.sql',import.meta.url),'utf8').split('--> statement-breakpoint').filter(s=>s.trim()))await proxy.env.DB.prepare(statement).run();
+ const frames=800000,take={format:'chromaflow-performance',version:1,id:'binding-test',name:'Current',created:new Date().toISOString(),sampleRate:8000,frames,tailFrames:0,channels:[new Float32Array(frames).fill(.02),new Float32Array(frames).fill(-.02)],snapshot:{main:{settings:mainDefaults,voices:['piano','vibes','strings','celesta'],custom:['C','Am','F','G'],bpm:60},rhythm:defaultRhythm(),arp:normalizeArp({}),expression:{}},scene:{w:8,h:8,...Object.fromEntries(['u','v','r','g','b'].map(k=>[k,Array(64).fill(0)]))},events:[],seamMs:80},file=encodePerformance(take),base='https://chromaflow.test/api/community/';
+ const request=new Request(base+'tracks',{method:'POST',body:file,headers:{origin:'https://chromaflow.test','content-type':'application/octet-stream','x-file-size':String(file.size),'x-track-title':'Binding%20current','x-artist-name':'River'}});
+ const response=await communityRequest(request,proxy.env,'binding-user');const result=await response.json();assert.equal(response.status,201,JSON.stringify(result));
+ const id=result.track.id,download=await communityRequest(new Request(base+'tracks/'+id+'/performance'),proxy.env);assert.equal(download.status,200);const decoded=await decodePerformance(await download.blob());assert.equal(decoded.name,'Binding current');assert.deepEqual(decoded.channels,take.channels);
+ const vote=await communityRequest(new Request(base+'tracks/'+id+'/like',{method:'PUT',headers:{origin:'https://chromaflow.test'}}),proxy.env,'listener');assert.equal(vote.status,200);const chart=await(await communityRequest(new Request(base+'tracks?window=today'),proxy.env)).json();assert.equal(chart.tracks[0].score,1);
+ const removed=await communityRequest(new Request(base+'tracks/'+id,{method:'DELETE',headers:{origin:'https://chromaflow.test'}}),proxy.env,'binding-user');assert.equal(removed.status,200);assert.equal((await proxy.env.BUCKET.list()).objects.length,0);
+ console.log('PASS: native local D1 and R2 bindings accept the migration, >5 MB multipart performance upload, exact PCM download, likes/charts and owner cleanup.');
+}finally{await proxy.dispose();}

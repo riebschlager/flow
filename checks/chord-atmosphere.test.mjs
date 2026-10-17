@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {ChordAtmosphere,chordMood} from '../dist/chord-atmosphere.js';
-import {Fluid} from '../dist/fluid.js';
+import {ChordAtmosphere,chordMood} from '../public/chord-atmosphere.js';
+import {Fluid} from '../public/fluid.js';
 assert.deepEqual(chordMood('C#maj7'),chordMood('Dbmaj7'));assert(chordMood('Cm').brightness<chordMood('C').brightness);
 const colors=['C','D','E','F','G','A','B'].map(chord=>chordMood(chord).color.join(','));assert.equal(new Set(colors).size,7);
 const atmosphere=new ChordAtmosphere();atmosphere.frame(0,{chord:'Cmaj7',amount:65});const before=atmosphere.light;

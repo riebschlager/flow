@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {GestureTracker,noteExpression,shapeExpression,normalizeGestureSettings} from '../dist/gestures.js';
-import {instruments} from '../dist/music.js';
-import {Fluid} from '../dist/fluid.js';
+import {GestureTracker,noteExpression,shapeExpression,normalizeGestureSettings} from '../public/gestures.js';
+import {instruments} from '../public/music.js';
+import {Fluid} from '../public/fluid.js';
 const top=noteExpression(.5,.05,{energy:0},100),bottom=noteExpression(.5,.95,{energy:0},100);assert(top.cutoff>bottom.cutoff);assert(top.sustain<bottom.sustain);assert(top.velocity<bottom.velocity);assert(top.ink<bottom.ink);
 const slow=noteExpression(.5,.5,{energy:0},100),fast=noteExpression(.5,.5,{energy:1},100);assert(fast.velocity>slow.velocity);assert(fast.sustain<slow.sustain);assert(fast.cutoff>slow.cutoff);assert(fast.force>slow.force);assert(fast.ink>slow.ink);assert(noteExpression(0,.5,{},100).pan<0);assert(noteExpression(1,.5,{},100).pan>0);
 const neutral=noteExpression(0,1,{energy:1,orbit:1},0);for(const key of ['velocity','sustain','ink','force'])assert.equal(neutral[key],1);assert.equal(neutral.pan,0);

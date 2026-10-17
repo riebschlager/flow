@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {landingTime,quantizeDivisions} from '../dist/quantize.js';
-import {AmbientAudio} from '../dist/music.js';
+import {landingTime,quantizeDivisions} from '../public/quantize.js';
+import {AmbientAudio} from '../public/music.js';
 let combinations=0;
 for(const bpm of [30,56,100])for(const rate of [.5,1,2])for(const beats of quantizeDivisions)for(const origin of [0,10.04])for(const now of [0,10.1,40.235])for(const duration of [.23,.45,.6]){
  const time=landingTime(now,duration,{origin,bpm,rate,beats});const step=60/bpm/rate*beats,position=(time-origin)/step;

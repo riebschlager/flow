@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {AmbientAudio} from '../dist/music.js';
-import {PercussionSynth,stepTime} from '../dist/rhythm.js';
-import {delaySeconds,delayGlide} from '../dist/timing.js';
+import {AmbientAudio} from '../public/music.js';
+import {PercussionSynth,stepTime} from '../public/rhythm.js';
+import {delaySeconds,delayGlide} from '../public/timing.js';
 function parameter(){return {events:[],setTargetAtTime(value,time,glide){this.events.push({value,time,glide});}};}
 const audio=new AmbientAudio();audio.ctx={currentTime:12};audio.echo={delayTime:parameter()};const synth=new PercussionSynth(audio);synth.bus={};synth.room={gain:parameter()};synth.echoWet={gain:parameter()};synth.echo={delayTime:parameter()};
 for(const bpm of [30,56,100])for(const rate of [.5,1,2])for(const delayBeats of [.5,.75,1]){

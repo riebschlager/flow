@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {normalizeArp,arpGlide,ArpEngine} from '../dist/arpeggiator.js';
+import {normalizeArp,arpGlide,ArpEngine} from '../public/arpeggiator.js';
 const legacy=normalizeArp({voice:'newage',length:200});assert.equal(legacy.glideEnabled,false);assert.equal(legacy.glideTime,180);assert.equal(legacy.glideAmount,100);assert.equal(legacy.voice,'newage');
 const invalid=normalizeArp({glideEnabled:'true',glideTime:9000,glideAmount:-4});assert.equal(invalid.glideEnabled,false);assert.equal(invalid.glideTime,2000);assert.equal(invalid.glideAmount,0);
 for(const step of [.0375,.125,.5,2])for(const length of [10,85,400])for(const glideTime of [0,180,2000])for(const glideAmount of [0,40,100]){
