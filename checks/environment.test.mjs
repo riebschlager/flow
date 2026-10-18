@@ -29,6 +29,7 @@ function fixture(){
 const f=fixture(),synth=new EnvironmentSynth(f.audio),config={...environmentDefaults,enabled:true};
 synth.apply(environmentDefaults);assert.equal(f.nodes.length,0,'disabled legacy sessions allocate no audio nodes');
 synth.prepare(config);assert.equal(f.nodes.length,0);assert.equal(synth.cache.size,1);
+const cachedRain=synth.buffers('rain'),peer=new EnvironmentSynth(f.audio);assert.equal(peer.buffers('rain'),cachedRain,'live and playback reuse exact sample buffers');assert.notEqual(new EnvironmentSynth(fixture().audio).buffers('rain'),cachedRain,'buffers remain context-local');
 synth.apply(config,1,{origin:1,restart:true});assert.equal(f.sources.length,2);assert(f.sources.every(s=>s.loop&&s.started.at===1&&s.started.offset===0));assert(synth.output.targets.includes(f.audio.sceneInput));
 const initial=synth.current;synth.apply({...config,volume:70,activity:100,tone:100},1.05,{origin:1});assert.equal(f.sources.length,2);assert.equal(synth.details.gain.events.at(-1).value,1);assert.equal(synth.filter.frequency.events.at(-1).value,10000);assert(Math.abs(synth.output.gain.events.at(-1).value-.196)<1e-10);
 synth.apply({...config,preset:'night'},1.1,{origin:1});assert.equal(f.sources.length,4);assert(Math.abs(f.sources.at(-1).started.offset-.1)<1e-9);assert(initial.retired);assert(initial.gains[0].gain.events.some(e=>e.kind==='set'&&e.at===1.1&&e.value>0&&e.value<1),'rapid edits fade from the actual partial envelope');
@@ -36,7 +37,7 @@ synth.apply({...config,preset:'night'},5,{origin:5,restart:true});assert.equal(f
 synth.apply({...config,volume:0},6);assert.equal(synth.current,null);assert.equal(synth.output.gain.events.at(-1).value,0);
 for(let i=0;i<10;i++)synth.apply({...config,preset:i%2?'wind':'rain'},7+i*.01,{origin:1,restart:true});assert(synth.voices.size<=4);assert.equal(synth.cache.size,3);
 f.setTime(8);synth.stop();assert.equal(synth.current,null);assert(f.sources.every(s=>s.stops?.length));
-synth.apply(config,10,{origin:1});assert.equal(f.sources.at(-1).started.offset,9%ENVIRONMENT_SECONDS);synth.dispose();assert.equal(synth.cache.size,0);for(const s of f.sources)s.onended();assert.equal(synth.output,null);
+synth.apply(config,10,{origin:1});assert.equal(f.sources.at(-1).started.offset,9%ENVIRONMENT_SECONDS);synth.dispose();assert.equal(synth.cache.size,0);for(const s of f.sources)s.onended();assert.equal(synth.output,null);assert.equal(peer.buffers('rain'),cachedRain,'disposing one player cannot invalidate another player cache');assert.equal(new EnvironmentSynth(f.audio).buffers('rain'),cachedRain,'track changes reuse prepared samples');
 
 const ids=['environmentEnabled','environmentPreset','environmentDescription','environmentVolume','environmentVolumeValue','environmentActivity','environmentActivityValue','environmentTone','environmentToneValue','environmentStatus'];
 const elements=new Map(ids.map(id=>[id,{value:'',checked:false,style:{setProperty(){}},listeners:{},addEventListener(kind,fn){this.listeners[kind]=fn;}}]));

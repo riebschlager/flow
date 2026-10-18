@@ -1,19 +1,19 @@
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
-import {createEnvironmentController} from './environment-ui.js?rev=environment-34';
-import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=gestures-32';
+import {createEnvironmentController} from './environment-ui.js?rev=performance-39';
+import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=gestures-32';
-import {createRecorderController} from './recorder-ui.js?rev=levels-38';
+import {createRecorderController} from './recorder-ui.js?rev=performance-39';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=levels-38';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=gestures-32';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=probability-33';
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
-import {Fluid} from './fluid.js?rev=aspect-36';
+import {Fluid} from './fluid.js?rev=performance-39';
 import {createPerformanceController} from './performance.js?rev=gestures-32';
 import {createRhythmController} from './rhythm-ui.js?rev=workspace-35';
-import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=levels-38';
+import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=performance-39';
 const $=id=>document.getElementById(id);
 let paletteKey=null,colors=getPalette('classic').colors,colorizeFluid=createFluidColorizer('classic');
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
@@ -80,7 +80,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.class
 // Fluid rendering and the droplet/impact lifecycle.
 const canvas=$('fluid'),ctx=canvas.getContext('2d',{alpha:false});const overlay=$('particles'),fx=overlay.getContext('2d');const stage=$('stage');
 const atmosphere=new ChordAtmosphere({reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false});
-let width=1,height=1,dpr=1;const sim=new Fluid(window.innerWidth>720?224:144,window.innerWidth>720?156:112);const ink=document.createElement('canvas');ink.width=sim.w;ink.height=sim.h;const inkCtx=ink.getContext('2d');let pixels=inkCtx.createImageData(sim.w,sim.h);let drops=[],ripples=[],glows=[],lastFrame=0,rainTimer=0,frameCount=0;let colorBag=[],lastDropColor=-1,dropSerial=0;
+let width=1,height=1,dpr=1,vignette=null;const sim=new Fluid(window.innerWidth>720?224:144,window.innerWidth>720?156:112);const ink=document.createElement('canvas');ink.width=sim.w;ink.height=sim.h;const inkCtx=ink.getContext('2d');let pixels=inkCtx.createImageData(sim.w,sim.h);let drops=[],ripples=[],glows=[],lastFrame=0,rainTimer=0,frameCount=0;let colorBag=[],lastDropColor=-1,dropSerial=0;
 const dust=Array.from({length:65},()=>({x:Math.random(),y:Math.random(),r:.4+Math.random()*.9,p:Math.random()*6}));
 function resize(){
  // Canvas bounds exclude the stage border and match the CSS drawing surface.
@@ -88,7 +88,7 @@ function resize(){
  width=r.width;height=r.height;dpr=Math.min(window.devicePixelRatio||1,1.7);
  const backingWidth=Math.round(width*dpr),backingHeight=Math.round(height*dpr);
  if(canvas.width!==backingWidth||canvas.height!==backingHeight){canvas.width=overlay.width=backingWidth;canvas.height=overlay.height=backingHeight;}
- ctx.setTransform(canvas.width/width,0,0,canvas.height/height,0,0);fx.setTransform(overlay.width/width,0,0,overlay.height/height,0,0);
+ ctx.setTransform(canvas.width/width,0,0,canvas.height/height,0,0);fx.setTransform(overlay.width/width,0,0,overlay.height/height,0,0);vignette=ctx.createRadialGradient(width*.55,height*.5,height*.12,width*.5,height*.5,Math.max(width,height)*.72);vignette.addColorStop(0,'#070a1000');vignette.addColorStop(.62,'#070a1030');vignette.addColorStop(1,'#070a10d9');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  const mobile=window.innerWidth<=720||!!window.matchMedia?.('(pointer: coarse)').matches,grid=fluidGridSize(width,height,{mobile});
  // Ignore sub-cell aspect changes from mobile browser chrome to avoid repeatedly
  // filtering the same dye. Orientation/layout changes still rebuild immediately.
@@ -113,10 +113,10 @@ function nextDropColor(){
  return color;
 }
 function dropClock(){
- const enabled=$('quantizeEnabled').checked,beats=Number($('quantizeBeats').value),rate=audio.rhythmRate;
+ const enabled=$('quantizeEnabled').checked,beats=Number($('quantizeBeats').value),rate=audio.rhythmRate,range=octaveRange();
  const now=(state.playing||recorder?.replaying)&&audio.ctx?audio.ctx.currentTime:performance.now()/1000;
  const origin=state.playing?(rhythmUI.timingOrigin??clockOrigin):0;
- return {now,origin,bpm:state.bpm,rate,beats,enabled,key:[state.playing,origin,state.bpm,rate,enabled,beats,octaveRange().down,octaveRange().up].join('|')};
+ return {now,origin,bpm:state.bpm,rate,beats,enabled,key:[state.playing,origin,state.bpm,rate,enabled,beats,range.down,range.up].join('|')};
 }
 function prepareDrop(d,clock){if(d.replay)return;
  if(d.timingKey===clock.key)return;
@@ -134,6 +134,7 @@ function playDrop(d,when=null,signal=null){
  audio.note(d.voice,d.pitch,d.expression,{when,signal}).catch(loadFail);
 }
 function serviceDrops(){
+ if(!drops.length)return;
  const clock=dropClock();
  for(const d of drops){
   prepareDrop(d,clock);
@@ -154,8 +155,8 @@ function drop(x,y,color=state.selected,impulse=null,expression=null){
 function impact(d){const c=colors[d.color];if(d.replay){ripples.push({x:d.x,y:d.y,color:c.hex,t:0});glows.push({x:d.x,y:d.y,color:c.hex,t:0});return;}const size=(.018+Number($('dropSize').value)/100*.06)*(d.expression?.ink||1),force=d.expression?.force||1;sim.splat(d.x,d.y,c.rgb,size,d.impulse[0]*force,d.impulse[1]*force);ripples.push({x:d.x,y:d.y,color:c.hex,t:0});glows.push({x:d.x,y:d.y,color:c.hex,t:0});if(ripples.length>30)ripples.shift();if(glows.length>20)glows.shift();if(state.playing){if(!d.audioScheduled)playDrop(d);$('noteToast').textContent=`${noteName(d.pitch)}  ·  ${instruments[d.voice].name.toUpperCase()}`;$('noteToast').classList.add('show');clearTimeout(noteTimer);noteTimer=setTimeout(()=>$('noteToast').classList.remove('show'),1400);}}
 $('clear').onclick=()=>{sim.clear();for(const d of drops)d.cancel?.abort();drops=[];ripples=[];glows=[];performanceUI.reset();arpUI.clearVisuals();};
 $('bloom').onclick=()=>{for(let i=0;i<8;i++){const a=i/8*Math.PI*2;drop(.5+Math.cos(a)*.17,.5+Math.sin(a)*.17);}$('intro').classList.add('faded');};
-function drawFluid(t){const light=atmosphere.light;renderFluidPixels(sim,pixels.data,t,colorizeFluid,{luminance:performanceUI.luminance*light.brightness});inkCtx.putImageData(pixels,0,0);ctx.fillStyle='#070b11';ctx.fillRect(0,0,width,height);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(ink,0,0,width,height);atmosphere.draw(ctx,width,height);const vignette=ctx.createRadialGradient(width*.55,height*.5,height*.12,width*.5,height*.5,Math.max(width,height)*.72);vignette.addColorStop(0,'#070a1000');vignette.addColorStop(.62,'#070a1030');vignette.addColorStop(1,'#070a10d9');ctx.fillStyle=vignette;ctx.fillRect(0,0,width,height);}
-function drawOverlay(dt,t){const clock=dropClock();fx.clearRect(0,0,width,height);for(const p of dust){const x=(p.x+Math.sin(t*.035+p.p)*.006)*width,y=(p.y+Math.cos(t*.024+p.p)*.01)*height;fx.globalAlpha=.12+Math.sin(t*.5+p.p)*.07;fx.fillStyle=colors[0].hex;fx.beginPath();fx.arc(x,y,p.r,0,Math.PI*2);fx.fill();}fx.globalAlpha=1;for(let i=drops.length-1;i>=0;i--){const d=drops[i];prepareDrop(d,clock);const progress=d.progress=d.progress>=1?1:Math.max(d.progress,d.startProgress+(1-d.startProgress)*Math.max(0,Math.min(1,(clock.now-d.start)/(d.landing-d.start)))),x=d.x*width,y=d.y*height-(1-progress*progress)*105,c=colors[d.color].hex;const halo=fx.createRadialGradient(x,y,0,x,y,19);halo.addColorStop(0,c+'85');halo.addColorStop(.2,c+'40');halo.addColorStop(1,c+'00');fx.fillStyle=halo;fx.beginPath();fx.arc(x,y,19,0,Math.PI*2);fx.fill();fx.strokeStyle=c+'50';fx.lineWidth=1.2;fx.beginPath();fx.moveTo(x,y-12);fx.lineTo(x,y-2);fx.stroke();fx.fillStyle=c;fx.beginPath();fx.ellipse(x,y,2.3,3.5,0,0,Math.PI*2);fx.fill();fx.fillStyle='#fff9';fx.beginPath();fx.arc(x-.5,y-1,1,0,Math.PI*2);fx.fill();if(progress>=1){impact(d);drops.splice(i,1);}}
+function drawFluid(t){const light=atmosphere.light;renderFluidPixels(sim,pixels.data,t,colorizeFluid,{luminance:performanceUI.luminance*light.brightness});inkCtx.putImageData(pixels,0,0);ctx.fillStyle='#070b11';ctx.fillRect(0,0,width,height);ctx.drawImage(ink,0,0,width,height);atmosphere.draw(ctx,width,height);ctx.fillStyle=vignette;ctx.fillRect(0,0,width,height);}
+function drawOverlay(dt,t){const clock=drops.length?dropClock():null;fx.clearRect(0,0,width,height);for(const p of dust){const x=(p.x+Math.sin(t*.035+p.p)*.006)*width,y=(p.y+Math.cos(t*.024+p.p)*.01)*height;fx.globalAlpha=.12+Math.sin(t*.5+p.p)*.07;fx.fillStyle=colors[0].hex;fx.beginPath();fx.arc(x,y,p.r,0,Math.PI*2);fx.fill();}fx.globalAlpha=1;for(let i=drops.length-1;i>=0;i--){const d=drops[i];prepareDrop(d,clock);const progress=d.progress=d.progress>=1?1:Math.max(d.progress,d.startProgress+(1-d.startProgress)*Math.max(0,Math.min(1,(clock.now-d.start)/(d.landing-d.start)))),x=d.x*width,y=d.y*height-(1-progress*progress)*105,c=colors[d.color].hex;const halo=fx.createRadialGradient(x,y,0,x,y,19);halo.addColorStop(0,c+'85');halo.addColorStop(.2,c+'40');halo.addColorStop(1,c+'00');fx.fillStyle=halo;fx.beginPath();fx.arc(x,y,19,0,Math.PI*2);fx.fill();fx.strokeStyle=c+'50';fx.lineWidth=1.2;fx.beginPath();fx.moveTo(x,y-12);fx.lineTo(x,y-2);fx.stroke();fx.fillStyle=c;fx.beginPath();fx.ellipse(x,y,2.3,3.5,0,0,Math.PI*2);fx.fill();fx.fillStyle='#fff9';fx.beginPath();fx.arc(x-.5,y-1,1,0,Math.PI*2);fx.fill();if(progress>=1){impact(d);drops.splice(i,1);}}
  fx.globalCompositeOperation='screen';for(let i=glows.length-1;i>=0;i--){const g=glows[i];g.t+=dt;const r=18+g.t*36,alpha=Math.max(0,1-g.t/1.7)*.15;fx.globalAlpha=alpha;const halo=fx.createRadialGradient(g.x*width,g.y*height,0,g.x*width,g.y*height,r);halo.addColorStop(0,g.color);halo.addColorStop(1,g.color+'00');fx.fillStyle=halo;fx.fillRect(g.x*width-r,g.y*height-r,r*2,r*2);if(g.t>1.7)glows.splice(i,1);}fx.globalAlpha=1;fx.globalCompositeOperation='source-over';for(let i=ripples.length-1;i>=0;i--){const r=ripples[i];r.t+=dt;const opacity=Math.max(0,1-r.t/2.1)*.30;fx.strokeStyle=r.color;fx.globalAlpha=opacity;fx.lineWidth=.65;fx.beginPath();fx.ellipse(r.x*width,r.y*height,5+r.t*39,2+r.t*15,0,0,Math.PI*2);fx.stroke();if(r.t>2.1)ripples.splice(i,1);}fx.globalAlpha=1;}
 function tick(now){const dt=Math.min(.033,(now-lastFrame)/1000||.016);lastFrame=now;recorder?.frame();const t=now/1000;if(state.playing){state.elapsed=Math.max(0,audio.ctx.currentTime-clockOrigin);const length=Number($('chordLength').value)*60/state.bpm;const chord=Math.floor(state.elapsed/length)%4;if(chord!==state.chordIndex){state.chordIndex=chord;renderChords();updateTransport();}const line=$('chords').querySelector('.active .progress');if(line)line.style.width=(state.elapsed%length/length*100)+'%';}rainTimer+=dt;const interval=4.5-Number($('rain').value)/100*3.9;if(!recorder?.blocked&&$('autoPour').checked&&rainTimer>(state.playing?interval:interval*1.8)){rainTimer=0;drop(.16+Math.random()*.71,.25+Math.random()*.53);}atmosphere.frame(dt,{chord:activeChords()[state.chordIndex],index:state.chordIndex,playing:state.playing||!!recorder?.replaying,amount:Number($('chordAtmosphere').value),palette:paletteKey});if(!recorder?.blocked)atmosphere.stir(sim,dt);performanceUI.frame(dt,now);rhythmUI.frame();arpUI.frame();if(!recorder?.blocked)serviceDrops();if(!recorder?.arming)sim.step(dt);drawFluid(t);drawOverlay(dt,t);rhythmUI.draw(fx,width,height);arpUI.draw(fx,width,height);performanceUI.draw(fx,width,height,now);frameCount++;requestAnimationFrame(tick);}
 const performanceUI=createPerformanceController({canvas,stage,audio,sim,drop,nextColor:()=>state.selected,getColor:()=>colors[state.selected],readOnly:()=>!!recorder?.blocked,onChange:()=>recorder?.stateChanged(),onGesture:m=>recorder?.capture('gesture',{...m,performance:{...audio.performance}}),onFirstTouch:()=>$('intro').classList.add('faded'),openGuide:()=>{if(document.body.classList.contains('panel-hidden'))togglePanel();switchTab('perform');$('gestureGuide').open=true;$('gestureGuide').querySelector('summary').focus();$('gestureGuide').scrollIntoView?.({block:'nearest'});}});

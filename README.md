@@ -32,6 +32,28 @@ Mix consolidates the sidebar’s two duplicate shared-echo selectors into one; B
 
 Structural checks cover unique IDs, label and ARIA references, valid nesting, and preserved control values/ranges/defaults. The full app smoke test exercises navigation, focus, scrolling, disclosures and the existing recording/playback/fork workflow. Full browser interaction and visual QA were unavailable in this environment.
 
+## Performance audit (version 39)
+
+The audit profiled the solver, palette raster, animation loop, instrument loading, audio scheduling and playback resource lifetimes. Pressure projection remains the largest solver cost; its 20 iterations and all fluid equations, grid budgets, DPR, colors, effects, note envelopes and scheduler intervals are preserved.
+
+- Velocity components now share one advection backtrace, and the three dye channels share another. Existing scratch arrays hold the previous dye values, with no extra solver allocations. Interpolation arithmetic, Float32 rounding and boundary order match version 38 exactly.
+- Larger rasters cache exact Float64 spatial lighting phases and integer neighbor offsets between resizes. The cache is weakly keyed to the simulation, replaces itself after resize and uses about 0.53 MiB at the measured desktop grid. Phone-sized grids retain the original compact renderer and allocate no geometry cache. Color mapping, Gaussian reconstruction and lighting math are unchanged.
+- The canvas vignette is built on resize rather than every frame. Empty droplet queues skip clock/key work; recorder status/time text changes only when its content changes. Animation cadence, counters and progress motion are unchanged.
+- Completed sampled notes detach their abort hooks, while preserving filter/panner cleanup and recorded cancellation behavior. Session stop retires WebAudioFont envelopes belonging to the discarded arpeggio bus. The 64-voice policy still selects the same oldest voice, using a single scan instead of an allocated filter/sort.
+- Deterministic atmosphere sample buffers are shared lazily per AudioContext across live and session engines (at most five preset pairs). Voice sources, gain automation, crossfades and phase remain independent. Disposing one player does not invalidate another player's buffers. Existing instruments were already loaded/decoded lazily and cached; audio scheduling remains on its existing audio clock with the same lookahead and stall recovery.
+
+A paired Node CPU benchmark alternates the version-38 reference and current implementations, with warmup and nine median batches of 24 frames. Representative results from this environment:
+
+| CPU operation | Grid | Before | After |
+| --- | --- | --- | --- |
+| Fluid step | 241 × 144 | 8.15 ms | 7.52 ms |
+| Palette raster | 241 × 144 | 2.78 ms | 2.22 ms |
+| Fluid step | 111 × 145 | 3.99 ms | 3.76 ms |
+
+These are CPU microbenchmarks, not browser/device FPS claims. Run `node checks/benchmark-performance.mjs` to repeat them; timings vary with the machine and load. Twelve warm atmosphere preparations dropped from 767 ms total to 0.34 ms in a separate native-audio check. First use still synthesizes the exact original bed.
+
+Regression checks compare 176 fluid frames bit for bit and 80 palette renders byte for byte against frozen version-38 references, including turbulent splats/forces, settings changes, resize, clear and both renderer paths. A native 24 kHz stereo render using actual WebAudioFont samples, arpeggio notes, synthesized drums, effects and atmosphere had zero PCM difference from version 38. Its completed-note abort-hook count fell from 24 to zero. Lifecycle stress tests cover 500 note completions and 100 discarded arpeggio buses; the full musical/session/community suite and TypeScript checks pass. Browser profiling, device FPS, native Canvas visual QA and subjective listening were unavailable in this environment.
+
 ## Output level and dynamics
 
 Fresh setups start at 70% master (previously 55%). The master now maps directly to 0–100% gain, removing the old hidden 0.65 multiplier. A calibrated +4.1 dB makeup stage follows scene expression, then a fast peak compressor and an emergency sample guard before the final master. All droplets, arpeggio, percussion, atmospherics, effects and gestures pass through this output path. It is fixed gain compensation, not automatic gain riding: quiet passages, natural decays, layer balance and Conduct gestures remain expressive.

@@ -48,12 +48,33 @@ export function createFluidColorizer(palette){
 function smooth(field,i,left,right,up,down){
  return (field[i]*4+(field[i+left]+field[i+right]+field[i+up]+field[i+down])*2+field[i+up+left]+field[i+up+right]+field[i+down+left]+field[i+down+right])/16;
 }
+// Geometry is immutable between resizes. Store exact double-precision lighting
+// phases and integer neighbor offsets once rather than rebuild them per pixel.
+const geometries=new WeakMap();
+function geometry(sim){let cached=geometries.get(sim);if(cached?.w===sim.w&&cached?.h===sim.h)return cached;
+ const {w,h}=sim,n=w*h,phase=new Float64Array(n),left=new Int16Array(n),right=new Int16Array(n),up=new Int16Array(n),down=new Int16Array(n);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=x+y*w;phase[i]=x*.035+y*.03;left[i]=x>0?-1:0;right[i]=x<w-1?1:0;up[i]=y>0?-w:0;down[i]=y<h-1?w:0;}
+ cached={w,h,phase,left,right,up,down};geometries.set(sim,cached);return cached;
+}
 export function renderFluidPixels(sim,pixels,time,colorize,{luminance=1}={}){
+ if(sim.w*sim.h>16128)return renderCached(sim,pixels,time,colorize,luminance);
  for(let y=0;y<sim.h;y++)for(let x=0;x<sim.w;x++){
   const i=x+y*sim.w,left=x>0?-1:0,right=x<sim.w-1?1:0,up=y>0?-sim.w:0,down=y<sim.h-1?sim.w:0;
   const r=smooth(sim.r,i,left,right,up,down),g=smooth(sim.g,i,left,right,up,down),b=smooth(sim.b,i,left,right,up,down);
   const gradient=(sim.r[i+right]+sim.g[i+right]+sim.b[i+right])-(sim.r[i+left]+sim.g[i+left]+sim.b[i+left]);
   const lighting=(.82+.18*Math.sin(x*.035+y*.03+time*.12))*luminance;
+  colorize(r,g,b,lighting,gradient,pixels,i*4);pixels[i*4+3]=255;
+ }
+ return pixels;
+}
+
+function renderCached(sim,pixels,time,colorize,luminance){
+ const grid=geometry(sim),{phase}=grid;
+ for(let i=0;i<sim.w*sim.h;i++){
+  const left=grid.left[i],right=grid.right[i],up=grid.up[i],down=grid.down[i];
+  const r=smooth(sim.r,i,left,right,up,down),g=smooth(sim.g,i,left,right,up,down),b=smooth(sim.b,i,left,right,up,down);
+  const gradient=(sim.r[i+right]+sim.g[i+right]+sim.b[i+right])-(sim.r[i+left]+sim.g[i+left]+sim.b[i+left]);
+  const lighting=(.82+.18*Math.sin(phase[i]+time*.12))*luminance;
   colorize(r,g,b,lighting,gradient,pixels,i*4);pixels[i*4+3]=255;
  }
  return pixels;

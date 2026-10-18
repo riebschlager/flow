@@ -60,10 +60,12 @@ function envelope(param,at,fade,outgoing=false,amplitude=1){
 }
 function voiceLevel(voice,at){return voice.retired?voice.retireLevel*Math.cos(clamp((at-voice.retireAt)/voice.retireFade)*Math.PI/2):Math.sin(clamp((at-voice.at)/voice.fade)*Math.PI/2);}
 function ramp(param,value,at,time=.12){param.setTargetAtTime(value,at,time);}
+// At most five immutable stereo beds per AudioContext, shared by live and replay.
+const contextBuffers=new WeakMap();
 export class EnvironmentSynth{
  constructor(audio){this.audio=audio;this.cache=new Map();this.voices=new Set();this.current=null;this.output=null;this.config=null;}
  connect(){if(this.output)return;const c=this.audio.ctx;this.base=c.createGain();this.base.gain.value=.72;this.details=c.createGain();this.details.gain.value=0;this.filter=c.createBiquadFilter();this.filter.type='lowpass';this.filter.Q.value=.45;this.output=c.createGain();this.output.gain.value=0;this.base.connect(this.filter);this.details.connect(this.filter);this.filter.connect(this.output);this.output.connect(this.audio.sceneInput||this.audio.limiter);}
- buffers(preset){if(this.cache.has(preset))return this.cache.get(preset);const c=this.audio.ctx,data=synthesizeEnvironment(preset),buffers={};for(const key of ['base','detail']){const b=c.createBuffer(2,data.base[0].length,data.sampleRate);data[key].forEach((samples,ch)=>b.copyToChannel(samples,ch));buffers[key]=b;}this.cache.set(preset,buffers);return buffers;}
+ buffers(preset){if(this.cache.has(preset))return this.cache.get(preset);const c=this.audio.ctx;let shared=contextBuffers.get(c);if(!shared){shared=new Map();contextBuffers.set(c,shared);}if(shared.has(preset)){const buffers=shared.get(preset);this.cache.set(preset,buffers);return buffers;}const data=synthesizeEnvironment(preset),buffers={};for(const key of ['base','detail']){const b=c.createBuffer(2,data.base[0].length,data.sampleRate);data[key].forEach((samples,ch)=>b.copyToChannel(samples,ch));buffers[key]=b;}shared.set(preset,buffers);this.cache.set(preset,buffers);return buffers;}
  prepare(raw){const config=normalizeEnvironment(raw);if(this.audio.ctx&&config.enabled&&config.volume>0)this.buffers(config.preset);}
  retire(voice,at,fade=.3){
   if(!voice||voice.retired)return;const amplitude=voiceLevel(voice,at);Object.assign(voice,{retired:true,retireAt:at,retireFade:fade,retireLevel:amplitude});

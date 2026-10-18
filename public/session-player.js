@@ -1,5 +1,5 @@
 import {masterLevel} from './output.js?rev=levels-38';
-import {EnvironmentSynth} from './environment.js?rev=environment-34';
+import {EnvironmentSynth} from './environment.js?rev=performance-39';
 import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=gestures-32';
 import {PercussionSynth} from './rhythm.js?rev=gestures-32';
 import {PerformanceAudio} from './recorder-audio.js?rev=gestures-32';
@@ -30,7 +30,7 @@ export class SessionPlayer{
   for(const [key,value] of this.sounds)if(value.until<now)this.sounds.delete(key);
  }
  fail(error){this.stop();this.onError(error);}
- stop(){this.generation++;this.abort?.abort();if(this.timer!==null)this.clearTimer(this.timer);this.timer=null;const a=this.audio,now=a.ctx?.currentTime||0;for(const entry of this.sounds.values())this.release(entry,now);this.sounds.clear();this.environment?.dispose();this.environment=null;this.drums?.stop();for(const key of ['bus','output','room','verb','echo','echoWet','echoTone','feedback'])this.drums?.[key]?.disconnect?.();this.drums=null;this.arp?.disconnect();this.arp=null;this.take=null;
+ stop(){this.generation++;this.abort?.abort();if(this.timer!==null)this.clearTimer(this.timer);this.timer=null;const a=this.audio,now=a.ctx?.currentTime||0;for(const entry of this.sounds.values())this.release(entry,now);this.sounds.clear();this.environment?.dispose();this.environment=null;this.drums?.stop();for(const key of ['bus','output','room','verb','echo','echoWet','echoTone','feedback'])this.drums?.[key]?.disconnect?.();this.drums=null;this.arp?.disconnect();a.releaseTarget?.(this.arp);this.arp=null;this.take=null;
   for(const param of [a.droplets?.gain,a.master?.gain,a.wet?.gain,a.echoWet?.gain,a.echo?.delayTime,a.sceneFilter?.frequency,a.sceneFilter?.Q,a.scenePan?.pan,a.sceneGain?.gain,a.gestureRoom?.gain,a.gestureEchoWet?.gain,a.gestureEcho?.delayTime])param?.cancelScheduledValues(now);
   a.performanceApplied={};a.echoTimeValue=null;if(a.playing)a.setPlaying(false);
  }

@@ -1,4 +1,4 @@
-import {environmentPresets,normalizeEnvironment,EnvironmentSynth} from './environment.js?rev=environment-34';
+import {environmentPresets,normalizeEnvironment,EnvironmentSynth} from './environment.js?rev=performance-39';
 const $=id=>document.getElementById(id);
 export function createEnvironmentController({audio,getOrigin=()=>0,onChange=()=>{},readOnly=()=>false}){
  let config;try{config=normalizeEnvironment(JSON.parse(localStorage.getItem('chromaflow-environment-v1')));}catch{config=normalizeEnvironment();}
