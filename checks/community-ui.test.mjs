@@ -42,7 +42,7 @@ console.log('PASS: direct and legacy shared links bypass modal/account/chart, at
 // Presentation links load one selected track, preserve the chosen composition,
 // and never fetch a leaderboard or account just to listen.
 let chosen,launched=0,entered=[],presented=0,left=0;
-const presentation={active:false,choose(t,fn){chosen=t;this.launch=fn;},enter(t,ratio,opts){this.active=true;entered.push([t,ratio,opts]);},async play(t,options){assert.equal(t.communityId,id);presented++;this.options=options;},fail(e){throw e;},exit(){left++;this.active=false;}};
+const presentation={setQueue(queue){this.queue=queue;},active:false,choose(t,fn){chosen=t;this.launch=fn;},enter(t,ratio,opts){this.active=true;entered.push([t,ratio,opts]);},async play(t,options){assert.equal(t.communityId,id);presented++;this.options=options;},fail(e){throw e;},exit(){left++;this.active=false;}};
 const presentUI=createCommunityController(recorder,{request,upload,presentation});
 recorder.phase='idle';recorder.prepareExternal=async()=>launched++;
 await presentUI.load();assert($('communityTracks').innerHTML.includes('data-action="present"'));

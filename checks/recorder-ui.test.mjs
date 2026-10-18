@@ -32,3 +32,20 @@ const forkId=forked.id;$('recordMode').value='cycles';$('recordCycles').value='1
 quota=true;await recorder.forkExternal(source);assert.equal(saved.size,countBeforeFork+1);assert.deepEqual(recorder.selectedTake.events,[]);assert($('recorderStatus').textContent.includes('Your fork remains'));assert.equal($('takeDownload').disabled,false);quota=false;
 console.log('PASS: fork during community playback, opening setup/pattern/scene copy, isolated identity and empty timeline, editable browser draft, recording into the same fork, busy-state protection, parent preservation and quota recovery.');
 console.log('PASS: cycle capture, complete setup and timed automation, browser save/select/rename, loop reset and stop restoration, seam edit, portable and WAV downloads, file import, setup loading, manual bar finish, recording through finish request, quota recovery with retained download, and cancellation.');
+
+// Presentation handoffs retain the original browser setup and use one shared clock.
+const beforePresentation=structuredClone(setup),beforeSelection=recorder.selectedTake.id;
+let prepared=0,visualStarts=0,visualStops=0,midpoints=0,progress=[];
+backend.preload=async()=>prepared++;
+backend.transition=async(take,{duration})=>({start:audio.ctx.currentTime+.16,duration});
+bridge.beginTransition=()=>visualStarts++;bridge.endTransition=()=>visualStops++;
+const first=structuredClone(source),next=structuredClone(source);next.name='Incoming';next.snapshot.main.settings.reverb=21;
+await recorder.playExternal(first,{presentation:true});await recorder.preloadExternal(next);assert.equal(prepared,1);
+const switchAt=audio.ctx.currentTime+.16;
+const handoff=recorder.transitionExternal(next,{duration:5,onMidpoint:()=>midpoints++,onProgress:p=>progress.push(p)});await Promise.resolve();await Promise.resolve();
+assert.equal($('playbackTitle').textContent,first.name);assert.equal(visualStarts,0);
+audio.ctx.currentTime=switchAt+.01;recorder.frame();assert.equal(visualStarts,1);assert.equal($('playbackTitle').textContent,'Incoming');assert.equal(setup.main.settings.reverb,21);
+audio.ctx.currentTime=switchAt+2.6;recorder.frame();assert.equal(midpoints,1);
+audio.ctx.currentTime=switchAt+5.1;recorder.frame();assert.equal(await handoff,true);assert.equal(midpoints,1);assert.equal(progress.at(-1),1);assert(visualStops>0);
+const cancelled=recorder.transitionExternal(first);await Promise.resolve();await Promise.resolve();recorder.stopPlayback();assert.equal(await cancelled,false);assert.equal(recorder.phase,'idle');assert.equal(recorder.selectedTake.id,beforeSelection);assert.deepEqual(setup,beforePresentation);
+console.log('PASS: presentation preloading, audio-clock visual commit, midpoint credits, completed handoffs, cancellation and original setup/selection restoration.');

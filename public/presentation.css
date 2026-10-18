@@ -21,7 +21,7 @@ body.presentation-mode>*:not(#presentationShell):not(.svg-defs){display:none!imp
 #presentationShell #stage{position:relative;flex:none;margin:0;padding:0;min-width:0;min-height:0;max-width:none;max-height:none;border:0;border-radius:0;container-type:inline-size;isolation:isolate}
 #presentationShell[data-ratio=portrait] #stage{width:min(100vw,56.25dvh);height:auto;aspect-ratio:9/16}
 #presentationShell[data-ratio=landscape] #stage{width:min(100vw,177.777777dvh);height:auto;aspect-ratio:16/9}
-#presentationShell #stage>*:not(#fluid):not(#particles):not(#presentationOverlay):not(#presentationControls):not(#presentationGate){display:none!important}
+#presentationShell #stage>*:not(#fluid):not(#particles):not(#presentationOverlay):not(#presentationControls):not(#presentationGate):not(#presentationNextStatus):not(.presentation-outgoing){display:none!important}
 #presentationShell #fluid{pointer-events:none;cursor:default}
 .presentation-overlay{position:absolute;inset:0;z-index:6;pointer-events:none;padding:5cqw 6cqw;color:#f7f5f1;text-shadow:0 2px 18px #0008;background:linear-gradient(0deg,#03070be6,transparent 52%,#03070b40);display:flex;justify-content:space-between;align-items:flex-end;gap:7cqw}
 .presentation-overlay[hidden]{display:none}
@@ -38,3 +38,11 @@ body.presentation-mode>*:not(#presentationShell):not(.svg-defs){display:none!imp
 #presentationShell[data-ratio=portrait] .presentation-brand p{margin:3.5cqw 0 2.7cqw}
 .presentation-controls{position:absolute;z-index:10;top:14px;right:14px;display:flex;gap:8px}.presentation-controls[hidden]{display:none}.presentation-controls button,.presentation-controls a{font-size:11px;padding:9px 12px;background:#101318db;color:#eee;border:1px solid #ffffff35;border-radius:6px;text-decoration:none}
 .presentation-gate{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#06090a9c;backdrop-filter:blur(5px);font-size:14px}.presentation-gate[hidden]{display:none}.presentation-gate button{background:#c1dec9;color:#18231d;padding:13px 24px;border-radius:8px;font-size:14px}
+
+.presentation-outgoing{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+.presentation-next-status{position:absolute;top:58px;right:14px;left:14px;z-index:10;margin:0;text-align:right;color:#eee;font-size:12px;line-height:1.5;text-shadow:0 1px 8px #000}
+.presentation-next-status:empty{display:none}
+.presentation-controls{flex-wrap:wrap;max-width:calc(100% - 28px);justify-content:flex-end}
+.presentation-controls button:disabled{opacity:.6;cursor:default}
+.presentation-controls :focus-visible{outline:2px solid #c1dec9;outline-offset:3px}
+@media(max-width:450px){.presentation-controls button,.presentation-controls a{padding:9px 8px;font-size:10px}.presentation-next-status{top:85px}}

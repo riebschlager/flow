@@ -6,7 +6,7 @@
 <meta name="author" content="Chris Riebschlager">
 <meta name="theme-color" content="#101316"><meta name="description" content="A little less rush, a little more room. Make an evolving musical scene for relaxing, meditation, studying or sleep. Free, always ad-free, no sign-up needed to listen.">
 <title>Flow</title>
-<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?rev=shared-60">
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?rev=next-62">
 <link rel="canonical" href="https://flow.the816.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Flow">
@@ -25,7 +25,7 @@
 <meta name="twitter:description" content="A little less rush, a little more room. Make an evolving musical scene for relaxing, meditation, studying or sleep. Free, always ad-free, no sign-up needed to listen.">
 <meta name="twitter:image" content="https://flow.the816.com/social/flow-unwind.jpg">
 <meta name="twitter:image:alt" content="Flow — Make a little room to unwind. Find a vibe. Let the music keep you company. Colorful ribbons on a dark canvas.">
-<link rel="stylesheet" href="/presentation.css?rev=present-61">
+<link rel="stylesheet" href="/presentation.css?rev=next-62">
 <script>if(/^\/recordings\//.test(location.pathname)&&["portrait","landscape"].includes(new URLSearchParams(location.search).get("present")))document.documentElement.classList.add("presentation-pending");</script>
 </head>
 <body class="session-loading">
@@ -117,8 +117,9 @@
 <div id="presentationShell" hidden><div id="presentationOverlay" class="presentation-overlay" hidden>
 <div class="presentation-credit"><h1 id="presentationTitle"></h1><p id="presentationArtist"></p></div>
 <div class="presentation-brand"><div class="presentation-logo"><span class="brandmark"><svg aria-hidden="true"><use href="#drop"/></svg></span><span>Flow</span></div><p>infinite ambient music in your browser.<br>authored by humans.</p><span class="presentation-url">flow.the816.com</span></div></div>
-<div id="presentationControls" class="presentation-controls" hidden><button id="presentationFullscreen">Enter fullscreen</button><a id="presentationExit" href="/community">Exit presentation</a></div>
+<div id="presentationControls" class="presentation-controls" hidden><button id="presentationNext" disabled>Next track →</button><button id="presentationFullscreen">Enter fullscreen</button><a id="presentationExit" href="/community">Exit presentation</a></div>
+<p id="presentationNextStatus" class="presentation-next-status" role="status" aria-live="polite"></p>
 <div id="presentationGate" class="presentation-gate" hidden><p id="presentationStatus" role="status" aria-live="polite">Preparing your moment…</p><button id="presentationBegin" hidden>Tap to begin</button></div></div>
-<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=present-61"></script>
+<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=next-62"></script>
 <script type="module" src="select-ui.js?rev=selects-45"></script>
 </body></html>
