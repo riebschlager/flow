@@ -138,3 +138,5 @@
  dialog .lane-level input[type=range]{background:linear-gradient(to right,var(--lane) var(--pct,50%),#35383d var(--pct,50%)) center / 100% 4px no-repeat}
  .lane-pattern-tools{flex-wrap:wrap;gap:8px;font-size:12px}.lane-pattern-tools button{min-height:44px;min-width:44px;font-size:12px;padding:8px}.lane-pattern-tools input[type=number]{width:64px}.studio-clear{min-height:44px;font-size:12px}.studio-transport>label,.studio-transport>span{font-size:12px}
 }
+
+.help-link{text-decoration:none}
