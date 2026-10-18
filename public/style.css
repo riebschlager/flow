@@ -262,3 +262,5 @@ body.zen.zen-harmony-collapsed .transport{display:none}
 /* Leave the palette and Clear canvas a separate lane above the bottom handle. */
 body.zen .palette-controls,body.zen #clear{bottom:46px}
 @media(max-width:600px){body.zen .zen-row-toggle{max-width:calc(100% - 32px);min-height:44px;padding:9px 12px}body.zen .zen-transport-toggle{left:12px;transform:none;max-width:calc(100% - 130px)}body.zen .gesture-hud{top:52px}body.zen .palette-controls,body.zen #clear{bottom:52px}}
+
+.share-sign-in{padding:18px;border:1px solid #79618d;border-radius:8px;background:#b7a0ff0a;margin:12px 0}.share-sign-in h4{font-size:16px;font-weight:500;color:#e3d5eb;margin:0 0 8px}.share-sign-in .outline-button{display:inline-block;width:auto;margin:10px 10px 0 0;text-decoration:none}.community-dialog button:disabled{cursor:default}
