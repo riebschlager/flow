@@ -140,3 +140,12 @@
 }
 
 .help-link{text-decoration:none}
+
+/* Shared compact native picker treatment. Full selected details wrap below. */
+select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.select-detail{margin:7px 0 12px;line-height:1.65;overflow-wrap:anywhere;letter-spacing:0;color:var(--muted);font-size:11px}
+.select-detail[hidden]{display:none}
+.voice-row{flex-wrap:wrap}.voice-row .select-detail{flex-basis:100%;margin:0 0 3px 80px}
+.studio-toolbar{flex-wrap:wrap}.studio-toolbar .select-detail{flex-basis:100%;margin:0}
+.beat-lane-top{flex-wrap:wrap}.beat-lane-top .select-detail{flex-basis:100%;margin:0}
+@media(max-width:700px){select{min-height:44px;font-size:16px}.voice-row select{min-height:44px;font-size:16px}.select-detail{font-size:12px}}

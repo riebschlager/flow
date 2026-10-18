@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {optionPresentation} from '../public/select-ui.js';
+assert.deepEqual(optionPresentation('Daydream · Cmaj7 → Am7 → Fmaj7 → G'),{label:'Daydream',detail:'Cmaj7 → Am7 → Fmaj7 → G'});
+assert.deepEqual(optionPresentation('Conduct · filter & pan'),{label:'Conduct',detail:'filter & pan'});
+assert.deepEqual(optionPresentation('Manual · finish at next bar'),{label:'Manual',detail:'finish at next bar'});
+assert.deepEqual(optionPresentation('Warm strings'),{label:'Warm strings',detail:''});
+const name='A very long performance name with more than thirty two characters';
+const result=optionPresentation(name+' · 1:24');assert.equal(Array.from(result.label).length,32);assert.equal(result.detail,name+' · 1:24');
+assert.equal(optionPresentation('<img src=x onerror=alert(1)>').label,'<img src=x onerror=alert(1)>');
+assert.equal(optionPresentation('🎶'.repeat(40)).label,'🎶'.repeat(31)+'…');
+console.log('PASS: concise names, full chord and gesture details, unchanged short names, full long performance names and durations, safe plain text, and Unicode labels.');
