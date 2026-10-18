@@ -39,6 +39,6 @@ export function createPresentationController(recorder){
  $('presentationFullscreen').onclick=e=>{void fullscreen();if(e.detail)e.currentTarget.blur();reveal();};
  document.addEventListener('fullscreenchange',()=>{$('presentationFullscreen').textContent=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen';});
  shell.addEventListener('pointermove',reveal);shell.addEventListener('pointerdown',e=>{if(!e.target.closest('button,a'))reveal();});shell.addEventListener('focusin',reveal);
- document.addEventListener('keydown',e=>{if(active&&e.key==='Tab')reveal();});
+ document.addEventListener('keydown',e=>{if(!active)return;if(e.key==='Tab')reveal();if(e.key==='Escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});});
  return {choose,enter,play,fail,exit,get active(){return active;}};
 }
