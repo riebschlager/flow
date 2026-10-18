@@ -173,3 +173,10 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;over
 @media(prefers-reduced-motion:reduce){.listening-invitation :is(.play-button,.mobile-play){animation:none}}
 
 .mini-row #voiceDelayBeats{width:170px;max-width:58%;font-size:11px}
+
+/* Saved-session loops use the hero area for the piece and composer. */
+.playback-hero[hidden]{display:none}
+body.loop-playback #intro,body.loop-playback #performanceHint,body.loop-playback #gestureHud{display:none}
+body.loop-playback .playback-hero{display:block;right:7%;opacity:1}
+.playback-hero p{overflow-wrap:anywhere;font-size:clamp(28px,3.8vw,58px)}
+body.loop-playback .playback-hero>span{display:block;overflow-wrap:anywhere;font-size:clamp(12px,1.3vw,16px);line-height:1.6;color:#c3b4e2}
