@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {trackCover,trackSeed} from '../public/track-cover.js';
+const svg=trackCover('Quiet water','River');
+assert.equal(svg,trackCover('Quiet water','River'));
+assert.notEqual(svg,trackCover('Other water','River'));
+assert.notEqual(svg,trackCover('Quiet water','Other artist'));
+assert.notEqual(trackSeed('ab','c'),trackSeed('a','bc'));
+assert.equal(trackCover(' Café ','River'),trackCover('Cafe\u0301','River'));
+assert(!trackCover('<script>alert(1)</script>','" onload="evil()').includes('script'));
+assert(!svg.includes('id='));assert(!svg.includes('NaN'));
+const allowed=new Set(['#141a20','#ffffff','#b7a0ff','#73e2d0','#ff9e9e','#edca82']);
+for(const color of svg.match(/#[a-f0-9]{6}/g))assert(allowed.has(color));
+assert.equal(new Set(Array.from({length:200},(_,i)=>trackCover('Song '+i,'Artist'))).size,200);
+console.log('PASS: reproducible, distinct, Unicode-normalized SVG covers, unambiguous metadata seeds, safe markup, sketch palette.');

@@ -53,3 +53,20 @@ requests=[];entered=[];location.pathname='/recordings/'+id;location.hash='';loca
 await presentUI.openRoute();assert.equal(entered[0][0],null,'standalone shell appears while the track loads');assert.equal(entered.at(-1)[1],'landscape');assert.equal(presentation.options.autoplay,true);assert.deepEqual(requests.map(r=>r[0]),['/api/community/tracks/'+id,'/api/community/tracks/'+id+'/performance']);
 assert.equal(presented,2);presentUI.leavePresentation();assert.equal(left,2);
 console.log('PASS: presentation chooser defers playback, launch unlocks audio, portrait selection is retained, direct landscape loads bypass account/chart, and leaving cleans up presentation.');
+
+// Home discovery is public, independent of chart state, and uses existing playback controls.
+location.pathname='/';location.hash='';location.search='';recorder.phase='idle';requests=[];
+recorder.prepareExternal=async()=>unlocked++;
+await presentUI.loadHome();
+assert.deepEqual(requests.map(r=>r[0]),['/api/community/tracks?window=all&sort=newest&page=0']);
+assert($('homeCommunityTracks').innerHTML.includes('<svg'));
+assert($('homeCommunityTracks').innerHTML.includes('&lt;Glass &amp; light&gt;'));
+assert(!$('homeCommunityTracks').innerHTML.includes('River <artist>'));
+assert($('homeCommunityTracks').innerHTML.includes('data-action="present"'));
+const homeUI=createCommunityController(recorder,{request,upload,presentation});
+await homeUI.loadHome();const prior=played;await homeUI.action('play',id,button);assert.equal(played,prior+1);
+recorder.phase='idle';await homeUI.action('present',id,button);assert.equal(chosen.id,id);
+await presentation.launch({ratio:'landscape',unlock:recorder.prepareExternal()});assert.equal(entered.at(-1)[1],'landscape');
+failList=true;await homeUI.loadHome();assert.equal($('homeCommunityRetry').hidden,false);assert.match($('homeCommunityStatus').textContent,/Storage unavailable/);
+failList=false;await homeUI.loadHome();assert.equal($('homeCommunityRetry').hidden,true);
+console.log('PASS: anonymous home discovery, escaped metadata and covers, direct Listen/Present, visible failure and retry.');
