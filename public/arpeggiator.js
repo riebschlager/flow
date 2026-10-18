@@ -1,4 +1,4 @@
-import {parseChord,instruments} from './music.js?rev=gestures-32';
+import {parseChord,instruments} from './music.js?rev=gestures-32-echo52';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRates=[4,2,1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){

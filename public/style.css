@@ -171,3 +171,5 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;over
 .mobile-dock>.listening-hint{left:max(12px,env(safe-area-inset-left));bottom:calc(100% + 12px);width:min(235px,calc(100vw - 24px))}
 .mobile-dock>.listening-hint:after{left:35px}
 @media(prefers-reduced-motion:reduce){.listening-invitation :is(.play-button,.mobile-play){animation:none}}
+
+.mini-row #voiceDelayBeats{width:170px;max-width:58%;font-size:11px}

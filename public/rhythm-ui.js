@@ -1,5 +1,5 @@
-import {echoLabel} from './timing.js?rev=gestures-32';
-import {drumVoices,grooves,grooveDetails,drumKits,applyDrumKit,normalizeRhythm,groovePattern,euclidean,rotatePattern,varyPattern,RhythmEngine} from './rhythm.js?rev=gestures-32';
+import {echoLabel} from './timing.js?rev=gestures-32-echo52';
+import {drumVoices,grooves,grooveDetails,drumKits,applyDrumKit,normalizeRhythm,groovePattern,euclidean,rotatePattern,varyPattern,RhythmEngine} from './rhythm.js?rev=gestures-32-echo52';
 const $=id=>document.getElementById(id);
 const anchors=[{x:.25,y:.68},{x:.48,y:.42},{x:.72,y:.66},{x:.77,y:.31}];
 export function createRhythmController({audio,togglePlay,getPosition,onHit,getChordAt,onChange=()=>{}}){

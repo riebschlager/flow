@@ -35,3 +35,8 @@ console.log('PASS: all eight kits and eight new patterns in both panels, indepen
 $('rhythmEnabled').checked=true;fire($('rhythmEnabled'),'change');audio.playing=true;audio.ctx={currentTime:0};const originalError=console.error;let logged=0;
 try{console.error=()=>logged++;ui.start();assert.equal(logged,1);assert.match($('rhythmStatus').textContent,/couldn’t start/);ui.transportChanged();assert.match($('rhythmStatus').textContent,/couldn’t start/);}finally{console.error=originalError;audio.playing=false;audio.ctx=null;$('rhythmEnabled').checked=false;fire($('rhythmEnabled'),'change');ui.stop();}
 console.log('PASS: failed audio/scheduler startup is reported visibly and is not overwritten as Playing.');
+
+// Either echo menu updates every shared control and survives restoring saved settings.
+const {echoDivisions}=await import('../public/timing.js');
+for(const {beats} of echoDivisions){for(const id of ['voiceDelayBeats','studioDelayBeats']){$(id).value=String(beats);fire($(id),'change');assert.equal(audio.delayBeats,beats);assert.equal(Number($('voiceDelayBeats').value),beats);assert.equal(Number($('studioDelayBeats').value),beats);assert.equal(stored.delayBeats,beats);const saved=structuredClone(stored);ui.restore(saved);assert.equal(audio.delayBeats,beats);}}
+console.log('PASS: every echo spacing syncs from either menu, persists, and restores.');

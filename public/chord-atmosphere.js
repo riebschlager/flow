@@ -1,5 +1,5 @@
 import {getPalette,hexRGB,normalizePalette} from './palettes.js?rev=gestures-32';
-import {parseChord} from './music.js?rev=gestures-32';
+import {parseChord} from './music.js?rev=gestures-32-echo52';
 const clamp=(value,lo=0,hi=1)=>Math.max(lo,Math.min(hi,value));
 const mix=(a,b,t)=>a+(b-a)*t;
 function hueColor(hue){const h=((hue%360)+360)%360/60,c=.58,x=c*(1-Math.abs(h%2-1)),m=.24;const rgb=h<1?[c,x,0]:h<2?[x,c,0]:h<3?[0,c,x]:h<4?[0,x,c]:h<5?[x,0,c]:[c,0,x];return rgb.map(value=>value+m);}

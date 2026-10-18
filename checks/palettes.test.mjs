@@ -20,7 +20,7 @@ for(const palette of Object.values(colorPalettes)){
 }
 const snapshot={main:{settings:{},voices:['piano','piano','piano','piano'],custom:['C','Am','F','G']}};
 // Use an actual supported voice without coupling to an instrument label.
-const {instruments}=await import('../public/music.js?rev=gestures-32');snapshot.main.voices.fill(Object.keys(instruments)[0]);
+const {instruments}=await import('../public/music.js?rev=gestures-32-echo52');snapshot.main.voices.fill(Object.keys(instruments)[0]);
 assert.equal(sanitizeSnapshot(snapshot).main.settings.colorPalette,'classic');snapshot.main.settings.colorPalette='ember';assert.equal(sanitizeSnapshot(snapshot).main.settings.colorPalette,'ember');snapshot.main.settings.colorPalette='data:text/html';assert.equal(sanitizeSnapshot(snapshot).main.settings.colorPalette,'classic');
 const atmosphere=new ChordAtmosphere();atmosphere.frame(0,{chord:'Cmaj7',palette:'tide'});assert.deepEqual(atmosphere.current.color,hexRGB(colorPalettes.tide.colors[0].hex));
 const before=structuredClone(atmosphere.current),age=atmosphere.age;atmosphere.frame(0,{chord:'Cmaj7',palette:'ember'});assert.deepEqual(atmosphere.current,before);assert.equal(atmosphere.age,age,'a palette edit does not restart the chord pulse');for(let i=0;i<120;i++)atmosphere.frame(.1,{chord:'Cmaj7',palette:'ember'});assert(atmosphere.current.color.every((v,i)=>Math.abs(v-hexRGB(colorPalettes.ember.colors[0].hex)[i])<1e-4));

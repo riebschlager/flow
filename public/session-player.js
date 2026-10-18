@@ -1,10 +1,10 @@
 import {masterLevel} from './output.js?rev=levels-38';
 import {EnvironmentSynth} from './environment.js?rev=performance-39';
 import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=gestures-32';
-import {PercussionSynth} from './rhythm.js?rev=gestures-32';
+import {PercussionSynth} from './rhythm.js?rev=gestures-32-echo52';
 import {PerformanceAudio} from './recorder-audio.js?rev=gestures-32';
 import {normalizePerformance} from './gestures.js?rev=gestures-32';
-import {delaySeconds} from './timing.js?rev=gestures-32';
+import {delaySeconds} from './timing.js?rev=gestures-32-echo52';
 const soundKinds=new Set(['settings','gesture','note','drum','noteOff','drumOff']);
 const parameter=(p,value,at,smooth=.02)=>p?.setTargetAtTime(value,at,smooth);
 export class SessionPlayer{
