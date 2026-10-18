@@ -32,6 +32,14 @@ Mix consolidates the sidebar’s two duplicate shared-echo selectors into one; B
 
 Structural checks cover unique IDs, label and ARIA references, valid nesting, and preserved control values/ranges/defaults. The full app smoke test exercises navigation, focus, scrolling, disclosures and the existing recording/playback/fork workflow. Full browser interaction and visual QA were unavailable in this environment.
 
+## Output level and dynamics
+
+Fresh setups start at 70% master (previously 55%). The master now maps directly to 0–100% gain, removing the old hidden 0.65 multiplier. A calibrated +4.1 dB makeup stage follows scene expression, then a fast peak compressor and an emergency sample guard before the final master. All droplets, arpeggio, percussion, atmospherics, effects and gestures pass through this output path. It is fixed gain compensation, not automatic gain riding: quiet passages, natural decays, layer balance and Conduct gestures remain expressive.
+
+Explicit browser and session master values, including zero, are retained. Existing 55% setups benefit from the corrected output path without silently changing their stored slider. Live performance, session/community playback and new local WAV exports use the same master mapping and protected signal. Older PCM takes keep their already-rendered audio.
+
+Native offline measurements used actual WebAudioFont samples and the production effect graph across five representative soundscapes, a dense four-layer stress mix and a muted mix. Typical examples moved from roughly −29…−26 LUFS into roughly −18…−15 LUFS; this is calibration evidence, not a guarantee that every performance has identical loudness. Checks also cover finite bounded peaks, master mute, independent layer routing and timed session automation. Browser listening/visual QA was unavailable.
+
 ## Droplets mix
 
 Mix → Layer levels includes a 0–100% Droplets mix slider for painting, automatic droplets and blooms. A dedicated smoothed input gain feeds the shared melodic effects; arpeggio, percussion and atmospherics retain their independent levels. Turning droplets down also reduces their new reverb/delay sends, while existing shared effect tails fade naturally. Visual droplets continue at zero volume. Master still controls the entire composition.

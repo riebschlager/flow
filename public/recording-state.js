@@ -1,3 +1,4 @@
+import {DEFAULT_MASTER_VOLUME} from './output.js?rev=levels-38';
 import {normalizeEnvironment} from './environment.js?rev=environment-34';
 import {normalizePalette} from './palettes.js?rev=gestures-32';
 import {instruments,progressions,soundscapes,parseChord} from './music.js?rev=gestures-32';
@@ -5,7 +6,7 @@ import {normalizeRhythm,drumVoices} from './rhythm.js?rev=gestures-32';
 import {normalizeArp} from './arpeggiator.js?rev=probability-33';
 import {normalizeGestureSettings,normalizePerformance} from './gestures.js?rev=gestures-32';
 const number=(n,lo,hi,fallback)=>Number.isFinite(Number(n))?Math.max(lo,Math.min(hi,Number(n))):fallback;
-export const mainDefaults={colorPalette:'classic',soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:55,dropletsVolume:100,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65};
+export const mainDefaults={colorPalette:'classic',soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:DEFAULT_MASTER_VOLUME,dropletsVolume:100,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65};
 export function sanitizeSnapshot(raw){
  if(!raw?.main||!Array.isArray(raw.main.voices)||raw.main.voices.length!==4||raw.main.voices.some(v=>!Object.hasOwn(instruments,v)))throw new Error('A performance references an unknown melodic voice.');
  const main=raw.main,settings={...mainDefaults,...Object.fromEntries(Object.entries(main.settings||{}).filter(([k])=>Object.hasOwn(mainDefaults,k)))};

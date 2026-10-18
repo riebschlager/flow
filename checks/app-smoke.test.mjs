@@ -22,10 +22,11 @@ $('performanceHint').onclick();assert.equal($('performPanel').hidden,false);asse
 document.activeElement=make('summary');const beforeKeyboard=$('audioState').textContent;for(const fn of document.events.keydown)fn({code:'Space',key:' ',repeat:false,preventDefault(){}});assert.equal($('audioState').textContent,beforeKeyboard);assert.equal($('start').disabled,false);$('zen').onclick();assert(document.body.classList.contains('zen'));for(const fn of document.events.keydown)fn({code:'Escape',key:'Escape',preventDefault(){}});assert(!document.body.classList.contains('zen'));document.activeElement=body;
 console.log('PASS: five destinations, ARIA selection, arrow/Home/End navigation, per-tab scroll, cross-links, focused disclosure keyboard safety, compact initial editors and direct gesture-guide access.');
 $('performTab').onclick();assert.equal($('performPanel').hidden,false);assert.equal($('rhythmPanel').hidden,true);
+assert.equal($('volume').value,'70');assert.equal($('volumeValue').textContent,'70%');
 const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:500,clientY:350};for(const fn of canvas.listeners.pointerdown)fn(event);for(let i=0;i<60;i++)tick();for(const fn of canvas.listeners.pointerup)fn(event);for(let i=0;i<45;i++)tick();assert.equal($('gestureName').textContent,'Bloom');const coral=all.find(e=>e.dataset.color==='2');for(const fn of coral.listeners.click)fn();assert.equal($('cycleColors').checked,false);assert.equal($('paletteHint').textContent,'CORAL ONLY');assert.equal($('pitchRangeValue').textContent,'Coral: C2 → B3 · 8 notes');$('clear').onclick();tick();
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
 // Exercise the live app's quantized launch, scheduler, splash, and transport controls.
-const {AmbientAudio}=await import('../public/music.js?rev=droplets-37');
+const {AmbientAudio}=await import('../public/music.js?rev=levels-38');
 const {EnvironmentSynth}=await import('../public/environment.js?rev=environment-34');const environmentEvents=[];for(const method of ['prepare','apply','stop','dispose'])EnvironmentSynth.prototype[method]=function(...args){environmentEvents.push({method,args:structuredClone(args)});};
 const notes=[],percussionHits=[],timers=new Map();let timerID=0;
 const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
@@ -116,7 +117,7 @@ try{
  const soundCount=notes.length;$('chordAtmosphere').value='0';for(const fn of $('chordAtmosphere').listeners.input)fn();tick();assert.deepEqual(atmosphereFrame.light,{brightness:1,tint:[1,1,1]});assert.equal(notes.length,soundCount);assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.chordAtmosphere,'0');
  console.log('PASS: canvas atmosphere tracks automatic chord boundaries and paused manual jumps, with a persisted zero setting and no extra audio events.');
  // Selecting new soundscapes applies all four voices/effects without changing timing.
- const {soundscapes,instruments}=await import('../public/music.js?rev=droplets-37');
+ const {soundscapes,instruments}=await import('../public/music.js?rev=levels-38');
  const beforeScapes={bpm:$('bpmLabel').textContent,rate:$('rhythmRate').value,spacing:$('voiceDelayBeats').value,notes:notes.length};
  for(const key of ['glassorganisms','submergedcinema','strangeattractor','orbitalrelay']){
   $('soundscape').value=key;for(const fn of $('soundscape').listeners.change)await fn();const scape=soundscapes[key];
@@ -125,7 +126,7 @@ try{
  for(const key of Object.keys(instruments).filter(key=>instruments[key].group==='Experimental textures')){assert($('voices').html.includes('value="'+key+'"'));assert($('arpVoice').html.includes('value="'+key+'"'));}
  assert.equal($('bpmLabel').textContent,beforeScapes.bpm);assert.equal($('rhythmRate').value,beforeScapes.rate);assert.equal($('voiceDelayBeats').value,beforeScapes.spacing);assert.equal(notes.length,beforeScapes.notes);
  console.log('PASS: all experimental preset selections update four voices, effects, description, and saved settings; new voices appear in color and arpeggio menus without changing timing or triggering extra notes.');
- const {progressions,progressionDetails}=await import('../public/music.js?rev=droplets-37');
+ const {progressions,progressionDetails}=await import('../public/music.js?rev=levels-38');
  const beforeHarmony={bpm:$('bpmLabel').textContent,rate:$('rhythmRate').value,voice:$('voice0').value,reverb:$('reverb').value,length:$('chordLength').value};
  for(const [key,detail] of Object.entries(progressionDetails)){
   assert($('progression').options.some(option=>option.value===key));$('progression').value=key;fire('progression');tick();
