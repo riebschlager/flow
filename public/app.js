@@ -1,11 +1,12 @@
-import {createSessionWorkspace} from './session-workspace.js?rev=shared-60';
+import {createSessionWorkspace} from './session-workspace.js?rev=present-61';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
 import {createEnvironmentController} from './environment-ui.js?rev=performance-39';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
-import {createCommunityController} from './community-ui.js?rev=shared-60';
+import {createCommunityController} from './community-ui.js?rev=present-61';
+import {createPresentationController} from './presentation.js?rev=present-61';
 import {createRecorderController} from './recorder-ui.js?rev=shared-60';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=water-49-echo52';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=gestures-32-echo52';
@@ -159,7 +160,7 @@ for(const [id,collapsedClass,label,collapseArrow,expandArrow] of [
  };
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('zen')){toggleZen(false);return;}if(recorder?.blocked||$('recordDialog').open||$('communityDialog').open)return;if(/^(INPUT|SELECT|TEXTAREA|BUTTON|SUMMARY|A)$/.test(document.activeElement.tagName)||$('beatDialog').open)return;if(performanceUI.key(e))return;if(e.code==='Space'&&!e.repeat){e.preventDefault();togglePlay();}if(/^[1-4]$/.test(e.key))selectColor(Number(e.key)-1);if(e.key==='Escape')toggleZen(false);});
+document.addEventListener('keydown',e=>{if(document.body.classList.contains('presentation-mode'))return;if(e.key==='Escape'&&document.body.classList.contains('zen')){toggleZen(false);return;}if(recorder?.blocked||$('recordDialog').open||$('communityDialog').open)return;if(/^(INPUT|SELECT|TEXTAREA|BUTTON|SUMMARY|A)$/.test(document.activeElement.tagName)||$('beatDialog').open)return;if(performanceUI.key(e))return;if(e.code==='Space'&&!e.repeat){e.preventDefault();togglePlay();}if(/^[1-4]$/.test(e.key))selectColor(Number(e.key)-1);if(e.key==='Escape')toggleZen(false);});
 // Fluid rendering and the droplet/impact lifecycle.
 const canvas=$('fluid'),ctx=canvas.getContext('2d',{alpha:false});const overlay=$('particles'),fx=overlay.getContext('2d');const stage=$('stage');
 const atmosphere=new ChordAtmosphere({reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false});
@@ -267,7 +268,8 @@ for(const op of ['splat','force','pulse','clear']){const original=sim[op].bind(s
 for(const type of ['input','change'])document.addEventListener(type,e=>{if(e.target.closest?.('#recordDialog')||e.target.closest?.('#communityDialog'))return;recorder.stateChanged();});
 
 audio.onSessionEvent=(...args)=>recorder.captureSound(...args);
-const community=createCommunityController(recorder);
+const presentation=createPresentationController(recorder);
+const community=createCommunityController(recorder,{presentation});
 sessionWorkspace=createSessionWorkspace({recorder,community,bridge:{snapshot:snapshotPerformance,scene:snapshotScene,applySnapshot,restoreScene,stopLive,togglePlay,validateTake:sanitizeTake,validateScene(scene){if(!scene||!Number.isInteger(scene.w)||!Number.isInteger(scene.h)||scene.w<1||scene.h<1||scene.w*scene.h>1000000||['u','v','r','g','b'].some(k=>!Array.isArray(scene[k])||scene[k].length!==scene.w*scene.h||scene[k].some(v=>!Number.isFinite(v))))throw new Error('Invalid session canvas.');}}});
 community.setWorkspace(sessionWorkspace);
 sessionWorkspace.init();

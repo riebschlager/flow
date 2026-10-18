@@ -25,6 +25,8 @@
 <meta name="twitter:description" content="A little less rush, a little more room. Make an evolving musical scene for relaxing, meditation, studying or sleep. Free, always ad-free, no sign-up needed to listen.">
 <meta name="twitter:image" content="https://flow.the816.com/social/flow-unwind.jpg">
 <meta name="twitter:image:alt" content="Flow — Make a little room to unwind. Find a vibe. Let the music keep you company. Colorful ribbons on a dark canvas.">
+<link rel="stylesheet" href="/presentation.css?rev=present-61">
+<script>if(/^\/recordings\//.test(location.pathname)&&["portrait","landscape"].includes(new URLSearchParams(location.search).get("present")))document.documentElement.classList.add("presentation-pending");</script>
 </head>
 <body class="session-loading">
 <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -101,6 +103,22 @@
 <section class="community-share" aria-labelledby="shareTitle"><div><span class="eyebrow">PASS A LITTLE CALM ALONG</span><h3 id="shareTitle">Share a recorded moment</h3><p id="shareTakeInfo" class="helper">Select a take in your session, then choose Share.</p></div><button id="communityRecordings" class="outline-button">Open browser library</button>
 <div id="shareSignInGate" class="share-sign-in" hidden><h4>Sign in to share your session</h4><p class="helper" id="shareSignInMessage" role="status" aria-live="polite">Sharing publicly requires a ChatGPT account. Your saved take stays in this browser. After signing in, review its details and confirm sharing.</p><a id="shareSignIn" class="outline-button" href="/signin-with-chatgpt?return_to=%2Fcommunity" target="_top">Sign in with ChatGPT to share ↗</a><button id="shareAuthRetry" class="outline-button" type="button" hidden>Retry account check</button></div><form id="shareForm" hidden><div class="share-fields"><div><label for="shareArtist">Your public name</label><input id="shareArtist" type="text" maxlength="40" minlength="2" required autocomplete="nickname" placeholder="What should we call you?"></div><div><label for="shareTrackTitle">Track title</label><input id="shareTrackTitle" type="text" maxlength="80" minlength="2" required placeholder="A name for this moment"></div></div><label class="share-consent" for="shareConsent"><input id="shareConsent" type="checkbox" required> I made this performance and want to share its notes, canvas and settings publicly.</label><p class="helper">Names and titles are checked before publishing. Keep them kind. Session data only · up to 8 MB per shared loop; your original stays in your browser. Your account email is never shown.</p><button id="sharePublish" type="submit" class="outline-button">↑ Share with everyone</button><progress id="shareProgress" hidden aria-label="Upload progress" max="1" value="0"></progress><p id="shareStatus" class="community-status" role="status" aria-live="polite"></p></form></section>
 </dialog>
-<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=shared-60"></script>
+<dialog id="presentationDialog" class="presentation-dialog" aria-labelledby="presentationHeading">
+<button id="presentationClose" class="close-dialog" aria-label="Close presentation options">×</button>
+<span class="eyebrow">A MOMENT, ON REPEAT</span><h2 id="presentationHeading">Give this music a little room.</h2>
+<p id="presentationTrack" class="helper"></p>
+<fieldset class="presentation-options"><legend>Choose a composition</legend>
+<label><input type="radio" name="presentationRatio" value="portrait" checked><span class="ratio-icon portrait-icon" aria-hidden="true"></span><strong>Portrait <small>9:16</small></strong></label>
+<label><input type="radio" name="presentationRatio" value="landscape"><span class="ratio-icon landscape-icon" aria-hidden="true"></span><strong>Landscape <small>16:9</small></strong></label></fieldset>
+<label class="presentation-fullscreen-option"><input id="presentationWantFullscreen" type="checkbox"> Open fullscreen</label>
+<p class="helper">The selected track and its visuals loop continuously. Your chosen composition keeps its proportions on every screen.</p>
+<button id="presentationLaunch" class="session-primary">Start presentation ↗</button><p id="presentationLaunchStatus" role="status" aria-live="polite"></p>
+</dialog>
+<div id="presentationShell" hidden><div id="presentationOverlay" class="presentation-overlay" hidden>
+<div class="presentation-credit"><h1 id="presentationTitle"></h1><p id="presentationArtist"></p></div>
+<div class="presentation-brand"><div class="presentation-logo"><span class="brandmark"><svg aria-hidden="true"><use href="#drop"/></svg></span><span>Flow</span></div><p>infinite ambient music in your browser.<br>authored by humans.</p><span class="presentation-url">flow.the816.com</span></div></div>
+<div id="presentationControls" class="presentation-controls" hidden><button id="presentationFullscreen">Enter fullscreen</button><a id="presentationExit" href="/community">Exit presentation</a></div>
+<div id="presentationGate" class="presentation-gate" hidden><p id="presentationStatus" role="status" aria-live="polite">Preparing your moment…</p><button id="presentationBegin" hidden>Tap to begin</button></div></div>
+<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=present-61"></script>
 <script type="module" src="select-ui.js?rev=selects-45"></script>
 </body></html>

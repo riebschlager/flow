@@ -38,3 +38,18 @@ const before=played;await ui.playPreview();assert.equal(played,before+1);assert.
 recorder.phase='idle';blocked=false;location.pathname='/';location.hash='#track='+id;await ui.openRoute();assert.equal(played,before+2);assert.equal($('communityDialog').open,false);
 recorder.phase='idle';recorder.prepareExternal=async()=>{throw Error('Instrument unavailable');};await ui.openRoute();assert.equal($('previewStatus').textContent,'Instrument unavailable');assert.equal($('quickPlay').disabled,false);
 console.log('PASS: direct and legacy shared links bypass modal/account/chart, attempt autoplay, invite Play when blocked, retry the loaded track, and report genuine playback failures.');
+
+// Presentation links load one selected track, preserve the chosen composition,
+// and never fetch a leaderboard or account just to listen.
+let chosen,launched=0,entered=[],presented=0,left=0;
+const presentation={active:false,choose(t,fn){chosen=t;this.launch=fn;},enter(t,ratio,opts){this.active=true;entered.push([t,ratio,opts]);},async play(t,options){assert.equal(t.communityId,id);presented++;this.options=options;},fail(e){throw e;},exit(){left++;this.active=false;}};
+const presentUI=createCommunityController(recorder,{request,upload,presentation});
+recorder.phase='idle';recorder.prepareExternal=async()=>launched++;
+await presentUI.load();assert($('communityTracks').innerHTML.includes('data-action="present"'));
+await presentUI.action('present',id,button);assert.equal(chosen.id,id);assert.equal(presented,0,'chooser does not start playback');
+await presentation.launch({ratio:'portrait',unlock:recorder.prepareExternal()});assert.equal(launched,1);assert.equal(entered.at(-1)[1],'portrait');assert.equal(entered.at(-1)[2].navigate,true);assert.equal(presented,1);
+presentUI.leavePresentation();assert.equal(left,1);
+requests=[];entered=[];location.pathname='/recordings/'+id;location.hash='';location.search='?present=landscape';
+await presentUI.openRoute();assert.equal(entered[0][0],null,'standalone shell appears while the track loads');assert.equal(entered.at(-1)[1],'landscape');assert.equal(presentation.options.autoplay,true);assert.deepEqual(requests.map(r=>r[0]),['/api/community/tracks/'+id,'/api/community/tracks/'+id+'/performance']);
+assert.equal(presented,2);presentUI.leavePresentation();assert.equal(left,2);
+console.log('PASS: presentation chooser defers playback, launch unlocks audio, portrait selection is retained, direct landscape loads bypass account/chart, and leaving cleans up presentation.');
