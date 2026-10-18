@@ -1,0 +1,6 @@
+#!/bin/sh
+# Git retains the commit if synchronization fails; the caller must report/retry it.
+node scripts/github-sync.mjs || {
+  echo 'Flow: GitHub sync failed. The local commit is safe; retry node scripts/github-sync.mjs.' >&2
+  exit 1
+}

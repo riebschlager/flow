@@ -287,3 +287,9 @@ Each person has one active like per track, enforced by the database primary key.
 ## Validation
 
 After a current build, run `for test_file in checks/*.test.mjs; do node "$test_file" || exit 1; done` and `npx tsc --noEmit`. Tests cover the full live app/recorder bridge, worklet-free session capture, cancelled/ended musical events, data-file roundtrips, loop scheduling, voice preloading, expression/glide/FX automation, tab recovery, local WAV export controls/cancellation, legacy PCM file compatibility, IndexedDB atomicity, and all existing musical features. Community tests exercise actual SQLite queries and ephemeral native D1/R2 bindings, session-only storage and audio rejection, ownership, text gates, votes/charts and failure cleanup. A native offline Web Audio check also verified production WebAudioFont/percussion synthesis over three repeated cycles and an explicit WAV export through the actual capture worklet and encoder.
+
+## GitHub source sync
+
+The source is mirrored to https://github.com/riebschlager/flow on `main`, preserving Sites history. In every fresh checkout run `node scripts/github-sync-install.mjs` once. The tracked post-commit hook then pushes each new commit to GitHub using your existing Git credentials. Verify or retry manually with `node scripts/github-sync.mjs`. The installer preserves any different existing hooks configuration by stopping for integration.
+
+Sites remains the deployment source. Complete the normal Sites workflow and verify GitHub sync after each update. Sync never force-pushes. A failed hook leaves the local commit intact and must be retried; it does not undo the commit. New clones need the installer because Git does not clone local hook configuration. This is commit-based sync, not a background file watcher.
