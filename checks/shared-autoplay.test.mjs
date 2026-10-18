@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {AmbientAudio} from '../public/music.js';
+let closed=0;
+globalThis.window={AudioContext:class{state='suspended';resume(){return new Promise(()=>{});}close(){closed++;return Promise.resolve();}},WebAudioFontPlayer:class{}};
+const audio=new AmbientAudio();
+await assert.rejects(()=>audio.initialize({autoplay:true}),e=>e.name==='NotAllowedError');
+assert.equal(closed,1);assert.equal(audio.ctx,null,'blocked attempt leaves initialization retryable');
+const running={state:'suspended',resume(){this.state='running';return Promise.resolve();}};
+audio.ctx=running;await audio.resumeContext(true);assert.equal(running.state,'running');
+running.resume=()=>Promise.reject(new DOMException('Not allowed','NotAllowedError'));
+await assert.rejects(()=>audio.resumeContext(true),e=>e.name==='NotAllowedError');
+console.log('PASS: unresolved browser resume prompts for Play, closes partial context for retry, and detects running/rejected autoplay.');

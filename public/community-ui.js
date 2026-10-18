@@ -2,7 +2,7 @@ import {encodePerformance,decodePerformance,isSession,takeDuration} from './reco
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const duration=ms=>`${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}`,mb=n=>(n/1048576).toFixed(1)+' MB';
 export function createCommunityController(recorder,{request=fetch,upload=uploadFile}={}){
- let workspace=null;
+ let workspace=null,previewTake=null,previewBusy=false;
  let authState='unknown',signedIn=false,window='today',sort='popular',page=0,tracks=[],hasMore=false,loading=false,uploading=false,sharedTake=null,revision=0,actionBusy=false;
  const status=text=>$('communityStatus').textContent=text;
  async function api(path='',options={}){const response=await request('/api/community/'+path,{credentials:'same-origin',signal:AbortSignal.timeout(15000),...options});let data;try{data=await response.json();}catch{throw new Error('The shared library is unavailable. Please try again.');}if(!response.ok)throw new Error(data.error||'The request could not be completed.');return data;}
@@ -39,7 +39,7 @@ export function createCommunityController(recorder,{request=fetch,upload=uploadF
     if(!['idle','playing'].includes(recorder.phase))throw new Error('Finish your recording before opening another performance.');
     if(kind==='save'&&recorder.phase!=='idle')throw new Error('Stop playback before saving a browser copy.');
     if(kind==='play')await recorder.prepareExternal();status('Opening '+track.title+'…');const take=await getTake(track);
-    if(kind==='play'){await recorder.playExternal(take);workspace?.preview(take);$('communityDialog').close();}else if(kind==='fork'){await recorder.forkExternal(take);$('communityDialog').close();}else{await recorder.saveExternal(take);status('Saved a separate copy in your browser library.');}
+    if(kind==='play'){await recorder.playExternal(take);previewTake=take;workspace?.preview(take);$('previewStatus').textContent='';$('communityDialog').close();}else if(kind==='fork'){await recorder.forkExternal(take);$('communityDialog').close();}else{await recorder.saveExternal(take);status('Saved a separate copy in your browser library.');}
    }else if(kind==='like'){await api(`tracks/${id}/like`,{method:track.liked?'DELETE':'PUT'});await load();}
    else if(kind==='remove'){await api('tracks/'+id,{method:'DELETE'});await load();status('Performance removed from the public library. Your browser copy is unchanged.');}
    else if(kind==='link'){const link=new URL('/recordings/'+id,globalThis.location.href).href;try{await navigator.clipboard.writeText(link);status('Track link copied.');}catch{status('Track link: '+link);}}
@@ -56,8 +56,26 @@ export function createCommunityController(recorder,{request=fetch,upload=uploadF
  $('communityRecordings').onclick=()=>{$('communityDialog').close();$('recordLauncher').onclick();};$('communityRefresh').onclick=()=>load();$('communityMore').onclick=()=>load(true);
  for(const [id,w,s] of [['chartToday','today','popular'],['chartWeek','week','popular'],['chartAll','all','popular'],['chartNewest','all','newest'],['chartMine','all','mine']])$(id).onclick=()=>{window=w;sort=s;return load();};
  $('communityTracks').addEventListener('click',e=>{const button=e.target.closest?.('button[data-action]');if(button)action(button.dataset.action,button.dataset.id,button);});
- async function openRoute(){let pending;try{pending=sessionStorage.getItem('flow-pending-share');sessionStorage.removeItem('flow-pending-share');}catch{}if(pending){try{const take=await recorder.getTake(pending);if(take&&isSession(take)){await recorder.selectTake(take.id);await share();return;}}catch{status('Reopen your saved take from the browser library to share it.');}}await open(false);const id=globalThis.location.pathname.match(/^\/recordings\/([a-f0-9-]{36})\/?$/)?.[1]||globalThis.location.hash.match(/^#track=([a-f0-9-]{36})$/)?.[1];if(id){try{const {track}=await api('tracks/'+id);tracks=[track];hasMore=false;render();status('A shared recording. Listen, or use its setup to make something of your own.');}catch(e){status(e.message);}}}
+ async function playPreview({autoplay=false}={}){
+  if(!previewTake||previewBusy||recorder.phase!=='idle')return;
+  previewBusy=true;$('quickPlay').disabled=true;$('previewStatus').textContent='Preparing playback…';
+  try{await recorder.prepareExternal({autoplay});await recorder.playExternal(previewTake);$('previewStatus').textContent='';}
+  catch(e){$('previewStatus').textContent=e.name==='NotAllowedError'?'Press Play to listen.':e.message;}
+  finally{previewBusy=false;$('quickPlay').disabled=recorder.phase!=='idle';}
+ }
+ async function openRoute(){
+  const id=globalThis.location.pathname?.match(/^\/recordings\/([a-f0-9-]{36})\/?$/)?.[1]||globalThis.location.hash.match(/^#track=([a-f0-9-]{36})$/)?.[1];
+  if(id){
+   $('communityDialog').close();$('sessionNotice').hidden=true;
+   try{const {track}=await api('tracks/'+id);previewTake=await getTake(track);workspace?.preview(previewTake);await playPreview({autoplay:true});}
+   catch(e){previewTake=null;$('sessionNotice').textContent=e.message;$('sessionNotice').hidden=false;}
+   return;
+  }
+  let pending;try{pending=sessionStorage.getItem('flow-pending-share');sessionStorage.removeItem('flow-pending-share');}catch{}
+  if(pending){try{const take=await recorder.getTake(pending);if(take&&isSession(take)){await recorder.selectTake(take.id);await share();return;}}catch{status('Reopen your saved take from the browser library to share it.');}}
+  await open(false);
+ }
 
- return {open,openRoute,setWorkspace(value){workspace=value;},share,load,publish,action,get tracks(){return tracks;}};
+ return {open,openRoute,playPreview,setWorkspace(value){workspace=value;},share,load,publish,action,get tracks(){return tracks;}};
 }
 function uploadFile(url,file,{title,artist,onProgress}){return new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('POST',url);xhr.timeout=300000;xhr.setRequestHeader('Content-Type','application/json');xhr.setRequestHeader('X-Track-Title',encodeURIComponent(title));xhr.setRequestHeader('X-Artist-Name',encodeURIComponent(artist));xhr.setRequestHeader('X-File-Size',String(file.size));xhr.upload.onprogress=e=>{if(e.lengthComputable)onProgress(e.loaded/e.total);};xhr.onerror=()=>reject(new Error('The upload was interrupted. Your browser copy is safe; try again.'));xhr.ontimeout=()=>reject(new Error('The upload took too long. Try a shorter take or a faster connection.'));xhr.onload=()=>{let data;try{data=JSON.parse(xhr.responseText);}catch{return reject(new Error('The shared library is unavailable. Please try again.'));}xhr.status>=200&&xhr.status<300?resolve(data):reject(Object.assign(new Error(data.error||'The upload failed.'),{status:xhr.status}));};xhr.send(file);});}

@@ -4,7 +4,7 @@ import {sessionFixture} from './session-fixture.mjs';
 import {sanitizeTake} from '../public/recording-state.js';
 import {sessionRoute} from '../public/session-store.js';
 const elements=new Map(),handlers={},intervals=[];
-function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',hidden:false,checked:false,classList:{toggle(){}},innerHTML:'',listeners:{},addEventListener(k,f){this.listeners[k]=f;},close(){this.open=false;},click(){return this.onclick?.();}});return elements.get(id);}
+function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',hidden:false,checked:false,classList:{toggle(){},add(){}},innerHTML:'',listeners:{},addEventListener(k,f){this.listeners[k]=f;},close(){this.open=false;},click(){return this.onclick?.();}});return elements.get(id);}
 globalThis.document={title:'',body:{classList:{toggle(){},remove(){}}},getElementById:el,querySelector:s=>s==='.brand'?el('brand'):null,addEventListener(){}};
 globalThis.addEventListener=(k,f)=>handlers[k]=f;globalThis.setInterval=f=>{intervals.push(f);return 0;};
 globalThis.location={pathname:'/',search:''};globalThis.history={pushState(a,b,url){const u=new URL(url,'https://flow.test');location.pathname=u.pathname;location.search=u.search;},replaceState(...a){this.pushState(...a);}};
@@ -36,3 +36,10 @@ bridge.validateScene=()=>{};bridge.validateTake=sanitizeTake;recorder.saveExtern
 const originalId=sessionRoute(location.pathname);await workspace.importProject(project);const imported=sessions.get(sessionRoute(location.pathname));assert.notEqual(imported.id,originalId);assert.equal(imported.takeIds.length,1);assert.notEqual(imported.takeIds[0],portable.id);assert.deepEqual(takes.get(imported.takeIds[0]).events,portable.events);
 await assert.rejects(()=>workspace.importProject({...project,takes:['invalid']}));
 console.log('PASS: portable project export/import preserves draft and recorded events, assigns independent identities, and rejects malformed takes.');
+
+// The shared-view Play button replays the shared track even with a local selection.
+let sharedPlays=0;const sharedCommunity={openRoute:async()=>{},open:async()=>{},playPreview:async()=>sharedPlays++};
+const sharedWorkspace=createSessionWorkspace({bridge,recorder,store,community:sharedCommunity});
+sharedWorkspace.preview({...portable,communityId:'public-track',artist:'River'});assert.equal(el('sharedPreview').hidden,false);assert.equal(document.title,portable.name+' · Flow');await el('quickPlay').onclick();assert.equal(sharedPlays,1);
+recorder.phase='playing';recorder.replaying=true;el('quickStop').onclick();assert.equal(recorder.phase,'idle');assert.equal(el('sharedPreview').hidden,false);await el('quickPlay').onclick();assert.equal(sharedPlays,2);
+console.log('PASS: shared listening view and title, Play targets shared track, Stop retains the track for replay.');

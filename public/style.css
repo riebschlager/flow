@@ -320,3 +320,6 @@ body.zen .control-rail{display:none}
  body:not(.zen) .art-footer{order:3}
  body:not(.zen) .transport{margin-top:10px}
 }
+
+/* Keep the shared track and autoplay invitation visible in Zen view too. */
+body.zen #sharedPreview:not([hidden]){display:flex;position:relative;flex-shrink:0}#previewStatus{display:block;color:var(--mint);font-size:12px;margin-top:5px}#previewStatus:empty{display:none}
