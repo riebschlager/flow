@@ -160,3 +160,14 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;over
 .current-note .note-voice{flex:none;width:100%;min-height:0;padding:0;border:0;font-size:10px;line-height:1.3;overflow-wrap:anywhere}
 @media(max-width:1100px){.harmony-display{order:3;flex-basis:100%;max-width:none;border-top:1px solid #2c3036;padding-top:12px;margin-top:4px}.harmony-display .chord-sequence{gap:8px}}
 @media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){.harmony-display{order:0;width:100%;flex-basis:100%;border:0;margin:0;padding:0;gap:10px}.harmony-display .chord-sequence{gap:6px}.harmony-display .chord-chip{max-width:none;font-size:11px}.current-note{flex-basis:88px;padding-left:10px}.current-note .note-voice{font-size:11px}}
+
+/* A brief invitation, anchored to the audio control after the first silent gesture. */
+.play-group{position:relative}
+.listening-hint{position:absolute;left:0;bottom:calc(100% + 18px);z-index:25;width:235px;padding:12px 15px;border:1px solid #b6e1c94d;border-radius:10px;background:#192620f5;box-shadow:0 8px 28px #0005;color:#d6eddf;font-size:11px;line-height:1.6;font-weight:400;letter-spacing:.1px;pointer-events:none;opacity:0;transform:translateY(5px);transition:opacity .4s,transform .4s}
+.listening-hint:after{content:'';position:absolute;bottom:-5px;left:17px;width:8px;height:8px;background:#192620;border-right:1px solid #b6e1c94d;border-bottom:1px solid #b6e1c94d;transform:rotate(45deg)}
+.listening-invitation .listening-hint{opacity:1;transform:translateY(0)}
+.listening-invitation :is(.play-button,.mobile-play){animation:listening-halo 2.8s ease-out 3;box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}
+@keyframes listening-halo{0%,100%{box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}55%{box-shadow:0 0 0 11px #b6e1c900,0 0 35px #b6e1c955}}
+.mobile-dock>.listening-hint{left:max(12px,env(safe-area-inset-left));bottom:calc(100% + 12px);width:min(235px,calc(100vw - 24px))}
+.mobile-dock>.listening-hint:after{left:35px}
+@media(prefers-reduced-motion:reduce){.listening-invitation :is(.play-button,.mobile-play){animation:none}}
