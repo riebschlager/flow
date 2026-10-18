@@ -64,5 +64,5 @@ export function createRecorderController(bridge,{store=new PerformanceStore(),ma
   return new Promise(resolve=>{transition={...ready,take,onMidpoint,onProgress,resolve,started:false,midpoint:false};});
  },
  async saveExternal(take){if(busy())throw new Error('Stop playback or finish recording before saving a copy.');bridge.validate(take);take.id=globalThis.crypto.randomUUID();take.created=new Date().toISOString();await keep(take);if(draft)throw new Error(error);return take;},
-get recording(){return phase==='recording';},get replaying(){return ['playing','exporting'].includes(phase);},get arming(){return phase==='recording'&&audio.ctx.currentTime<timeline.start;},get blocked(){return ['preparing','finalizing','playing','exporting'].includes(phase)||(phase==='recording'&&audio.ctx.currentTime<timeline.start);},get phase(){return phase;},finish,stopPlayback,cancel};
+get presentationTime(){return audio.ctx?.currentTime??0;},get recording(){return phase==='recording';},get replaying(){return ['playing','exporting'].includes(phase);},get arming(){return phase==='recording'&&audio.ctx.currentTime<timeline.start;},get blocked(){return ['preparing','finalizing','playing','exporting'].includes(phase)||(phase==='recording'&&audio.ctx.currentTime<timeline.start);},get phase(){return phase;},finish,stopPlayback,cancel};
 }
