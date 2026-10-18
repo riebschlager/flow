@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';import {OrbitRings} from '../public/orbit-rings.js';
+const sample={active:true,kind:'orbit',x:.4,y:.6,orbit:.8,heading:Math.PI-.02};
+const rings=new OrbitRings();rings.update(sample,0,.65,'#b7a0ff');assert.equal(rings.opacity,0);rings.update(sample,16,.65,'#b7a0ff');assert(rings.opacity>0&&rings.opacity<.2);rings.update(sample,150,.65,'#b7a0ff');assert(rings.opacity>.7&&rings.opacity<1);
+const heading=rings.heading;rings.update({...sample,heading:-Math.PI+.02},166,.65,'#b7a0ff');assert(rings.heading>heading,'π boundary continues in the same direction');assert(rings.heading-heading<.01,'wrapped heading change is eased');
+const target=rings.targetHeading;rings.update({...sample,heading:-1},182,.65,'#b7a0ff');assert(rings.heading<rings.targetHeading);assert(rings.targetHeading>target);
+const pose={x:rings.x,y:rings.y,radius:rings.radius},opacity=rings.opacity;rings.update({...sample,active:false,x:.9,y:.1},198,.65,'#fff');assert(rings.opacity>0&&rings.opacity<opacity);assert.deepEqual({x:rings.x,y:rings.y,radius:rings.radius},pose,'fade holds the last ring position');
+const drawn=[];const ctx={save(){},restore(){},beginPath(){},stroke(){},ellipse(...args){drawn.push({args,alpha:this.globalAlpha,color:this.strokeStyle});}};rings.draw(ctx,1000,600);assert.equal(drawn.length,3);assert(drawn.every(d=>d.alpha>0&&d.alpha<.55*.65&&d.color==='#b7a0ff'));
+rings.update({...sample,kind:'ribbon'},1600,.65,'#fff');assert.equal(rings.opacity,0);drawn.length=0;rings.draw(ctx,1000,600);assert.equal(drawn.length,0);
+function envelope(rate){const state=new OrbitRings();state.update(sample,0,1,'#fff');for(let frame=1;frame<=rate;frame++)state.update(sample,frame*1000/rate,1,'#fff');const peak=state.opacity;for(let frame=1;frame<=rate;frame++)state.update({...sample,active:false},1000+frame*1000/rate,1,'#fff');return [peak,state.opacity];}
+const reference=envelope(60);for(const rate of [30,120])envelope(rate).forEach((value,i)=>assert(Math.abs(value-reference[i])<1e-12,'fade duration does not depend on frame rate'));
+console.log('PASS: gentle onset/release fades, held dismissal pose, eased shortest-path rotation at ±π, three retained rings, hidden tails and frame-rate-independent opacity.');

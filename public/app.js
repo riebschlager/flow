@@ -11,7 +11,7 @@ import {createArpeggiatorController} from './arpeggiator-ui.js?rev=probability-3
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
 import {Fluid} from './fluid.js?rev=performance-39';
-import {createPerformanceController} from './performance.js?rev=gestures-32';
+import {createPerformanceController} from './performance.js?rev=orbit-40';
 import {createRhythmController} from './rhythm-ui.js?rev=workspace-35';
 import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=performance-39';
 const $=id=>document.getElementById(id);

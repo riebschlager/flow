@@ -32,6 +32,10 @@ Mix consolidates the sidebar’s two duplicate shared-echo selectors into one; B
 
 Structural checks cover unique IDs, label and ARIA references, valid nesting, and preserved control values/ranges/defaults. The full app smoke test exercises navigation, focus, scrolling, disclosures and the existing recording/playback/fork workflow. Full browser interaction and visual QA were unavailable in this environment.
 
+## Orbit ring motion
+
+Orbit’s three ellipses fade into view over a few tenths of a second and fade away at their last pose when the gesture ends or recognition switches to another tool. Rotation follows a short exponential ease on an unwrapped heading, so crossing −π/π no longer flips the rings. The smoothing uses elapsed time, works during recorded playback and is local to the visualization; musical expression, fluid forces and session data are unchanged. Conduct and Space keep their existing visuals. Checks cover onset/release opacity, angle wrapping, live controller dismissal and frame-rate independence. Browser visual QA was unavailable.
+
 ## Performance audit (version 39)
 
 The audit profiled the solver, palette raster, animation loop, instrument loading, audio scheduling and playback resource lifetimes. Pressure projection remains the largest solver cost; its 20 iterations and all fluid equations, grid budgets, DPR, colors, effects, note envelopes and scheduler intervals are preserved.
