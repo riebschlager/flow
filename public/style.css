@@ -150,14 +150,13 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;over
 .beat-lane-top{flex-wrap:wrap}.beat-lane-top .select-detail{flex-basis:100%;margin:0}
 @media(max-width:700px){select{min-height:44px;font-size:16px}.voice-row select{min-height:44px;font-size:16px}.select-detail{font-size:12px}}
 
-/* Keep the latest pitch beside its harmonic context, outside the fluid stage. */
-.harmony-display{display:flex;flex:1;min-width:0;max-width:420px;flex-direction:column;align-items:center;gap:10px}
-.harmony-display .chord-sequence{order:0;width:100%;justify-content:center;padding:0;margin:0;border:0;gap:6px}
+/* Keep the latest pitch and voice stacked to the right of the chords. */
+.harmony-display{display:flex;flex:1;min-width:0;max-width:490px;align-items:center;gap:16px}
+.harmony-display .chord-sequence{order:0;flex:1;min-width:0;width:auto;justify-content:center;padding:0;margin:0;border:0;gap:6px}
 .harmony-display .chord-chip{flex:1;min-width:0;max-width:90px}
-.current-note{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-width:0;min-height:32px}
-.current-note-label{flex:none;font-size:7px;letter-spacing:1.2px;color:#8b9099}
-.current-note .note-toast{position:static;transform:none;display:flex;flex:1;min-width:0;max-width:250px;width:auto;height:32px;gap:10px;text-shadow:none}
-.current-note .note-pitch{width:48px;font-size:22px;letter-spacing:-.5px}
-.current-note .note-voice{min-height:26px;padding-left:10px;font-size:11px;overflow-wrap:anywhere}
+.current-note{display:flex;align-items:center;flex:0 0 112px;min-width:0;min-height:48px;padding-left:16px;border-left:1px solid #353840}
+.current-note .note-toast{position:static;transform:none;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;max-width:100%;width:100%;height:48px;gap:4px;text-shadow:none}
+.current-note .note-pitch{width:100%;font-size:22px;letter-spacing:-.5px}
+.current-note .note-voice{flex:none;width:100%;min-height:0;padding:0;border:0;font-size:10px;line-height:1.3;overflow-wrap:anywhere}
 @media(max-width:1100px){.harmony-display{order:3;flex-basis:100%;max-width:none;border-top:1px solid #2c3036;padding-top:12px;margin-top:4px}.harmony-display .chord-sequence{gap:8px}}
-@media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){.harmony-display{order:0;width:100%;flex-basis:100%;border:0;margin:0;padding:0;gap:10px}.harmony-display .chord-sequence{gap:6px}.harmony-display .chord-chip{max-width:none}.current-note-label{font-size:8px}.current-note .note-voice{font-size:12px}}
+@media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){.harmony-display{order:0;width:100%;flex-basis:100%;border:0;margin:0;padding:0;gap:10px}.harmony-display .chord-sequence{gap:6px}.harmony-display .chord-chip{max-width:none;font-size:11px}.current-note{flex-basis:88px;padding-left:10px}.current-note .note-voice{font-size:11px}}

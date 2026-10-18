@@ -5,7 +5,7 @@
 <meta name="author" content="Chris Riebschlager">
 <meta name="theme-color" content="#101316"><meta name="description" content="A living canvas of color and sound. Drop luminous ink into a fluid simulation and compose gentle ambient music with Flow.">
 <title>Flow</title>
-<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?rev=note-transport-47">
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?rev=note-stack-48">
 <link rel="canonical" href="https://flow.the816.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Flow">
@@ -53,7 +53,7 @@
 <div class="play-group"><button id="start" class="play-button" aria-label="Begin listening"><svg><use href="#play"/></svg></button><div><strong id="playLabel">Begin listening</strong><span id="audioState" role="status">Sound is waiting for you</span></div></div>
 <div class="harmony-display">
 <div class="chord-sequence" id="chords" aria-label="Chord progression"></div>
-<div class="current-note"><span class="current-note-label">CURRENT NOTE</span><div class="note-toast" id="noteToast" role="img" aria-label="Latest note"><span class="note-pitch" aria-hidden="true"><span id="notePitchA"></span><span id="notePitchB"></span></span><span class="note-voice" aria-hidden="true"><span id="noteVoiceA"></span><span id="noteVoiceB"></span></span></div></div>
+<div class="current-note"><div class="note-toast" id="noteToast" role="img" aria-label="Latest note"><span class="note-pitch" aria-hidden="true"><span id="notePitchA"></span><span id="notePitchB"></span></span><span class="note-voice" aria-hidden="true"><span id="noteVoiceA"></span><span id="noteVoiceB"></span></span></div></div>
 </div>
 <div class="tempo"><span>TEMPO</span><div><button id="slower" aria-label="Decrease tempo">−</button><strong id="bpmLabel">56</strong><button id="faster" aria-label="Increase tempo">+</button></div><small>BPM</small></div>
 </div>
