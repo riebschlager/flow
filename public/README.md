@@ -6,7 +6,7 @@ An ambient instrument combining an incompressible fluid solver and WebAudioFont 
 
 Install with the Sites dependency helper (or `npm run install:ci` standalone), generate schema changes with `npm run db:generate`, and build with the Sites build helper (or `npm run build` standalone). `dist/` is generated output. For local development, use the Sites preview workflow or `npm run dev` standalone; apply generated SQL migrations to local D1 before using Community. Audio starts only after pressing Begin listening. Click or drag to drop color, choose voices and progressions in the panel, or enable automatic rain. Selecting a palette swatch (or pressing 1–4) locks all new painting, rain, and bloom droplets to that color and voice. Enable Cycle colors beside the palette to shuffle all four colors and voices: each appears once per random round, with no consecutive repeats between rounds. This applies to painting, rain, and blooms. The color mode and selected color are remembered. The horizontal impact location selects a chord tone and color chooses the instrument. Space toggles sound, 1–4 selects color, Enter drops when the canvas is focused, and Escape exits Zen view.
 
-Controls include four editable chord slots (via a comma-separated progression), tempo, chord length, 28 instruments assigned to four colors, nine soundscape collections, reverb, tempo-synchronized delay, master volume, vorticity, color persistence, droplet size, color cycling, and rain density. Settings persist in localStorage.
+Controls include four editable chord slots (via a comma-separated progression), tempo, chord length, 28 instruments assigned to four colors, nine soundscape collections, reverb, tempo-synchronized delay, master volume, independent droplets level, vorticity, color persistence, droplet size, color cycling, and rain density. Settings persist in localStorage.
 
 The solver uses semi-Lagrangian advection, pressure projection (20 Gauss-Seidel iterations), and vorticity confinement. The grid follows the canvas aspect ratio with approximately square cells. Desktop uses at most 35,000 cells and coarse-pointer/narrow devices use at most 16,128; the longer side is capped at 384/224 cells respectively. Canvas2D renders the dye field plus impact ripples and falling droplets. Audio uses locally bundled WebAudioFont with FluidR3 samples, a filtered feedback delay and a stereo convolution impulse generated in the browser.
 
@@ -24,13 +24,19 @@ The UI audit found that Sound had grown into a long stack of harmony, voices, ar
 | Layers | Arpeggiator, percussion and atmospherics, each with a visible switch, status and expandable editor. |
 | Perform | Canvas tool, quantize, pitch/touch range, expression settings, automatic droplets, bloom and the gesture guide. |
 | Scene | Color palette, fluid behavior, chord glow, color guidance and percussion visual response. |
-| Mix | Master level, arpeggio/percussion/atmosphere levels, shared echo spacing, melodic effects and drum effects. |
+| Mix | Master level, droplets/arpeggio/percussion/atmosphere levels, shared echo spacing, melodic effects and drum effects. |
 
 The panel keeps its navigation visible on desktop while controls scroll independently. Desktop destinations retain their scroll positions during the session; mobile navigation sticks above the controls. Tabs support Left/Right and Home/End. Optional layer editors begin compact and open when that layer is enabled by its switch. Color voices, pitch settings, gesture instructions, note shape and portamento use native keyboard-accessible disclosures. The canvas’s How to perform button opens the gesture guide directly. Space on a focused button, link or disclosure retains its native interaction rather than also toggling the audio transport.
 
 Mix consolidates the sidebar’s two duplicate shared-echo selectors into one; Beat studio retains its contextual synchronized selector. The existing independent effect sends and all audio timing are unchanged. Automatic droplets now belongs to Perform and is named separately from the synthesized Soft rain environment. Record / Library, Community, transport, the session format, storage keys, defaults, synthesis and fluid algorithms are unchanged. The audit retained every parameter and its bounds; only a redundant sidebar selector was removed.
 
 Structural checks cover unique IDs, label and ARIA references, valid nesting, and preserved control values/ranges/defaults. The full app smoke test exercises navigation, focus, scrolling, disclosures and the existing recording/playback/fork workflow. Full browser interaction and visual QA were unavailable in this environment.
+
+## Droplets mix
+
+Mix → Layer levels includes a 0–100% Droplets mix slider for painting, automatic droplets and blooms. A dedicated smoothed input gain feeds the shared melodic effects; arpeggio, percussion and atmospherics retain their independent levels. Turning droplets down also reduces their new reverb/delay sends, while existing shared effect tails fade naturally. Visual droplets continue at zero volume. Master still controls the entire composition.
+
+The level persists locally and in opening snapshots, recorded settings automation, session file roundtrips, forks, community uploads/playback and WAV exports. Playback schedules changes on the audio clock, restores the opening level at each loop, and cancels queued automation on stop. Older sessions default to 100%, preserving their original balance; no format or database migration is needed.
 
 ## Canvas aspect and responsive simulation
 

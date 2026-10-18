@@ -1,5 +1,5 @@
 import {CaptureTimeline,VisualTimeline,MAX_SECONDS,encodePerformance,decodePerformance,wavFile,clone,isSession,takeDuration,forkSession,isSetupDraft} from './recorder-core.js?rev=gestures-32';
-import {SessionBackend} from './session-player.js?rev=environment-34';
+import {SessionBackend} from './session-player.js?rev=droplets-37';
 import {PerformanceStore,takeSummary} from './performance-store.js?rev=gestures-32';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const time=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
