@@ -248,3 +248,17 @@ body.zen .transport>.tempo button{min-width:28px;min-height:40px}
 body.zen .transport>.tempo>span,body.zen .transport>.tempo>small{display:none}
 body.zen .transport>.tempo>div{gap:3px;margin:0}
 @media(max-width:600px){body.zen .current-note{flex-basis:76px;padding-left:8px}body.zen .transport{gap:6px}body.zen .transport>.tempo{min-width:74px}}
+
+/* Independent zen row handles belong to the canvas, so they remain reachable
+   when either row is removed from the grid. Audio and recording keep running. */
+.zen-row-toggle{display:none}
+body.zen .zen-row-toggle{position:absolute;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;justify-content:center;gap:8px;min-height:36px;max-width:calc(100% - 280px);padding:7px 12px;border:1px solid #ffffff25;background:#10161deb;color:#c6cbd2;font-size:10px;line-height:1.4;white-space:nowrap;touch-action:manipulation}
+body.zen .zen-row-toggle:hover{background:#202b33;color:#fff;border-color:#b6e1c966}
+body.zen .zen-row-toggle span{font-size:16px;line-height:1}
+body.zen .zen-transport-toggle{top:0;border-top:0;border-radius:0 0 8px 8px}
+body.zen .zen-harmony-toggle{bottom:0;border-bottom:0;border-radius:8px 8px 0 0}
+body.zen.zen-transport-collapsed .session-capture{display:none}
+body.zen.zen-harmony-collapsed .transport{display:none}
+/* Leave the palette and Clear canvas a separate lane above the bottom handle. */
+body.zen .palette-controls,body.zen #clear{bottom:46px}
+@media(max-width:600px){body.zen .zen-row-toggle{max-width:calc(100% - 32px);min-height:44px;padding:9px 12px}body.zen .zen-transport-toggle{left:12px;transform:none;max-width:calc(100% - 130px)}body.zen .gesture-hud{top:52px}body.zen .palette-controls,body.zen #clear{bottom:52px}}

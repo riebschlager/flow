@@ -137,6 +137,20 @@ function togglePanel(){if(mobileLayout.matches){setMobileControls(!document.body
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else toggleZen();}catch{toggleZen();}};
 function toggleZen(force){if(typeof force==='boolean')document.body.classList.toggle('zen',force);else document.body.classList.toggle('zen');$('zen').setAttribute('aria-pressed',String(document.body.classList.contains('zen')));$('zen').innerHTML=document.body.classList.contains('zen')?'Exit Zen <span>↙</span>':'Zen view <span>↗</span>';}
 $('zen').onclick=()=>toggleZen();
+// Each zen edge folds independently; the handles stay on the growing canvas.
+for(const [id,collapsedClass,label,collapseArrow,expandArrow] of [
+ ['zenTransportToggle','zen-transport-collapsed','transport','⌃','⌄'],
+ ['zenHarmonyToggle','zen-harmony-collapsed','chords & notes','⌄','⌃']
+]){
+ const button=$(id);
+ button.onclick=()=>{
+  const collapsed=!document.body.classList.contains(collapsedClass);
+  document.body.classList.toggle(collapsedClass,collapsed);
+  button.setAttribute('aria-expanded',String(!collapsed));
+  button.innerHTML=`${collapsed?'Show':'Hide'} ${label} <span aria-hidden="true">${collapsed?expandArrow:collapseArrow}</span>`;
+ };
+}
+
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('zen')){toggleZen(false);return;}if(recorder?.blocked||$('recordDialog').open||$('communityDialog').open)return;if(/^(INPUT|SELECT|TEXTAREA|BUTTON|SUMMARY|A)$/.test(document.activeElement.tagName)||$('beatDialog').open)return;if(performanceUI.key(e))return;if(e.code==='Space'&&!e.repeat){e.preventDefault();togglePlay();}if(/^[1-4]$/.test(e.key))selectColor(Number(e.key)-1);if(e.key==='Escape')toggleZen(false);});
 // Fluid rendering and the droplet/impact lifecycle.
 const canvas=$('fluid'),ctx=canvas.getContext('2d',{alpha:false});const overlay=$('particles'),fx=overlay.getContext('2d');const stage=$('stage');
