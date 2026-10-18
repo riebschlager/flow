@@ -133,9 +133,17 @@ document.addEventListener('keydown',e=>{
  }
 });
 setMobileControls(false,false);
-function togglePanel(){if(mobileLayout.matches){setMobileControls(!document.body.classList.contains('mobile-controls-open'));return;}document.body.classList.toggle('panel-hidden');$('togglePanel').setAttribute('aria-expanded',!document.body.classList.contains('panel-hidden'));} $('togglePanel').onclick=togglePanel;
+// Move the same transport node: playback state and listeners survive layout changes.
+function syncTransportLayout(){
+ const inRail=!mobileLayout.matches&&!document.body.classList.contains('zen')&&!document.body.classList.contains('panel-hidden');
+ const parent=inRail?$('controlRail'):document.querySelector('.artwork');
+ parent.prepend($('zenTransportRow'));
+}
+mobileLayout.addEventListener('change',syncTransportLayout);
+syncTransportLayout();
+function togglePanel(){if(mobileLayout.matches){setMobileControls(!document.body.classList.contains('mobile-controls-open'));return;}document.body.classList.toggle('panel-hidden');syncTransportLayout();$('togglePanel').setAttribute('aria-expanded',!document.body.classList.contains('panel-hidden'));} $('togglePanel').onclick=togglePanel;
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else toggleZen();}catch{toggleZen();}};
-function toggleZen(force){if(typeof force==='boolean')document.body.classList.toggle('zen',force);else document.body.classList.toggle('zen');$('zen').setAttribute('aria-pressed',String(document.body.classList.contains('zen')));$('zen').innerHTML=document.body.classList.contains('zen')?'Exit Zen <span>↙</span>':'Zen view <span>↗</span>';}
+function toggleZen(force){if(typeof force==='boolean')document.body.classList.toggle('zen',force);else document.body.classList.toggle('zen');syncTransportLayout();$('zen').setAttribute('aria-pressed',String(document.body.classList.contains('zen')));$('zen').innerHTML=document.body.classList.contains('zen')?'Exit Zen <span>↙</span>':'Zen view <span>↗</span>';}
 $('zen').onclick=()=>toggleZen();
 // Each zen edge folds independently; the handles stay on the growing canvas.
 for(const [id,collapsedClass,label,collapseArrow,expandArrow] of [

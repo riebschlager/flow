@@ -264,3 +264,59 @@ body.zen .palette-controls,body.zen #clear{bottom:46px}
 @media(max-width:600px){body.zen .zen-row-toggle{max-width:calc(100% - 32px);min-height:44px;padding:9px 12px}body.zen .zen-transport-toggle{left:12px;transform:none;max-width:calc(100% - 130px)}body.zen .gesture-hud{top:52px}body.zen .palette-controls,body.zen #clear{bottom:52px}}
 
 .share-sign-in{padding:18px;border:1px solid #79618d;border-radius:8px;background:#b7a0ff0a;margin:12px 0}.share-sign-in h4{font-size:16px;font-weight:500;color:#e3d5eb;margin:0 0 8px}.share-sign-in .outline-button{display:inline-block;width:auto;margin:10px 10px 0 0;text-decoration:none}.community-dialog button:disabled{cursor:default}
+
+/* Default workspace gives the living canvas the full height of the left column.
+   Transport shares the controls column; takes open only when they are needed. */
+.control-rail{min-width:0}
+.take-tray>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px;cursor:pointer;color:#d3dace;font-size:12px;list-style:none}
+.take-tray>summary::-webkit-details-marker{display:none}
+.take-tray>summary:after{content:'＋';font-size:18px;color:#aab6a7}
+.take-tray[open]>summary:after{content:'−'}
+.take-tray>summary span{margin-left:auto;font-size:10px;color:#96a391}
+.take-tray-heading{justify-content:flex-end}
+.take-tray>summary:focus-visible{outline:2px solid #b6e1c9;outline-offset:2px;border-radius:4px}
+@media(min-width:721px) and (min-height:501px),(min-width:1001px),(min-width:721px) and (pointer:fine){
+ body:not(.zen) .topbar{height:64px}
+ body:not(.zen) .session-header{padding:10px 24px;gap:16px}
+ body:not(.zen) .session-identity input{font-size:18px;padding:2px 0}
+ body:not(.zen):not(.session-home){height:100dvh;display:flex;flex-direction:column}
+ body:not(.zen) .topbar,body:not(.zen) .session-header{flex-shrink:0}
+ body:not(.zen) .workspace{height:auto;flex:1;min-height:500px;grid-template-rows:minmax(0,1fr)}
+ body:not(.zen) .artwork{padding:14px 18px 0;min-height:0;height:100%;overflow:auto;scrollbar-width:thin}
+ body:not(.zen) .canvas-wrap{height:auto;min-height:280px;flex:1 0 280px}
+ body:not(.zen) .transport{margin-top:10px;min-height:70px;padding:8px 12px;flex-wrap:nowrap;flex-shrink:0;gap:10px}
+ body:not(.zen) .harmony-display{flex:1;flex-basis:auto;max-width:none;order:0;border:0;margin:0;padding:0;gap:10px}
+ body:not(.zen) .harmony-display .chord-sequence{gap:5px;overflow-x:auto;justify-content:flex-start;scrollbar-width:thin;padding:3px}
+ body:not(.zen) .harmony-display .chord-chip{flex:1 0 48px;max-width:90px;height:40px;font-size:12px}
+ body:not(.zen) .chord-arrow{display:none}
+ body:not(.zen) .current-note{flex:0 0 88px;padding-left:10px}
+ body:not(.zen) .transport>.tempo{min-width:76px;flex-shrink:0}
+ body:not(.zen) .transport>.tempo>span,body:not(.zen) .transport>.tempo>small{display:none}
+ body:not(.zen) .transport>.tempo>div{margin:0;gap:2px}
+ body:not(.zen) .transport>.tempo button{min-width:28px;min-height:40px}
+ body:not(.zen) .take-tray{margin-top:8px;padding-top:0;flex-shrink:0}
+ body:not(.zen) .take-tray[open] #sessionTakes{max-height:150px;overflow:auto}
+ body:not(.zen) .art-footer{min-height:28px;flex-shrink:0}
+ body:not(.zen) .control-rail{display:flex;flex-direction:column;min-height:0;height:100%;border-left:1px solid var(--line);background:var(--panel)}
+ body:not(.zen) .control-rail>.session-capture{position:relative;inset:auto;margin:14px 12px 0;padding:12px;flex-shrink:0}
+ body:not(.zen) .control-rail .capture-controls{gap:6px}
+ body:not(.zen) .control-rail .capture-controls button{padding:8px 10px;min-height:38px;font-size:11px}
+ body:not(.zen) .control-rail .capture-controls output{font-size:15px}
+ body:not(.zen) .control-rail .capture-options[open]{max-height:35dvh;overflow:auto}
+ body:not(.zen) .control-rail .capture-options section{grid-template-columns:1fr}
+ body:not(.zen) .control-rail .capture-options section>*{grid-column:1}
+ body:not(.zen) .control-rail>.panel{height:auto;max-height:none;min-height:0;flex:1;border:0}
+ body:not(.zen) .panel-heading{margin-bottom:14px}
+ body:not(.zen) .panel-navigation{padding-top:18px}
+ body.panel-hidden:not(.zen) .control-rail{display:none}
+ body.panel-hidden:not(.zen) .artwork>.session-capture{position:relative;inset:auto;margin:0 0 10px;padding:8px 12px}
+ body.panel-hidden:not(.zen) .artwork>.session-capture .capture-options{position:relative}
+}
+body.zen .control-rail{display:none}
+@media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){
+ .control-rail{display:contents}
+ body:not(.zen) .artwork{display:flex;flex-direction:column}
+ body:not(.zen) .take-tray{order:2;margin-top:10px;padding-top:0}
+ body:not(.zen) .art-footer{order:3}
+ body:not(.zen) .transport{margin-top:10px}
+}
