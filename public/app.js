@@ -1,11 +1,12 @@
+import {createSessionWorkspace} from './session-workspace.js?rev=sessions-55';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
 import {createEnvironmentController} from './environment-ui.js?rev=performance-39';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
-import {createCommunityController} from './community-ui.js?rev=playback-hero-54';
-import {createRecorderController} from './recorder-ui.js?rev=playback-hero-54';
+import {createCommunityController} from './community-ui.js?rev=sessions-55';
+import {createRecorderController} from './recorder-ui.js?rev=sessions-55';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=water-49-echo52';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=gestures-32-echo52';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=probability-33-echo52';
@@ -20,7 +21,7 @@ const $=id=>document.getElementById(id);
 const showNote=createNoteReadout($('noteToast'),[$('notePitchA'),$('notePitchB')],[$('noteVoiceA'),$('noteVoiceB')]);
 let paletteKey=null,colors=getPalette('classic').colors,colorizeFluid=createFluidColorizer('classic');
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
-let recorder=null;
+let recorder=null,sessionWorkspace=null;
 const audio=new AmbientAudio();let busy=false,clockOrigin=0,dropTimer=null;
 $('voices').innerHTML=colors.map((c,i)=>`<div id="voiceRow${i}" class="voice-row" style="--color:${c.hex}"><span class="voice-dot"></span><label id="voiceLabel${i}" for="voice${i}">${c.name}</label><select id="voice${i}" aria-label="${c.name} instrument">${instrumentGroups.map(group=>`<optgroup label="${group}">${Object.entries(instruments).filter(([,v])=>v.group===group).map(([k,v])=>`<option value="${k}" ${state.voices[i]===k?'selected':''}>${v.name}</option>`).join('')}</optgroup>`).join('')}</select></div>`).join('');
 const persisted=['colorPalette','soundscape','progression','chordLength','reverb','delay','volume','dropletsVolume','swirl','persistence','dropSize','rain','cycleColors','autoPour','quantizeEnabled','quantizeBeats','octavesDown','octavesUp','chordAtmosphere','waterEnabled','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'];
@@ -231,7 +232,7 @@ function snapshotScene(){return {w:sim.w,h:sim.h,...Object.fromEntries(['u','v',
 function restoreScene(scene){sim.clear();resampleFluidState(scene,sim);drops=[];ripples=[];glows=[];}
 function stopLive(){state.playing=false;rhythmUI.stop();arpUI.stop();environmentUI.stop();audio.setPlaying(false);if(dropTimer!==null)globalThis.clearInterval(dropTimer);dropTimer=null;for(const d of drops)d.cancel?.abort();drops=[];performanceUI.reset();updateTransport();}
 function applySnapshot(raw,persistSettings=false){const s=sanitizeSnapshot(raw);Object.assign(state,{voices:s.main.voices,custom:s.main.custom,bpm:s.main.bpm,selected:s.main.selected,progression:s.main.settings.progression,elapsed:s.position,chordIndex:s.chordIndex});for(const [id,value] of Object.entries(s.main.settings)){$(id).type==='checkbox'?$(id).checked=value:$(id).value=String(value);}if(persistSettings||JSON.stringify(s.rhythm)!==JSON.stringify(rhythmUI.getState()))rhythmUI.restore(s.rhythm,persistSettings);if(persistSettings||JSON.stringify(s.arp)!==JSON.stringify(arpUI.getState()))arpUI.restore(s.arp,persistSettings);if(persistSettings||JSON.stringify(s.expression)!==JSON.stringify(performanceUI.getState()))performanceUI.restore(s.expression,persistSettings);$('chordInput').value=state.custom.join(', ');$('customChords').hidden=state.progression!=='custom';$('bpmLabel').textContent=state.bpm;$('scapeDescription').textContent=soundscapes[$('soundscape').value]?.text||'Four colors. Four voices. Entirely your own.';state.voices.forEach((v,i)=>$('voice'+i).value=v);clockOrigin=(audio.ctx?.currentTime||0)-s.position;if(persistSettings||JSON.stringify(s.environment)!==JSON.stringify(environmentUI.getState()))environmentUI.restore(s.environment,persistSettings);audio.setPerformance(s.performance);applyPalette();sliders();syncWater();syncAudio();syncQuantize();syncColorMode();sim.swirl=Number($('swirl').value)/100;sim.persistence=Number($('persistence').value)/100;document.querySelector('.autopour').classList.toggle('off',!$('autoPour').checked);renderChords();updateTransport();if(persistSettings)save();}
-recorder=createRecorderController({audio,snapshot:snapshotPerformance,scene:snapshotScene,validate:sanitizeTake,applySnapshot,restoreScene,stopLive,
+recorder=createRecorderController({get workspace(){return sessionWorkspace;},audio,snapshot:snapshotPerformance,scene:snapshotScene,validate:sanitizeTake,applySnapshot,restoreScene,stopLive,
  async prepareLive(){if(state.playing)stopLive();await audio.initialize();await Promise.all([...state.voices,...(arpUI.requiredVoice?[arpUI.requiredVoice]:[])].map(key=>audio.load(key)));environmentUI.prepare();},
  beginLive(start){state.elapsed=0;state.chordIndex=0;clockOrigin=start;performanceUI.reset();state.playing=true;audio.setPlaying(true);audio.recordingEnd=null;rhythmUI.start(start);arpUI.start();environmentUI.start(start);syncDropScheduler();rainTimer=0;renderChords();updateTransport();$('intro').classList.add('faded');},
  trimFuture(end){arpUI.trim(end);rhythmUI.trim(end);for(const d of drops)if(d.audioScheduled&&d.audioTime>=end)d.cancel?.abort();},
@@ -244,4 +245,7 @@ for(const op of ['splat','force','pulse','clear']){const original=sim[op].bind(s
 for(const type of ['input','change'])document.addEventListener(type,e=>{if(e.target.closest?.('#recordDialog')||e.target.closest?.('#communityDialog'))return;recorder.stateChanged();});
 
 audio.onSessionEvent=(...args)=>recorder.captureSound(...args);
-createCommunityController(recorder);
+const community=createCommunityController(recorder);
+sessionWorkspace=createSessionWorkspace({recorder,community,bridge:{snapshot:snapshotPerformance,scene:snapshotScene,applySnapshot,restoreScene,stopLive,togglePlay,validateTake:sanitizeTake,validateScene(scene){if(!scene||!Number.isInteger(scene.w)||!Number.isInteger(scene.h)||scene.w<1||scene.h<1||scene.w*scene.h>1000000||['u','v','r','g','b'].some(k=>!Array.isArray(scene[k])||scene[k].length!==scene.w*scene.h||scene[k].some(v=>!Number.isFinite(v))))throw new Error('Invalid session canvas.');}}});
+community.setWorkspace(sessionWorkspace);
+sessionWorkspace.init();
