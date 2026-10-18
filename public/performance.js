@@ -10,7 +10,7 @@ export function createPerformanceController({canvas,stage,audio,sim,drop,nextCol
  const strength=()=>settings.enabled?settings.amount/100:0;
  function sync(){
   $('expressionEnabled').checked=settings.enabled;$('conductScene').checked=settings.conduct;$('gestureTool').value=settings.tool;$('gestureTool').disabled=!settings.enabled||settings.amount===0;
-  $('gestureAmount').value=settings.amount;$('gestureAmountValue').textContent=settings.amount+'%';$('gestureAmount').style.setProperty('--pct',settings.amount+'%');$('performanceHint').textContent=settings.enabled?'How to perform ↗':'Expression off · Guide ↗';
+  $('gestureAmount').value=settings.amount;$('gestureAmountValue').textContent=settings.amount+'%';$('gestureAmount').style.setProperty('--pct',settings.amount+'%');$('performanceHint').textContent=settings.enabled?'Ways to play ↗':'Expression off · Guide ↗';
  }
  function point(e){const r=canvas.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width),y:clamp((e.clientY-r.top)/r.height),aspect:r.width/r.height};}
  function metrics(now){const m=tracker.sample(now);if(tool==='conduct'||tool==='space')m.kind=tool;if(tool==='orbit'){m.kind='orbit';m.orbit=.5+.5*m.energy;const angle=(m.x-.5)*Math.PI*2+(m.speed>.05?m.heading:0);m.heading=Math.atan2(Math.sin(angle),Math.cos(angle));}return m;}
