@@ -67,3 +67,12 @@
 @media(min-width:1550px){.panel-navigation{padding:28px 24px 0}.panel-content{padding:24px 24px 5px}.panel-heading h1{font-size:20px}.panel .tabs button{font-size:11px}.panel-description{font-size:11px;min-height:35px}.panel .helper{font-size:11px}}
 @media(max-width:1100px){.panel-navigation{padding:21px 14px 0}.panel-content{padding:18px 14px 5px}.panel .tabs{gap:1px;padding:3px}.panel .tabs button{font-size:9px;padding-left:0;padding-right:0}.panel-description{font-size:9px}.layer-card{padding-left:12px;padding-right:12px}.layer-card>.layer-editor{margin-left:-12px;margin-right:-12px}.layer-editor>.fold-content{padding-left:12px;padding-right:12px}}
 @media(max-width:720px){.panel{height:auto;max-height:none;overflow:visible}.panel-navigation{position:sticky;top:0;padding:20px 20px 0;box-shadow:0 8px 18px #10131633}.panel-content{overflow:visible;flex:auto;padding:22px 20px 8px}.panel-heading{margin-bottom:15px}.panel-heading h1{font-size:20px}.panel .tabs{gap:3px;padding:4px}.panel .tabs button{font-size:11px;min-height:40px}.panel-description{font-size:10px;min-height:0;margin:11px 0 13px}.panel .helper{font-size:11px}.layer-card>.helper{font-size:10px}.control-fold>summary{font-size:12px;min-height:54px}.control-fold>summary small{font-size:10px}.layer-editor>summary{font-size:11px}.layer-editor>summary small{max-width:none;font-size:10px}.panel .panel-bottom{padding:17px 20px}.panel input[type=range]{height:4px;margin-top:17px;margin-bottom:13px}.panel input[type=range]::-webkit-slider-thumb{width:13px;height:13px}.panel input[type=range]::-moz-range-thumb{width:13px;height:13px}.panel .voice-row label{width:56px}}
+
+/* A quiet, fixed-width readout: pitch and voice crossfade independently. */
+.note-toast{display:flex;align-items:center;gap:14px;width:min(280px,calc(100% - 40px));height:48px;letter-spacing:0;transition:opacity 450ms ease;text-shadow:0 1px 12px #000b}
+.note-toast.show{opacity:1}
+.note-pitch,.note-voice{display:grid;align-items:center;min-width:0}
+.note-pitch{width:68px;flex:none;font-size:30px;line-height:1.2;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.note-voice{flex:1;min-height:32px;padding-left:14px;border-left:1px solid #d9d3ea30;font-size:12px;line-height:1.3;color:#bcb5cb}
+.note-pitch>span,.note-voice>span{grid-area:1/1;opacity:0}
+@media(prefers-reduced-motion:reduce){.note-toast{transition:none}}

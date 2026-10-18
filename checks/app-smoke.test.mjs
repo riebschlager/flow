@@ -51,7 +51,7 @@ try{
  const origin=clock/1000;await $('start').listeners.click[0]();assert.equal(timers.size,1);assert.match($('environmentStatus').textContent,/Playing/);assert(environmentEvents.some(e=>e.method==='apply'&&e.args[0].preset==='night'&&e.args[0].volume===35));$('clear').onclick();
  const tap=()=>{for(const fn of canvas.listeners.pointerdown)fn(event);for(const fn of canvas.listeners.pointerup)fn(event);};tap();
  for(let i=0;i<85;i++){tick();for(const fn of timers.values())fn();}
- assert.equal(notes.length,1,'one scheduled note and no duplicate at impact');const hit=notes[0],step=60/56;assert(Math.abs((hit.when-origin)/step-Math.round((hit.when-origin)/step))<1e-8);assert(hit.when>hit.observedAt);assert(hit.when-hit.observedAt<=.12);assert($('noteToast').textContent.includes('·'));
+ assert.equal(notes.length,1,'one scheduled note and no duplicate at impact');const hit=notes[0],step=60/56;assert(Math.abs((hit.when-origin)/step-Math.round((hit.when-origin)/step))<1e-8);assert(hit.when>hit.observedAt);assert(hit.when-hit.observedAt<=.12);assert($('noteToast')['aria-label'].includes('·'));assert($('notePitchA').textContent||$('notePitchB').textContent);
  tap();const prior=notes.length;for(let i=0;i<150&&notes.length===prior;i++){tick();for(const fn of timers.values())fn();}assert.equal(notes.length,prior+1);const waiting=notes.at(-1);assert(clock/1000<waiting.when);$('clear').onclick();assert.equal(waiting.signal.aborted,true);
  // A grid edit replaces pending audio instead of leaving a ghost note behind.
  tap();const count=notes.length;for(let i=0;i<150&&notes.length===count;i++)tick();const old=notes.at(-1);$('quantizeBeats').value='.125';fire('quantizeBeats');assert.equal(old.signal.aborted,true);

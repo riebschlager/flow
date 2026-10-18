@@ -14,11 +14,13 @@ import {Fluid} from './fluid.js?rev=performance-39';
 import {createPerformanceController} from './performance.js?rev=orbit-40';
 import {createRhythmController} from './rhythm-ui.js?rev=workspace-35';
 import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=performance-39';
+import {createNoteReadout} from './note-readout.js?rev=crossfade-41';
 const $=id=>document.getElementById(id);
+const showNote=createNoteReadout($('noteToast'),[$('notePitchA'),$('notePitchB')],[$('noteVoiceA'),$('noteVoiceB')]);
 let paletteKey=null,colors=getPalette('classic').colors,colorizeFluid=createFluidColorizer('classic');
 const state={selected:0,voices:[...soundscapes.stillwater.voices],progression:'daydream',custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,playing:false,elapsed:0,chordIndex:0};
 let recorder=null;
-const audio=new AmbientAudio();let busy=false,noteTimer,clockOrigin=0,dropTimer=null;
+const audio=new AmbientAudio();let busy=false,clockOrigin=0,dropTimer=null;
 $('voices').innerHTML=colors.map((c,i)=>`<div id="voiceRow${i}" class="voice-row" style="--color:${c.hex}"><span class="voice-dot"></span><label id="voiceLabel${i}" for="voice${i}">${c.name}</label><select id="voice${i}" aria-label="${c.name} instrument">${instrumentGroups.map(group=>`<optgroup label="${group}">${Object.entries(instruments).filter(([,v])=>v.group===group).map(([k,v])=>`<option value="${k}" ${state.voices[i]===k?'selected':''}>${v.name}</option>`).join('')}</optgroup>`).join('')}</select></div>`).join('');
 const persisted=['colorPalette','soundscape','progression','chordLength','reverb','delay','volume','dropletsVolume','swirl','persistence','dropSize','rain','cycleColors','autoPour','quantizeEnabled','quantizeBeats','octavesDown','octavesUp','chordAtmosphere'];
 function save(){try{localStorage.setItem('chromaflow-v1',JSON.stringify({settings:Object.fromEntries(persisted.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),voices:state.voices,custom:state.custom,bpm:state.bpm,selected:state.selected}));}catch{}recorder?.stateChanged();}
@@ -152,7 +154,7 @@ function drop(x,y,color=state.selected,impulse=null,expression=null){
  if(recorder?.blocked)return;color=nextDropColor();const d={id:++dropSerial,x:Math.max(.04,Math.min(.96,x)),y:Math.max(.08,Math.min(.92,y)),color,expression,progress:0,duration:expression?.kind==='flick'?.23:.45+Math.random()*.15,impulse:impulse||[Math.random()*14-7,13+Math.random()*12]};
  prepareDrop(d,dropClock());drops.push(d);if(drops.length>45)drops.shift().cancel?.abort();
 }
-function impact(d){const c=colors[d.color];if(d.replay){ripples.push({x:d.x,y:d.y,color:c.hex,t:0});glows.push({x:d.x,y:d.y,color:c.hex,t:0});return;}const size=(.018+Number($('dropSize').value)/100*.06)*(d.expression?.ink||1),force=d.expression?.force||1;sim.splat(d.x,d.y,c.rgb,size,d.impulse[0]*force,d.impulse[1]*force);ripples.push({x:d.x,y:d.y,color:c.hex,t:0});glows.push({x:d.x,y:d.y,color:c.hex,t:0});if(ripples.length>30)ripples.shift();if(glows.length>20)glows.shift();if(state.playing){if(!d.audioScheduled)playDrop(d);$('noteToast').textContent=`${noteName(d.pitch)}  ·  ${instruments[d.voice].name.toUpperCase()}`;$('noteToast').classList.add('show');clearTimeout(noteTimer);noteTimer=setTimeout(()=>$('noteToast').classList.remove('show'),1400);}}
+function impact(d){const c=colors[d.color];if(d.replay){ripples.push({x:d.x,y:d.y,color:c.hex,t:0});glows.push({x:d.x,y:d.y,color:c.hex,t:0});return;}const size=(.018+Number($('dropSize').value)/100*.06)*(d.expression?.ink||1),force=d.expression?.force||1;sim.splat(d.x,d.y,c.rgb,size,d.impulse[0]*force,d.impulse[1]*force);ripples.push({x:d.x,y:d.y,color:c.hex,t:0});glows.push({x:d.x,y:d.y,color:c.hex,t:0});if(ripples.length>30)ripples.shift();if(glows.length>20)glows.shift();if(state.playing){if(!d.audioScheduled)playDrop(d);showNote(noteName(d.pitch),instruments[d.voice].name);}}
 $('clear').onclick=()=>{sim.clear();for(const d of drops)d.cancel?.abort();drops=[];ripples=[];glows=[];performanceUI.reset();arpUI.clearVisuals();};
 $('bloom').onclick=()=>{for(let i=0;i<8;i++){const a=i/8*Math.PI*2;drop(.5+Math.cos(a)*.17,.5+Math.sin(a)*.17);}$('intro').classList.add('faded');};
 function drawFluid(t){const light=atmosphere.light;renderFluidPixels(sim,pixels.data,t,colorizeFluid,{luminance:performanceUI.luminance*light.brightness});inkCtx.putImageData(pixels,0,0);ctx.fillStyle='#070b11';ctx.fillRect(0,0,width,height);ctx.drawImage(ink,0,0,width,height);atmosphere.draw(ctx,width,height);ctx.fillStyle=vignette;ctx.fillRect(0,0,width,height);}
