@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs>
+<radialGradient id="bg"><stop stop-color="#232333"/><stop offset="1" stop-color="#101316"/></radialGradient>
+<linearGradient id="ink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b7a0ff"/><stop offset=".45" stop-color="#887ac8"/><stop offset=".7" stop-color="#73e2d0"/><stop offset="1" stop-color="#edca82"/></linearGradient>
+<linearGradient id="rose"><stop stop-color="#ff9e9e"/><stop offset="1" stop-color="#b7a0ff"/></linearGradient>
+<filter id="soft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="20"/></filter><filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="55"/></filter>
+</defs>
+<rect width="1200" height="630" fill="url(#bg)"/>
+<g opacity=".22" filter="url(#glow)"><ellipse cx="910" cy="315" rx="225" ry="225" fill="#b7a0ff"/><ellipse cx="940" cy="420" rx="145" ry="100" fill="#73e2d0"/></g>
+<g fill="none" stroke-linecap="round">
+<path d="M904 121 C1138 162 1100 336 913 305 S722 431 946 496" stroke="url(#ink)" stroke-width="92" opacity=".62" filter="url(#soft)"/>
+<path d="M904 121 C1115 156 1102 319 916 305 S749 420 946 496" stroke="url(#ink)" stroke-width="34" opacity=".7"/>
+<path d="M948 143 C1100 216 1040 319 895 316 S805 449 972 467" stroke="url(#ink)" stroke-width="4" opacity=".9"/>
+<path d="M880 148 C754 194 771 309 911 346 S1065 463 930 497" stroke="url(#rose)" stroke-width="52" opacity=".46" filter="url(#soft)"/>
+<path d="M880 148 C754 194 771 309 911 346 S1065 463 930 497" stroke="url(#rose)" stroke-width="10" opacity=".75"/>
+<path d="M846 178 C784 243 847 284 960 327 S1020 431 963 452" stroke="#ffb9be" stroke-width="2" opacity=".72"/>
+</g>
+<path d="M84 61c-5 8-17 20-17 29a17 17 0 0 0 34 0c0-9-12-21-17-29Z" fill="#b7a0ff"/>
+<path d="M76 89a8 8 0 0 0 8 8" fill="none" stroke="#161b21" stroke-width="2.5" stroke-linecap="round"/>
+<text x="119" y="98" fill="#efedf5" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" letter-spacing="-1">Flow</text>
+<text x="68" y="204" fill="#a5b4b0" font-family="Helvetica,Arial,sans-serif" font-size="13" letter-spacing="3">MEET YOUR AMBIENT INSTRUMENT</text>
+<text x="64" y="292" fill="#f0edf5" font-family="Helvetica,Arial,sans-serif" font-size="65" letter-spacing="-2">Color in motion.</text>
+<text x="64" y="366" fill="#c9b6ee" font-family="Georgia,serif" font-size="65" font-style="italic" letter-spacing="-2">Music in the making.</text>
+<text x="68" y="427" fill="#a6adb8" font-family="Helvetica,Arial,sans-serif" font-size="21">Discover how to play, explore, and share.</text>
+<path d="M68 513H1132" stroke="#ffffff" stroke-opacity=".12"/>
+<g><circle cx="74" cy="553" r="5" fill="#b7a0ff"/><circle cx="98" cy="553" r="5" fill="#73e2d0"/><circle cx="122" cy="553" r="5" fill="#ff9e9e"/><circle cx="146" cy="553" r="5" fill="#edca82"/></g>
+<text x="180" y="558" fill="#8e98a4" font-family="Helvetica,Arial,sans-serif" font-size="13" letter-spacing="1.5">COLOR BECOMES SOUND</text>
+<text x="1132" y="558" text-anchor="end" fill="#bcb2cc" font-family="Helvetica,Arial,sans-serif" font-size="16">flow.the816.com</text>
+</svg>
