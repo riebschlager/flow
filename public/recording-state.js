@@ -6,15 +6,16 @@ import {normalizeRhythm,drumVoices} from './rhythm.js?rev=gestures-32';
 import {normalizeArp} from './arpeggiator.js?rev=probability-33';
 import {normalizeGestureSettings,normalizePerformance} from './gestures.js?rev=gestures-32';
 const number=(n,lo,hi,fallback)=>Number.isFinite(Number(n))?Math.max(lo,Math.min(hi,Number(n))):fallback;
-export const mainDefaults={colorPalette:'classic',soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:DEFAULT_MASTER_VOLUME,dropletsVolume:100,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65};
+export const mainDefaults={colorPalette:'classic',soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:DEFAULT_MASTER_VOLUME,dropletsVolume:100,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65,waterEnabled:true,waterSwell:45,waterSpeed:30,waterRefraction:40,waterCaustics:35,waterReflection:40};
 export function sanitizeSnapshot(raw){
  if(!raw?.main||!Array.isArray(raw.main.voices)||raw.main.voices.length!==4||raw.main.voices.some(v=>!Object.hasOwn(instruments,v)))throw new Error('A performance references an unknown melodic voice.');
  const main=raw.main,settings={...mainDefaults,...Object.fromEntries(Object.entries(main.settings||{}).filter(([k])=>Object.hasOwn(mainDefaults,k)))};
+ if(!Object.hasOwn(main.settings||{},'waterEnabled'))settings.waterEnabled=false;
  settings.colorPalette=normalizePalette(settings.colorPalette);
  if(settings.soundscape!=='custom'&&!Object.hasOwn(soundscapes,settings.soundscape))throw new Error('Unknown soundscape in performance.');if(settings.progression!=='custom'&&!Object.hasOwn(progressions,settings.progression))throw new Error('Unknown progression in performance.');
  if(!Array.isArray(main.custom)||main.custom.length!==4)throw new Error('The custom chord setup is incomplete.');main.custom.forEach(parseChord);
- for(const key of ['cycleColors','autoPour','quantizeEnabled'])settings[key]=settings[key]===true;
- for(const key of ['reverb','delay','volume','dropletsVolume','swirl','persistence','rain','chordAtmosphere'])settings[key]=number(settings[key],0,100,mainDefaults[key]);settings.dropSize=number(settings.dropSize,10,100,45);
+ for(const key of ['cycleColors','autoPour','quantizeEnabled','waterEnabled'])settings[key]=settings[key]===true;
+ for(const key of ['reverb','delay','volume','dropletsVolume','swirl','persistence','rain','chordAtmosphere','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'])settings[key]=number(settings[key],0,100,mainDefaults[key]);settings.dropSize=number(settings.dropSize,10,100,45);
  for(const key of ['octavesDown','octavesUp'])settings[key]=Math.round(number(settings[key],0,3,mainDefaults[key]));settings.chordLength=[4,8,16].includes(Number(settings.chordLength))?String(settings.chordLength):'8';settings.quantizeBeats=[1,.5,.25,.125,1/3].includes(Number(settings.quantizeBeats))?Number(settings.quantizeBeats):.5;
  return {main:{settings,voices:[...main.voices],custom:[...main.custom],bpm:number(main.bpm,30,100,56),selected:Math.round(number(main.selected,0,3,0))},rhythm:normalizeRhythm(raw.rhythm),arp:normalizeArp(raw.arp),environment:normalizeEnvironment(raw.environment),expression:normalizeGestureSettings(raw.expression),position:number(raw.position,0,100000,0),chordIndex:Math.round(number(raw.chordIndex,0,3,0)),performance:normalizePerformance(raw.performance)};
 }
