@@ -1,4 +1,4 @@
-import {createSessionWorkspace} from './session-workspace.js?rev=covers-66';
+import {createSessionWorkspace} from './session-workspace.js?rev=ambient-67';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
@@ -92,7 +92,7 @@ $('waterPreset').addEventListener('change',()=>{const values=waterPresets[$('wat
 syncWater();
 $('chordAtmosphere').addEventListener('input',()=>{sliders();save();});
 $('cycleColors').addEventListener('change',()=>{colorBag=[];syncColorMode();save();});$('autoPour').addEventListener('change',()=>{document.querySelector('.autopour').classList.toggle('off',!$('autoPour').checked);save();});
-const tabs=['sound','rhythm','perform','fluid','mix'],tabDescriptions={sound:'Pick a sound you like. Let it keep you company.',rhythm:'Add a little movement, a gentle pulse or a world of rain.',perform:'Leave Automatic droplets on to unwind, or add notes yourself.',fluid:'Find colors and a pace that feel good to be around.',mix:'Keep things soft, spacious and comfortable for you.'};
+const tabs=['sound','rhythm','perform','fluid','mix'],tabDescriptions={sound:'Choose your sounds. Give the music a direction.',rhythm:'Add a little movement, a gentle pulse or a world of rain.',perform:'Let Automatic droplets play your setup, or add notes yourself.',fluid:'Find colors and a pace that feel good to be around.',mix:'Keep things soft, spacious and comfortable for you.'};
 let currentTab='sound';const tabScroll=new Map();
 function switchTab(name){if(!tabs.includes(name))return;tabScroll.set(currentTab,$('panelScroll').scrollTop||0);for(const tab of tabs){$(tab+'Panel').hidden=tab!==name;$(tab+'Tab').setAttribute('aria-selected',tab===name);$(tab+'Tab').tabIndex=tab===name?0:-1;}$('panelDescription').textContent=tabDescriptions[name];currentTab=name;$('panelScroll').scrollTop=tabScroll.get(name)||0;}
 for(const tab of tabs){$(tab+'Tab').onclick=()=>switchTab(tab);$(tab+'Tab').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const other=e.key==='Home'?tabs[0]:e.key==='End'?tabs.at(-1):tabs[(tabs.indexOf(tab)+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length];switchTab(other);$(other+'Tab').focus();});}
