@@ -187,3 +187,64 @@ body.loop-playback .playback-hero>span{display:block;overflow-wrap:anywhere;font
 @media(max-width:720px){.session-header{padding:12px;gap:8px;flex-wrap:wrap}.session-identity{order:-1;flex-basis:100%}.session-identity input{font-size:19px}.session-header>button{font-size:11px;min-height:40px;flex:1;padding:8px}.session-home-panel{margin:30px auto;padding:0 20px}.session-home-panel h1{letter-spacing:-1.5px}.home-actions{margin-bottom:35px}.session-capture{position:fixed;bottom:76px;left:8px;right:8px;margin:0;z-index:21;padding:10px;background:#1a231df5;backdrop-filter:blur(15px)}.capture-controls{gap:5px}.capture-controls button{padding:8px 10px;font-size:12px;min-height:44px}.capture-controls output{font-size:12px}.loop-control{font-size:10px;gap:3px}.session-capture>p{font-size:10px;margin:6px 0}.capture-options summary{font-size:11px;padding-top:7px}.capture-options[open]{max-height:65dvh;overflow:auto}.capture-options section{padding-bottom:10px}.take-tray{margin-bottom:12px}.artwork{padding-bottom:170px}.canvas-wrap{height:360px;min-height:300px}.take-tray-heading button{min-height:40px}.session-home .session-capture{display:none}.session-home{padding-bottom:0}body.zen .session-capture{bottom:8px}.session-notice{padding:12px;font-size:12px}.session-capture .record-actions button{font-size:12px}.session-capture .record-auto{font-size:12px}.session-home .topbar{min-height:66px;height:auto}}
 .session-header~.workspace .transport>.play-group{display:none}.session-header~.workspace .record-bar{display:none}.session-capture .tempo{margin-left:8px;min-width:60px}.session-capture .tempo button{padding:0;min-height:24px;border:0;font-size:17px}.session-capture .tempo>span{font-size:8px}.session-capture .tempo strong{font-size:15px}.capture-controls{flex-wrap:wrap}.session-capture .tempo>div{gap:6px}@media(max-width:720px){.session-capture .tempo{display:none}.capture-controls .loop-control{margin-left:auto}.capture-controls output{margin-left:0}.session-capture .capture-options section{grid-template-columns:1fr}.session-capture .capture-options section>*{grid-column:1}.session-capture .record-actions{display:flex}.session-capture .tempo button{min-height:24px}}
 .session-loading .workspace{visibility:hidden}.session-capture{margin-top:0;margin-bottom:14px;flex-shrink:0}#quickLive{font-size:10px;border-style:dashed;color:#afc6aa}#quickUseSetup{color:#e3d0fa;border-color:#8e75a5}.session-header{position:sticky;top:0;z-index:24}@media(min-width:721px){.session-capture{top:100px;bottom:auto}.capture-options[open]{max-height:65vh;overflow:auto}}@media(max-width:720px){.session-header{position:relative}.session-capture{margin-bottom:0}.session-capture #quickLive{order:4;min-height:30px}.session-capture #quickUseSetup{order:4;min-height:30px}}body.zen .session-capture{top:auto}
+
+/* Zen keeps performance essentials at the edges, with a dedicated open canvas.
+   Flow rows reserve actual space: wrapping controls can never cover Exit Zen. */
+body.zen{overflow:hidden;padding:0}
+body.zen .workspace{height:100dvh;min-height:0}
+body.zen .artwork{height:100%;min-height:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:0}
+body.zen .session-capture{position:relative;inset:auto;grid-row:1;width:100%;max-width:920px;justify-self:center;margin:0;padding:8px 12px;border-radius:0 0 10px 10px;z-index:3;background:#171f19f2}
+body.zen .capture-controls{gap:6px}
+body.zen .capture-controls button{min-height:40px;padding:8px 12px}
+body.zen .session-capture>p{margin:5px 0;font-size:10px;min-height:0}
+body.zen .session-capture .tempo{display:block}
+body.zen .session-capture .tempo button{min-height:32px;min-width:28px}
+body.zen .canvas-wrap{grid-row:2;height:auto;min-height:0;width:100%}
+body.zen .canvas-bottom{inset:0;display:block;pointer-events:none}
+body.zen .canvas-bottom button,body.zen .canvas-bottom input,body.zen .palette-cycle{pointer-events:auto}
+body.zen .canvas-tools{display:contents}
+body.zen #zen{position:absolute;top:12px;right:12px;margin:0;min-height:44px;padding:10px 14px;background:#10161deb;color:#eeeef0}
+body.zen #clear{display:flex;position:absolute;right:12px;bottom:12px;min-height:44px;padding:10px 12px;border:1px solid #ffffff20;border-radius:6px;background:#10161deb;color:#c6cbd2}
+body.zen .palette-controls{display:flex;position:absolute;left:12px;bottom:12px;gap:8px;width:auto;max-width:calc(100% - 155px);padding:4px 8px;border:1px solid #ffffff20;border-radius:10px;background:#10161deb;pointer-events:auto}
+body.zen .palette{display:flex;gap:2px}
+body.zen .color{width:40px;height:40px}
+body.zen .palette-hint{display:none}
+body.zen .palette-cycle{font-size:11px;white-space:nowrap}
+body.zen .transport{display:flex;grid-row:3;justify-self:center;width:100%;max-width:720px;min-height:0;margin:0;padding:8px 16px;border-radius:10px 10px 0 0;background:#151b20f2}
+body.zen .transport>.play-group,body.zen .transport>.tempo{display:none}
+body.zen .harmony-display{order:0;flex:1;width:100%;max-width:none;min-width:0;margin:0;padding:0;border:0;gap:12px}
+body.zen .harmony-display .chord-sequence{justify-content:flex-start;overflow-x:auto;scrollbar-width:thin;padding:3px}
+body.zen .harmony-display .chord-chip{flex:1 0 52px;max-width:90px;height:40px;font-size:12px}
+body.zen .current-note{flex:0 0 112px;min-height:48px;padding-left:12px}
+body.zen .current-note .note-voice{color:#d2cbdc;font-size:11px}
+body.zen .gesture-hud{top:12px;left:12px;max-width:calc(100% - 145px)}
+body.zen .playback-hero{display:none}
+@media(max-width:600px){
+ body.zen .session-capture{padding:6px 8px}
+ body.zen .capture-controls button{font-size:11px;padding:8px;min-height:44px}
+ body.zen .capture-controls{gap:4px}
+ body.zen .capture-controls output{font-size:12px}
+ body.zen .session-capture .tempo{margin-left:auto;min-width:68px}
+ body.zen .session-capture .tempo>span,body.zen .session-capture .tempo>small{display:none}
+ body.zen .session-capture .tempo>div{margin:0}
+ body.zen .palette-controls{max-width:calc(100% - 66px);gap:4px;flex-wrap:wrap}
+ body.zen .palette-cycle{padding:0 4px;min-height:36px}
+ body.zen #clear{width:44px;height:44px;font-size:0;justify-content:center;padding:10px}
+ body.zen #clear svg{width:18px;height:18px}
+ body.zen .transport{padding:5px 8px}
+ body.zen .current-note{flex-basis:90px}
+ body.zen .harmony-display{gap:8px}
+}
+@media(max-height:500px){
+ body.zen .session-capture>p{display:none}
+ body.zen .session-capture{padding:4px 8px}
+ body.zen .transport{padding:3px 12px}
+ body.zen .palette-controls{padding:0 4px}
+}
+/* Tempo remains available beside the musical readout on every screen size. */
+body.zen .transport{max-width:820px;flex-wrap:nowrap;gap:10px}
+body.zen .transport>.tempo{display:block;min-width:76px}
+body.zen .transport>.tempo button{min-width:28px;min-height:40px}
+body.zen .transport>.tempo>span,body.zen .transport>.tempo>small{display:none}
+body.zen .transport>.tempo>div{gap:3px;margin:0}
+@media(max-width:600px){body.zen .current-note{flex-basis:76px;padding-left:8px}body.zen .transport{gap:6px}body.zen .transport>.tempo{min-width:74px}}
