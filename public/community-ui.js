@@ -1,4 +1,4 @@
-import {trackCover} from './track-cover.js?rev=covers-66';
+import {trackCover} from './track-cover.js?rev=halftone-68';
 import {PresentationQueue} from './presentation-queue.js?rev=next-62';
 import {encodePerformance,decodePerformance,isSession,takeDuration} from './recorder-core.js?rev=gestures-32';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -8,19 +8,24 @@ export function trackSeed(title,artist){
  return hash>>>0;
 }
 export function trackCover(title,artist){
- let seed=trackSeed(title,artist);
+ const initialSeed=trackSeed(title,artist);
+ let seed=initialSeed;
  const random=()=>{seed+=0x6D2B79F5;let t=seed;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};
- const n=(min,max)=>Math.round(min+random()*(max-min));
  const colors=getPalette('classic').colors.map(c=>c.hex);
- // Shuffle without changing the palette shared by the live sketch.
- for(let i=colors.length-1;i>0;i--){const j=n(0,i);[colors[i],colors[j]]=[colors[j],colors[i]];}
- const shapes=[];
- shapes.push(`<circle cx="${n(60,190)}" cy="${n(45,170)}" r="${n(65,125)}" fill="${colors[0]}"/>`);
- shapes.push(`<path d="M -30 ${n(30,170)} Q ${n(50,160)} ${n(-90,50)} 286 ${n(80,220)} L 286 286 L -30 286 Z" fill="${colors[1]}" opacity=".85"/>`);
- shapes.push(`<rect x="${n(30,150)}" y="${n(30,100)}" width="${n(35,80)}" height="${n(110,200)}" rx="${n(18,40)}" fill="${colors[2]}" transform="rotate(${n(-65,65)} 128 128)"/>`);
- const x=n(65,190),y=n(65,190);
- for(let i=0;i<4;i++)shapes.push(`<circle cx="${x}" cy="${y}" r="${30+i*14}" fill="none" stroke="${colors[3]}" stroke-width="2" opacity=".8"/>`);
- for(let i=0;i<7;i++)shapes.push(`<circle cx="${n(18,238)}" cy="${n(18,238)}" r="${n(2,6)}" fill="${colors[i%4]}"/>`);
- // No public metadata is interpolated into markup; no IDs, scripts or remote assets.
- return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><rect width="256" height="256" fill="#141a20"/>${shapes.join('')}<rect x="10" y="10" width="236" height="236" rx="2" fill="none" stroke="#ffffff" stroke-opacity=".18"/></svg>`;
+ const offset=Math.floor(random()*4);
+ colors.push(...colors.splice(0,offset));
+ // A coarse-to-fine grid is part of each piece's stable visual identity.
+ const columns=15+Math.floor(random()*21),step=300/columns;
+ const x=40+random()*110,y=90+random()*110;
+ // Namespaced, numeric IDs keep gradients independent across different covers.
+ const gradient=`flow-cover-${initialSeed}-gradient`,glow=`flow-cover-${initialSeed}-glow`;
+ const dots=[];
+ for(let row=0;row<columns;row++)for(let col=0;col<columns;col++){
+  const cx=(col+.5)*step,cy=(row+.5)*step;
+  const swell=(Math.sin(cx/70+random()*.1)+Math.cos(cy/85+cx/100)+2)/4;
+  const radius=step*(.09+.34*swell);
+  dots.push(`<circle cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${radius.toFixed(3)}"/>`);
+ }
+ // User-supplied text never enters SVG markup. No scripts or remote assets.
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" aria-hidden="true" focusable="false" style="stroke:none"><defs><linearGradient id="${gradient}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${colors[0]}"/><stop offset=".52" stop-color="${colors[1]}"/><stop offset="1" stop-color="${colors[2]}"/></linearGradient><radialGradient id="${glow}"><stop stop-color="${colors[3]}"/><stop offset="1" stop-color="${colors[3]}" stop-opacity="0"/></radialGradient></defs><rect width="300" height="300" fill="url(#${gradient})"/><circle cx="${x.toFixed(3)}" cy="${y.toFixed(3)}" r="220" fill="url(#${glow})"/><g fill="#202339" opacity=".84">${dots.join('')}</g></svg>`;
 }
