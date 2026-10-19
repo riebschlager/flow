@@ -333,3 +333,21 @@ body.zen #sharedPreview:not([hidden]){display:flex;position:relative;flex-shrink
 .session-home-panel>p.home-tagline{font-size:clamp(20px,2.4vw,28px);line-height:1.4;color:#bdd4c3;margin:0 0 22px}
 #intro{right:7%}#intro p{font-size:clamp(28px,3.3vw,50px)}
 @media(max-width:720px){#intro p{font-size:clamp(26px,6.5vw,40px);letter-spacing:-1px}}
+
+/* A slow wash of Original glow colors welcomes listeners to the home page. */
+body.session-home{position:relative;isolation:isolate;background:#101316}
+body.session-home::before,body.session-home::after{content:"";position:fixed;inset:-18%;z-index:-1;pointer-events:none;background-repeat:no-repeat;will-change:transform}
+body.session-home::before{
+ background-image:radial-gradient(ellipse at 16% 22%,#b7a0ff38,transparent 48%),radial-gradient(ellipse at 86% 35%,#73e2d033,transparent 49%),radial-gradient(ellipse at 52% 90%,#ff9e9e2b,transparent 48%);
+ animation:home-color-drift 38s ease-in-out infinite alternate;
+}
+body.session-home::after{
+ background-image:radial-gradient(ellipse at 82% 82%,#edca8229,transparent 46%),radial-gradient(ellipse at 38% 52%,#b7a0ff1c,transparent 45%);
+ animation:home-color-drift 53s ease-in-out -19s infinite alternate-reverse;
+}
+@keyframes home-color-drift{
+ 0%{transform:translate3d(-4%,-3%,0) rotate(-5deg) scale(1)}
+ 50%{transform:translate3d(3%,4%,0) rotate(3deg) scale(1.06)}
+ 100%{transform:translate3d(5%,-2%,0) rotate(7deg) scale(1.02)}
+}
+@media(prefers-reduced-motion:reduce){body.session-home::before,body.session-home::after{animation:none;will-change:auto}}
