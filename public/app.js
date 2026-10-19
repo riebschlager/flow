@@ -1,4 +1,4 @@
-import {createSessionWorkspace} from './session-workspace.js?rev=ambient-67';
+import {createSessionWorkspace} from './session-workspace.js?rev=delete-70';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
@@ -7,7 +7,7 @@ import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=pe
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=halftone-68';
 import {createPresentationController} from './presentation.js?rev=auto-63';
-import {createRecorderController} from './recorder-ui.js?rev=auto-63';
+import {createRecorderController} from './recorder-ui.js?rev=delete70-auto-63';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=water-49-echo52';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=gestures-32-echo52';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=probability-33-echo52';

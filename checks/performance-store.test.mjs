@@ -7,3 +7,8 @@ const take={id:'one',name:'A take',created:'2026-10-17T16:00:00Z',frames:8000,sa
 await store.put(take);assert.deepEqual(await store.list(),[takeSummary(take)]);assert(!('channels' in (await store.list())[0]));const restored=await store.get('one');assert(restored.channels[0] instanceof Float32Array);assert.deepEqual(restored,take);assert(transactions.some(t=>t.mode==='readwrite'&&t.names.includes('takes')&&t.names.includes('index')));
 abortNext=true;await assert.rejects(()=>store.put({...take,id:'two'}),/Storage may be full/);assert.equal((await store.list()).length,1);assert.equal(await store.get('two'),undefined);await store.remove('one');assert.equal((await store.list()).length,0);assert.equal(await store.get('one'),undefined);
 console.log('PASS: one shared IndexedDB connection, typed stereo audio roundtrip, metadata-only library listing, atomic audio/index writes and deletion, and aborted quota writes preserving earlier takes.');
+
+await store.put(take);await store.put({...take,id:'keep'});await store.put({...take,id:'three'});
+abortNext=true;await assert.rejects(()=>store.removeMany(['one','three']));assert(await store.get('one'));assert(await store.get('three'));
+await store.removeMany(['one','three']);assert.equal(await store.get('one'),undefined);assert.equal(await store.get('three'),undefined);assert(await store.get('keep'));
+console.log('PASS: bulk session take deletion updates audio and index atomically and preserves unrelated takes.');

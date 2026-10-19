@@ -4,13 +4,13 @@ import {sessionFixture} from './session-fixture.mjs';
 import {sanitizeTake} from '../public/recording-state.js';
 import {sessionRoute} from '../public/session-store.js';
 const elements=new Map(),handlers={},intervals=[];
-function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',hidden:false,checked:false,classList:{toggle(){},add(){}},innerHTML:'',listeners:{},addEventListener(k,f){this.listeners[k]=f;},close(){this.open=false;},click(){return this.onclick?.();}});return elements.get(id);}
+function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',hidden:false,checked:false,classList:{toggle(){},add(){}},innerHTML:'',listeners:{},addEventListener(k,f){this.listeners[k]=f;},close(){this.open=false;},focus(){},querySelectorAll(){return [];},click(){return this.onclick?.();}});return elements.get(id);}
 globalThis.document={title:'',body:{classList:{toggle(){},remove(){}}},getElementById:el,querySelector:s=>s==='.brand'?el('brand'):null,addEventListener(){}};
 globalThis.addEventListener=(k,f)=>handlers[k]=f;globalThis.setInterval=f=>{intervals.push(f);return 0;};
 globalThis.location={pathname:'/',search:''};globalThis.history={pushState(a,b,url){const u=new URL(url,'https://flow.test');location.pathname=u.pathname;location.search=u.search;},replaceState(...a){this.pushState(...a);}};
 let snapshot={main:{settings:{},voices:['piano','vibes','strings','celesta'],custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,selected:0}},scene={w:2,h:2,u:[0,0,0,0],v:[0,0,0,0],r:[0,0,0,0],g:[0,0,0,0],b:[0,0,0,0]},stops=0,quota=false;
 const sessions=new Map(),takes=new Map();
-const store={list:async()=>[...sessions.values()].map(x=>structuredClone(x)),get:async id=>structuredClone(sessions.get(id)),put:async s=>{if(quota)throw Error('Storage full');sessions.set(s.id,structuredClone(s));}};
+const store={remove:async id=>{if(quota)throw Error('Storage full');sessions.delete(id);},list:async()=>[...sessions.values()].map(x=>structuredClone(x)),get:async id=>structuredClone(sessions.get(id)),put:async s=>{if(quota)throw Error('Storage full');sessions.set(s.id,structuredClone(s));}};
 const recorder={phase:'idle',replaying:false,selectedTake:null,listTakes:async()=>[],getTake:async id=>takes.get(id),selectTake:async id=>recorder.selectedTake=takes.get(id)||null,record:async()=>recorder.phase='recording',stopPlayback(){this.phase='idle';this.replaying=false;},setLoop(){}};
 const bridge={snapshot:()=>structuredClone(snapshot),scene:()=>structuredClone(scene),applySnapshot:s=>snapshot=structuredClone(s),restoreScene:s=>scene=structuredClone(s),stopLive:()=>stops++};
 const workspace=createSessionWorkspace({bridge,recorder,store,community:{openRoute:async()=>{},open:async()=>{}}});
@@ -43,3 +43,23 @@ const sharedWorkspace=createSessionWorkspace({bridge,recorder,store,community:sh
 sharedWorkspace.preview({...portable,communityId:'public-track',artist:'River'});assert.equal(el('sharedPreview').hidden,false);assert.equal(document.title,portable.name+' · Flow');await el('quickPlay').onclick();assert.equal(sharedPlays,1);
 recorder.phase='playing';recorder.replaying=true;el('quickStop').onclick();assert.equal(recorder.phase,'idle');assert.equal(el('sharedPreview').hidden,false);await el('quickPlay').onclick();assert.equal(sharedPlays,2);
 console.log('PASS: shared listening view and title, Play targets shared track, Stop retains the track for replay.');
+
+// Deletion is explicit, cancellable, persistent, and preserves shared take references.
+const deleteClick=id=>el('recentSessions').onclick({target:{closest:selector=>selector==='[data-delete-session]'?{dataset:{deleteSession:id}}:null}});
+let confirmation='',confirmed=false,deleteFailure=false;
+globalThis.confirm=message=>{confirmation=message;return confirmed;};
+recorder.removeTakes=async ids=>{if(deleteFailure)throw Error('Delete storage failed');for(const id of ids)takes.delete(id);};
+await sharedWorkspace.route();
+const deletedId='delete-target',keptId='keep-target';
+sessions.set(deletedId,{...structuredClone(imported),id:deletedId,name:'Delete <idea>',takeIds:['unique','shared']});
+sessions.set(keptId,{...structuredClone(imported),id:keptId,takeIds:['shared']});takes.set('unique',take);takes.set('shared',take2);
+await sharedWorkspace.route();assert.match(el('recentSessions').innerHTML,/Delete &lt;idea&gt;/);assert.match(el('recentSessions').innerHTML,/data-delete-session/);
+await deleteClick(deletedId);assert(sessions.has(deletedId));assert(takes.has('unique'));assert.match(confirmation,/cannot be undone/);
+confirmed=true;recorder.phase='playing';await deleteClick(deletedId);assert(sessions.has(deletedId));recorder.phase='idle';
+deleteFailure=true;await deleteClick(deletedId);assert(sessions.has(deletedId));assert.match(el('sessionNotice').textContent,/Delete storage failed/);deleteFailure=false;
+await deleteClick(deletedId);assert(!sessions.has(deletedId));assert(!takes.has('unique'));assert(takes.has('shared'));assert(sessions.has(keptId));assert(!el('recentSessions').innerHTML.includes('data-session="delete-target"'));
+await sharedWorkspace.route();assert(!sessions.has(deletedId));
+for(const id of [...sessions.keys()])await deleteClick(id);
+assert.equal(sessions.size,0);assert.match(el('recentSessions').innerHTML,/Your sessions will appear here/);
+await sharedWorkspace.init();assert.equal(sessions.size,0);
+console.log('PASS: cancel/confirm session deletion, playback guard, storage failure, retained shared takes, escaped names, refreshed list, empty state and reload persistence.');

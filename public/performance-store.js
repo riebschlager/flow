@@ -6,5 +6,6 @@ export class PerformanceStore{
  async list(){const takes=await this.transaction('readonly',['index'],tx=>tx.objectStore('index').getAll());return takes.sort((a,b)=>b.created.localeCompare(a.created));}
  get(id){return this.transaction('readonly',['takes'],tx=>tx.objectStore('takes').get(id));}
  put(take){return this.transaction('readwrite',['takes','index'],tx=>{tx.objectStore('takes').put(take);return tx.objectStore('index').put(takeSummary(take));});}
+ removeMany(ids){return this.transaction('readwrite',['takes','index'],tx=>{for(const id of ids){tx.objectStore('takes').delete(id);tx.objectStore('index').delete(id);}});}
  remove(id){return this.transaction('readwrite',['takes','index'],tx=>{tx.objectStore('takes').delete(id);return tx.objectStore('index').delete(id);});}
 }
