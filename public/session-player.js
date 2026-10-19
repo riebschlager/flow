@@ -1,9 +1,10 @@
+import {WavChunks} from './session-export.js?rev=titles-81';
 import {PresentationMixer} from './presentation-mixer.js?rev=visible-sound-79';
 import {masterLevel} from './output.js?rev=levels-38';
 import {EnvironmentSynth} from './environment.js?rev=performance-39';
-import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=gestures-32';
+import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=titles-81';
 import {PercussionSynth} from './rhythm.js?rev=visible-sound-79';
-import {PerformanceAudio} from './recorder-audio.js?rev=gestures-32';
+import {PerformanceAudio} from './recorder-audio.js?rev=titles-81';
 import {normalizePerformance} from './gestures.js?rev=gestures-32';
 import {delaySeconds} from './timing.js?rev=gestures-32-echo52';
 const soundKinds=new Set(['settings','gesture','note','drum','noteOff','drumOff']);
@@ -50,5 +51,11 @@ export class SessionBackend{
  transition(take,options){if(!this.presentation)throw new Error('Start presentation playback first.');return this.presentation.transition(take,options);}
  async preload(take){await this.player.prepare(take);const environment=new EnvironmentSynth(this.audio);environment.prepare(take.snapshot.environment);for(const e of take.events)if(e.kind==='settings')environment.prepare(e.data.environment);}
  stop(){this.presentation?.dispose();this.presentation=null;this.player.stop();this.legacy.stop();}
- async export(take,onStart=()=>{}){if(!isSession(take))return wavFile(take);const operation=++this.operation;await this.prepare();if(operation!==this.operation)throw new Error('Audio export cancelled.');if(!this.capture)this.capture=new PerformanceAudio(this.audio,{onDone:result=>{const pending=this.exportResolve;this.exportResolve=null;this.exportReject=null;this.player.stop();if(pending){const frames=Math.round(takeDuration(this.exportTake)*this.audio.ctx.sampleRate);pending(wavFile({frames,sampleRate:this.audio.ctx.sampleRate,tailFrames:result.channels[0].length-frames,channels:result.channels,seamMs:80}));}}});await this.capture.prepare();if(operation!==this.operation)throw new Error('Audio export cancelled.');this.exportTake=take;return new Promise((resolve,reject)=>{this.exportResolve=resolve;this.exportReject=reject;this.player.play(take,{loop:false,tail:.75}).then(start=>{if(!this.exportReject||start===null)return;this.capture.begin(start,start+takeDuration(take));onStart(start);}).catch(e=>{this.exportResolve=null;this.exportReject=null;reject(e);});});}
+ async export(take,onStart=()=>{},{seconds=null,live=null}={}){
+  if(!isSession(take))return wavFile(take);const operation=++this.operation;await this.prepare();if(operation!==this.operation)throw new Error('Audio export cancelled.');
+  const duration=seconds??takeDuration(take);new WavChunks(this.audio.ctx.sampleRate,duration);
+  if(!this.capture)this.capture=new PerformanceAudio(this.audio,{onDone:result=>{const pending=this.exportResolve;this.exportResolve=null;this.exportReject=null;this.player.stop();if(pending)pending(result.blob);}});
+  await this.capture.prepare();if(operation!==this.operation)throw new Error('Audio export cancelled.');
+  return new Promise((resolve,reject)=>{this.exportResolve=resolve;this.exportReject=reject;const ready=live?Promise.resolve(this.audio.ctx.currentTime+.16):this.player.play(take,{loop:seconds!==null,tail:.75});ready.then(start=>{if(operation!==this.operation||!this.exportReject||start===null)return;this.capture.begin(start,start+duration,{stream:true,fades:seconds!==null});if(live)live(start,start+duration);onStart(start);}).catch(e=>{this.exportResolve=null;this.exportReject=null;this.capture?.cancel();this.player.stop();reject(e);});});
+ }
 }

@@ -6,7 +6,7 @@ process.env.CLOUDFLARE_CF_FETCH_ENABLED='false';process.env.WRANGLER_SEND_METRIC
 const proxy=await getPlatformProxy({configPath:'dist/server/wrangler.json',persist:false,remoteBindings:false,envFiles:[]});
 try{
  for(const statement of fs.readFileSync(new URL('../drizzle/0000_dapper_namorita.sql',import.meta.url),'utf8').split('--> statement-breakpoint').filter(s=>s.trim()))await proxy.env.DB.prepare(statement).run();
- const take=sessionFixture(),file=encodePerformance(take),base='https://chromaflow.test/api/community/';
+ const take=sessionFixture();take.events.push({t:1,kind:'title',data:{text:'Evening tide',color:1}});const file=encodePerformance(take),base='https://chromaflow.test/api/community/';
  const request=new Request(base+'tracks',{method:'POST',body:file,headers:{origin:'https://chromaflow.test','content-type':'application/json','x-file-size':String(file.size),'x-track-title':'Binding%20current','x-artist-name':'River'}});
  const response=await communityRequest(request,proxy.env,'binding-user');const result=await response.json();assert.equal(response.status,201,JSON.stringify(result));
  const id=result.track.id,download=await communityRequest(new Request(base+'tracks/'+id+'/performance'),proxy.env);assert.equal(download.status,200);const decoded=await decodePerformance(await download.blob());assert.equal(decoded.name,'Binding current');assert.deepEqual(decoded.events,take.events);assert.equal(decoded.channels,undefined);assert.equal(decoded.duration,take.duration);

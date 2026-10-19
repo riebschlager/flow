@@ -1,6 +1,6 @@
 import {SessionStore,sessionRoute} from './session-store.js?rev=delete-70';
-import {mainDefaults,sanitizeSnapshot} from './recording-state.js?rev=visible-sound-79';
-import {isSetupDraft,encodePerformance,decodePerformance} from './recorder-core.js?rev=gestures-32';
+import {mainDefaults,sanitizeSnapshot} from './recording-state.js?rev=titles-81';
+import {isSetupDraft,encodePerformance,decodePerformance} from './recorder-core.js?rev=titles-81';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fresh=()=>sanitizeSnapshot({main:{settings:{...mainDefaults},voices:['piano','vibes','strings','celesta'],custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,selected:0}});
 export function createSessionWorkspace({bridge,recorder,community,firstRun=false,store=new SessionStore()}){

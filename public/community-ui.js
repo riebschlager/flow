@@ -1,6 +1,6 @@
 import {trackCover} from './track-cover.js?rev=halftone-68';
 import {PresentationQueue} from './presentation-queue.js?rev=next-62';
-import {encodePerformance,decodePerformance,isSession,takeDuration} from './recorder-core.js?rev=gestures-32';
+import {encodePerformance,decodePerformance,isSession,takeDuration} from './recorder-core.js?rev=titles-81';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const duration=ms=>`${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}`,mb=n=>(n/1048576).toFixed(1)+' MB';
 export function createCommunityController(recorder,{request=fetch,upload=uploadFile,presentation=null}={}){

@@ -383,3 +383,5 @@ body.zen .zen-sleep{position:absolute;right:12px;bottom:116px;pointer-events:aut
 .canvas-first.mobile-controls-open .control-rail{display:block}body.zen.present-idle .cursor{display:none!important}.canvas-first .artwork{overflow:hidden}
 body.zen.present-idle .present-strip *{pointer-events:none}body.zen .present-strip:focus-within *{pointer-events:auto}
 .canvas-first:not(.session-home) #sessionHeader,.canvas-first .take-tray{display:none}body.zen .art-footer{display:none!important}
+
+.title-card{display:flex;align-items:center;gap:6px}.title-card input{width:150px;min-width:0;border:1px solid #ffffff24;border-radius:6px;background:#111820;color:#e6e7eb;padding:7px}.present-strip{flex-wrap:wrap;max-width:calc(100% - 24px)}.export-options{margin:14px 0;padding:14px;border:1px solid #ffffff20;border-radius:10px}.export-options summary{cursor:pointer;margin-bottom:12px}.export-options>button{margin-top:12px;width:100%}.exporting-media #fluid,.exporting-media #presentStrip,.exporting-media #controlRail{pointer-events:none}.exporting-media #presentStrip{opacity:0}
