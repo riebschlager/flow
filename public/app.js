@@ -5,7 +5,7 @@ import {VisibleSound,normalizeEnergy} from './visible-sound.js?rev=fluid-feedbac
 import {delaySeconds} from './timing.js?rev=gestures-32-echo52';
 import {createDriftController} from './drift-ui.js?rev=titles-81';
 import {RainClock,schedulingLookahead,createBackgroundContinuity} from './background-continuity.js?rev=continuity-76';
-import {createSessionWorkspace} from './session-workspace.js?rev=fluid-feedback-82';
+import {createSessionWorkspace} from './session-workspace.js?rev=multitouch-83';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=follow-root-75-workspace-35';
@@ -14,14 +14,14 @@ import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=pe
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=titles-81';
 import {createPresentationController} from './presentation.js?rev=first-run-80';
-import {createRecorderController} from './recorder-ui.js?rev=fluid-feedback-82';
-import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=fluid-feedback-82';
+import {createRecorderController} from './recorder-ui.js?rev=multitouch-83';
+import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=multitouch-83';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=fluid-feedback-82';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=fluid-feedback-82';
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
 import {Fluid} from './fluid.js?rev=performance-39';
-import {createPerformanceController} from './performance.js?rev=fluid-feedback-82';
+import {createPerformanceController} from './performance.js?rev=multitouch-83';
 import {createRhythmController} from './rhythm-ui.js?rev=fluid-feedback-82';
 import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=fluid-feedback-82';
 import {createNoteReadout} from './note-readout.js?rev=crossfade-41';
@@ -266,8 +266,8 @@ function syncDropScheduler(){
  if(!state.playing)driftUI?.stop();if(!state.playing)for(const d of drops)d.cancel?.abort();
  serviceMusic();if(state.playing)dropTimer=globalThis.setInterval(serviceMusic,25);
 }
-function drop(x,y,color=state.selected,impulse=null,expression=null,when=null){
- if(recorder?.blocked&&!recorder?.renderingDrift)return;if(busy&&!state.playing&&startingFromCanvas){if(pendingTouches.length<45)pendingTouches.push([x,y,color,impulse,expression,when]);return;}color=nextDropColor();const d={id:++dropSerial,x:Math.max(.04,Math.min(.96,x)),y:Math.max(.08,Math.min(.92,y)),color,expression,progress:0,duration:expression?.kind==='flick'?.23:.45+Math.random()*.15,impulse:impulse||[Math.random()*14-7,13+Math.random()*12]};
+function drop(x,y,color=state.selected,impulse=null,expression=null,when=null,fixedColor=false){
+ if(recorder?.blocked&&!recorder?.renderingDrift)return;if(busy&&!state.playing&&startingFromCanvas){if(pendingTouches.length<45)pendingTouches.push([x,y,color,impulse,expression,when,fixedColor]);return;}color=fixedColor?color:nextDropColor();const d={id:++dropSerial,x:Math.max(.04,Math.min(.96,x)),y:Math.max(.08,Math.min(.92,y)),color,expression,progress:0,duration:expression?.kind==='flick'?.23:.45+Math.random()*.15,impulse:impulse||[Math.random()*14-7,13+Math.random()*12]};
  const clock=dropClock();if(when!==null)clock.now=when;prepareDrop(d,clock);drops.push(d);if(drops.length>45)drops.shift().cancel?.abort();
 }
 function impact(d){visualImpact(d);const c=colors[d.color];if(d.replay){ripples.push({x:d.x,y:d.y,color:c.hex,t:0});return;}const size=(.018+Number($('dropSize').value)/100*.06)*(d.expression?.ink||1),force=d.expression?.force||1;sim.splat(d.x,d.y,c.rgb,size,d.impulse[0]*force,d.impulse[1]*force);ripples.push({x:d.x,y:d.y,color:c.hex,t:0});if(!d.audioScheduled)glows.push({x:d.x,y:d.y,color:c.hex,t:0});if(ripples.length>30)ripples.shift();if(glows.length>20)glows.shift();if(state.playing&&d.audioScheduled){showNote(noteName(d.pitch),instruments[d.voice].name);}}
@@ -323,7 +323,7 @@ async function chooseIntent(key){
 for(const id of ['intentPicker','presentIntent'])$(id).addEventListener('change',()=>chooseIntent($(id).value));
 for(const id of ['energy','zenEnergy','volume','reverb','delay'])$(id).addEventListener('input',()=>{intentRamp.cancel(id==='zenEnergy'?'energy':id);if(id==='energy'||id==='zenEnergy')syncEnergy();else syncAudio();});
 syncIntentPickers();
-const performanceUI=createPerformanceController({canvas,stage,audio,sim,drop,nextColor:()=>state.selected,getColor:()=>colors[state.selected],readOnly:()=>!!recorder?.blocked&&!recorder?.renderingDrift,onChange:()=>recorder?.stateChanged(),onGesture:m=>recorder?.capture('gesture',{...m,performance:{...audio.performance}}),onFirstTouch:()=>{$('intro').classList.add('faded');},openGuide:()=>{if(mobileLayout.matches)setMobileControls(true);else if(document.body.classList.contains('panel-hidden'))togglePanel();switchTab('perform');$('gestureGuide').open=true;$('gestureGuide').querySelector('summary').focus();$('gestureGuide').scrollIntoView?.({block:'nearest'});}});
+const performanceUI=createPerformanceController({canvas,stage,audio,sim,drop,nextColor:()=>state.selected,touchColor:nextDropColor,getColor:(color)=>colors[color??state.selected],readOnly:()=>!!recorder?.blocked&&!recorder?.renderingDrift,onChange:()=>recorder?.stateChanged(),onGesture:m=>recorder?.capture('gesture',{...m,performance:{...audio.performance}}),onFirstTouch:()=>{$('intro').classList.add('faded');},openGuide:()=>{if(mobileLayout.matches)setMobileControls(true);else if(document.body.classList.contains('panel-hidden'))togglePanel();switchTab('perform');$('gestureGuide').open=true;$('gestureGuide').querySelector('summary').focus();$('gestureGuide').scrollIntoView?.({block:'nearest'});}});
 const rhythmUI=createRhythmController({audio,togglePlay,onFlare:hit=>visibleSound.flare(hit),onChange:()=>recorder?.stateChanged(),getChordAt:when=>activeChords()[Math.floor(Math.max(0,when-clockOrigin)/(Number($('chordLength').value)*60/state.bpm))%4],getPosition:()=>Math.max(0,state.playing?audio.ctx.currentTime-clockOrigin:state.elapsed)*state.bpm/60,onHit:hit=>{recorder?.capture('percussion',hit,hit.time);stirPercussion(sim,hit);}});
 const arpUI=createArpeggiatorController({audio,getFluid:index=>$('fluidListens').checked&&!recorder?.replaying?fluidListen.arp(index,$('quantizeEnabled').checked):null,onImpact:event=>visualImpact({...event,color:(event.index||0)%4},'arp'),getColors:()=>colors.map(c=>c.hex),onNote:event=>{recorder?.capture('arpeggio',event,event.time);},onChange:()=>recorder?.stateChanged(),getClock:()=>({origin:rhythmUI.timingOrigin??clockOrigin,chordOrigin:clockOrigin,bpm:state.bpm,rate:audio.rhythmRate,chordBeats:Number($('chordLength').value),chords:activeChords()}),getChord:()=>activeChords()[state.playing?chordAt(audio.ctx.currentTime):state.chordIndex]});
 const environmentUI=createEnvironmentController({audio,getOrigin:()=>clockOrigin,onChange:()=>recorder?.stateChanged(),readOnly:()=>!!recorder?.blocked});

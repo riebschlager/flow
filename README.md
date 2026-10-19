@@ -106,7 +106,7 @@ Both melodic and percussion delay lines use the same timing function and transit
 
 ## Expressive canvas and gesture audit
 
-The Perform tab has an expression switch (default on), intensity (default 65%), a Canvas tool selector, a guide, and live filter/reverb/echo readouts. Paint is the default. Conduct, Space and Orbit are available as explicit tools for mouse, trackpad, touch and pen. Choose a mouse shortcut before beginning a drag: right-button or Shift-left-drag selects Conduct; Alt/Option-left-drag selects Space. A canvas-only context-menu handler enables right-button performance while expression is on. Pointer capture, cancellation, focus loss and reset all end the active gesture cleanly. Additional pointers are ignored.
+The Perform tab has an expression switch (default on), intensity (default 65%), a Canvas tool selector, a guide, and live filter/reverb/echo readouts. Paint is the default. Conduct, Space and Orbit are available as explicit tools for mouse, trackpad, touch and pen. Choose a mouse shortcut before beginning a drag: right-button or Shift-left-drag selects Conduct; Alt/Option-left-drag selects Space. A canvas-only context-menu handler enables right-button performance while expression is on. Pointer capture, cancellation, focus loss and reset all end the active gesture cleanly. Touch supports up to five independent fingers; mouse and pen retain one active pointer.
 
 The audit found that the previous Orbit pan was narrow, its filter changes happened mostly above the melodic bus’s existing low-pass cutoff, and its small fluid pulse was easy to miss. Gather had no audible action until release. Slow/fast painting modified new notes but left the ongoing arrangement mostly unchanged. The revised gestures give each action a distinct role:
 
@@ -328,3 +328,9 @@ Zen / Present’s Title card writes up to 80 characters in the selected palette 
 ### Fluid feedback
 
 In Perform, enable **Fluid listens** to let ink density gently shape arpeggio velocity and warmth; unquantized notes breathe by at most 10 ms. Mixing currents can add a very quiet, slow harmonic after you stop painting, no more than once every four seconds, with a faint Energy-scaled ring. Analysis pauses with the hidden-tab solver. The experimental switch ships off pending listening approval, persists with scene settings, and follows recorded settings automation and forks. Sessions capture the emitted notes and replay without fluid analysis; older sessions keep feedback off.
+
+## Multi-touch
+
+Play with up to five fingers: each touch keeps its own pitch, height expression, and color (Cycle colors draws the next color from the existing shuffled cycle on touchdown). Moving touches repeat at most once every 750 ms each, keeping sustained five-finger painting below eight notes per second and within the existing 64-voice budget. Pinch two Paint touches inward deliberately to Gather at their midpoint; spread to release four chord tones, or lift both fingers. Touchdown notes already played remain audible; the pinch cancels further stroke notes and release accents. Cancel, capture loss and blur never Bloom. Two-finger Conduct is intentionally omitted to keep pinch recognition unambiguous; the existing Conduct tool still works. Canvas touches suppress browser zoom and scrolling; controls keep normal browser zoom.
+
+No new settings are persisted. Recordings keep the existing session version with optional gesture pointer/color fields; older sessions use the original single gesture view. Notes, fluid actions, shared scene expression, export and forks use their existing production paths.

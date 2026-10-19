@@ -230,8 +230,9 @@ try{
  $('arpSource').value='scale';fire('arpSource');$('arpRootMode').value='chord';fire('arpRootMode');
  await $('recordStart').onclick();assert.equal(captures.length,0,'session recording must not create a PCM capture device');assert.equal($('recordBar').hidden,false);clock+=500;tick();
  // Let the real Drift scheduler record while no animation frames run.
+ const driftRandom=Math.random;Math.random=()=>.7;
  $('driftEnabled').checked=true;fire('driftEnabled');const driftNotesBefore=notes.filter(n=>!n.target).length;
- document.hidden=true;for(let i=0;i<1800;i++){clock+=25;serviceTimers();await Promise.resolve();}document.hidden=false;tick();assert(notes.filter(n=>!n.target).length>driftNotesBefore,'idle Drift reaches the production synth while recording without animation frames');$('driftEnabled').checked=false;fire('driftEnabled');
+ document.hidden=true;for(let i=0;i<1800;i++){clock+=25;serviceTimers();await Promise.resolve();}document.hidden=false;tick();assert(notes.filter(n=>!n.target).length>driftNotesBefore,'idle Drift reaches the production synth while recording without animation frames');Math.random=driftRandom;$('driftEnabled').checked=false;fire('driftEnabled');
  $('environmentPreset').value='hearth';fire('environmentPreset');$('environmentActivity').value='72';for(const fn of $('environmentActivity').listeners.input)fn();
  $('arpProbability').value='0';for(const fn of $('arpProbability').listeners.input)fn();for(let i=0;i<150;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}$('arpProbability').value='100';for(const fn of $('arpProbability').listeners.input)fn();
  const beforeSpace=notes.length;for(const fn of canvas.listeners.pointerdown)fn({...event,clientX:930,clientY:30,altKey:true});for(let i=0;i<75;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}assert.equal($('gestureName').textContent,'Space');assert(notes.slice(beforeSpace).every(n=>n.target),'Space must not paint melodic notes');for(const fn of canvas.listeners.pointerup)fn(event);
