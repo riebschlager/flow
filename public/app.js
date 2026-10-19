@@ -1,4 +1,4 @@
-import {createSessionWorkspace} from './session-workspace.js?rev=delete-70';
+import {createSessionWorkspace} from './session-workspace.js?rev=trash-71';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
