@@ -367,3 +367,5 @@ body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle:afte
  body:not(.zen).listening-invitation #quickPlay{animation:none;box-shadow:none;border-color:#454b49;background:transparent;color:inherit}
 }
 @media(prefers-reduced-motion:reduce){body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle{animation:none;box-shadow:0 0 0 3px #b6e1c933}}
+
+.arp-note.chord-tone{border-color:#b7a0d6;color:#e1cdef}.arp-chord-mark{display:block;font-size:10px;line-height:5px;margin-top:5px;color:#c6a7e6}.arp-note.active .arp-chord-mark{color:#24192f}

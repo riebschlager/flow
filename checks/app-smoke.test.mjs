@@ -129,6 +129,13 @@ try{
  $('arpEnabled').checked=false;fire('arpEnabled');const stoppedCount=notes.filter(note=>note.target).length;for(let i=0;i<30;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}assert.equal(notes.filter(note=>note.target).length,stoppedCount);assert.match($('arpStatus').textContent,/Off/);await $('start').listeners.click[0]();assert.equal(timers.size,0);
  const arpSettings=JSON.parse(store.get('chromaflow-arp-v1'));assert.equal(arpSettings.count,7);assert.equal(arpSettings.pattern,'bounce');assert.equal(arpSettings.voice,'vibes');assert.equal(arpSettings.enabled,false);
  console.log('PASS: app arpeggiator enable, chosen voice, bounce pattern, seven-note pool, timed preview, voice-change cancellation, independent mute, disable, pause, and persistence.');
+ // Scale mode uses the same patterns and persists with the scene.
+ assert.equal($('arpScaleControls').hidden,true);assert.equal($('arpRoot').disabled,true);
+ $('arpSource').value='scale';fire('arpSource');$('arpRoot').value='2';fire('arpRoot');$('arpScale').value='dorian';fire('arpScale');$('arpRestart').value='flow';fire('arpRestart');
+ assert.equal($('arpScaleControls').hidden,false);assert.equal($('arpRoot').disabled,false);assert.equal($('arpPoolLabel').textContent,'D Dorian · 7 notes');assert.equal($('arpPoolHelp').hidden,false);assert.match($('arpNotes').innerHTML,/chord-tone/);
+ const scaleSettings=JSON.parse(store.get('chromaflow-arp-v1'));assert.equal(scaleSettings.root,2);assert.equal(scaleSettings.scale,'dorian');assert.equal(scaleSettings.restart,false);
+ $('arpSource').value='chord';fire('arpSource');assert.equal($('arpScaleControls').hidden,true);assert.equal($('arpPoolHelp').hidden,true);assert.match($('arpPoolLabel').textContent,/chord tones/);$('arpRestart').value='restart';fire('arpRestart');
+ console.log('PASS: scale selectors, D Dorian note pool, chord-tone markers, stored scale/continuous settings and return to chord mode.');
  // The canvas atmosphere follows real transport boundaries and manual jumps.
  $('progression').value='daydream';fire('progression');await $('start').listeners.click[0]();$('clear').onclick();
  clock+=8*60/58*1000+25;tick();assert.equal(atmosphereFrame.chord,'Am7');assert.equal(atmosphereFrame.index,1);assert(atmosphereFrame.pulse>0&&atmosphereFrame.pulse<.01);

@@ -1,5 +1,5 @@
 import {SessionStore,sessionRoute} from './session-store.js?rev=delete-70';
-import {mainDefaults,sanitizeSnapshot} from './recording-state.js?rev=water-49-echo52';
+import {mainDefaults,sanitizeSnapshot} from './recording-state.js?rev=scales-74';
 import {isSetupDraft,encodePerformance,decodePerformance} from './recorder-core.js?rev=gestures-32';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fresh=()=>sanitizeSnapshot({main:{settings:{...mainDefaults},voices:['piano','vibes','strings','celesta'],custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,selected:0}});

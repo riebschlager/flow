@@ -1,10 +1,20 @@
 import {parseChord,instruments} from './music.js?rev=gestures-32-echo52';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
+export const arpRoots=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+export const arpScales={
+ major:{name:'Major',intervals:[0,2,4,5,7,9,11]},
+ minor:{name:'Natural minor',intervals:[0,2,3,5,7,8,10]},
+ majorPentatonic:{name:'Major pentatonic',intervals:[0,2,4,7,9]},
+ minorPentatonic:{name:'Minor pentatonic',intervals:[0,3,5,7,10]},
+ dorian:{name:'Dorian',intervals:[0,2,3,5,7,9,10]},
+ mixolydian:{name:'Mixolydian',intervals:[0,2,4,5,7,9,10]},
+ lydian:{name:'Lydian',intervals:[0,2,4,6,7,9,11]}
+};
 export const arpRates=[4,2,1,.5,.25,.125,1/3];
 export function normalizeArp(raw={}){
  raw=raw&&typeof raw==='object'?raw:{};
  const number=(value,lo,hi,fallback)=>Number.isFinite(Number(value))?Math.max(lo,Math.min(hi,Number(value))):fallback;
- return {enabled:raw.enabled===true,voice:Object.hasOwn(instruments,raw.voice)?raw.voice:'vibes',pattern:Object.hasOwn(arpPatterns,raw.pattern)?raw.pattern:'up',count:Math.round(number(raw.count,1,16,8)),beats:arpRates.includes(Number(raw.beats))?Number(raw.beats):.5,volume:number(raw.volume,0,100,55),probability:number(raw.probability??100,0,100,100),length:number(raw.length,10,400,85),attack:number(raw.attack,0,2000,20),decay:number(raw.decay,0,2000,120),sustain:number(raw.sustain,0,100,65),glideEnabled:raw.glideEnabled===true,glideTime:number(raw.glideTime,0,2000,180),glideAmount:number(raw.glideAmount,0,100,100)};
+ return {source:raw.source==='scale'?'scale':'chord',root:Number.isInteger(raw.root)&&raw.root>=0&&raw.root<12?raw.root:0,scale:Object.hasOwn(arpScales,raw.scale)?raw.scale:'major',restart:raw.restart!==false,enabled:raw.enabled===true,voice:Object.hasOwn(instruments,raw.voice)?raw.voice:'vibes',pattern:Object.hasOwn(arpPatterns,raw.pattern)?raw.pattern:'up',count:Math.round(number(raw.count,1,16,8)),beats:arpRates.includes(Number(raw.beats))?Number(raw.beats):.5,volume:number(raw.volume,0,100,55),probability:number(raw.probability??100,0,100,100),length:number(raw.length,10,400,85),attack:number(raw.attack,0,2000,20),decay:number(raw.decay,0,2000,120),sustain:number(raw.sustain,0,100,65),glideEnabled:raw.glideEnabled===true,glideTime:number(raw.glideTime,0,2000,180),glideAmount:number(raw.glideAmount,0,100,100)};
 }
 export function arpEnvelope(raw={},step=.5){
  const cfg=normalizeArp(raw),duration=Math.max(.02,Math.min(8,(Number(step)||.5)*cfg.length/100));
@@ -18,8 +28,8 @@ export function arpGlide(raw={},step=.5){
  const cfg=normalizeArp(raw),shape=arpEnvelope(cfg,step),requested=cfg.glideTime/1000,time=Math.min(requested,shape.duration-shape.release);
  return {enabled:cfg.glideEnabled&&time>0&&cfg.glideAmount>0,time,amount:cfg.glideAmount/100,fitted:time<requested-.000001};
 }
-export function arpNotes(chord,count=8){
- count=normalizeArp({count}).count;const base=parseChord(chord),notes=[];
+export function arpNotes(chord,count=8,raw={}){
+ const cfg=normalizeArp({...raw,count});count=cfg.count;const base=cfg.source==='scale'?arpScales[cfg.scale].intervals.map(n=>48+cfg.root+n):parseChord(chord),notes=[];
  for(let octave=0;octave<8;octave++)for(const note of base){const pitch=note+octave*12;if(pitch<=127)notes.push(pitch);}
  return [...new Set(notes)].sort((a,b)=>a-b).slice(0,count);
 }
@@ -68,17 +78,17 @@ export class ArpEngine{
   if(!this.audio.playing||!this.getConfig().enabled){this.stop();return;}
   const cfg=this.getConfig(),clock=this.getClock(),now=this.audio.ctx.currentTime;
   const step=60/clock.bpm/clock.rate*cfg.beats;
-  const key=JSON.stringify([clock.origin,clock.bpm,clock.rate,clock.chordOrigin,clock.chordBeats,clock.chords,cfg.voice,cfg.count,cfg.pattern,cfg.beats]);
+  const key=JSON.stringify([clock.origin,clock.bpm,clock.rate,clock.chordOrigin,clock.chordBeats,clock.chords,cfg.voice,cfg.count,cfg.pattern,cfg.beats,cfg.source,cfg.root,cfg.scale,cfg.restart]);
   this.setVolume();for(const note of this.notes)if(note.time<=now&&note.time>this.lastStartedTime){this.lastStartedPitch=note.pitch;this.lastStartedTime=note.time;}this.notes=this.notes.filter(note=>note.end>now);
   if(key!==this.key){this.cancelFuture(now);this.key=key;this.chordKey=null;this.pattern.reset();this.nextStep=Math.max(0,Math.ceil((now+.025-clock.origin)/step-1e-9));this.onEvent({type:'reset'});}
   if(clock.origin+this.nextStep*step<now+.003)this.nextStep=Math.max(this.nextStep,Math.ceil((now+.025-clock.origin)/step-1e-9));
   for(let guard=0;guard<32;guard++){
    const time=clock.origin+this.nextStep*step;if(time>now+.12)break;this.nextStep++;
    const chordIndex=Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm))%clock.chords.length,chord=clock.chords[chordIndex];
-   // Start each chord's pattern from its first step, even at a progression wrap.
+   // Restart at chord boundaries by default; continuous mode preserves the pattern phase.
    const chordKey=chordIndex+'|'+Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm));
-   if(this.chordKey!==chordKey){this.chordKey=chordKey;this.pattern.reset();}
-   const pool=arpNotes(chord,cfg.count),index=this.pattern.next(pool.length,cfg.pattern),pitch=pool[index];
+   if(this.chordKey!==chordKey){this.chordKey=chordKey;if(cfg.restart!==false)this.pattern.reset();}
+   const pool=arpNotes(chord,cfg.count,cfg),index=this.pattern.next(pool.length,cfg.pattern),pitch=pool[index];
    // A rest still consumes its pattern step. Probability uses a separate random
    // stream, and never changes the rhythmic grid or the last sounded glide pitch.
    const probability=cfg.probability??100;
