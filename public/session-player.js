@@ -1,4 +1,4 @@
-import {PresentationMixer} from './presentation-mixer.js?rev=next-62';
+import {PresentationMixer} from './presentation-mixer.js?rev=present-sleep-78';
 import {masterLevel} from './output.js?rev=levels-38';
 import {EnvironmentSynth} from './environment.js?rev=performance-39';
 import {isSession,takeDuration,wavFile} from './recorder-core.js?rev=gestures-32';
@@ -46,6 +46,7 @@ export class SessionBackend{
  cancelRecording(){if(this.timer!==null)globalThis.clearInterval(this.timer);this.timer=null;}
  cancel(){this.operation++;this.cancelRecording();this.capture?.cancel();this.exportResolve=null;if(this.exportReject){const reject=this.exportReject;this.exportReject=null;reject(new Error('Audio export cancelled.'));}}
  play(take,options){if(options?.presentation){this.presentation?.dispose();this.presentation=new PresentationMixer(this.audio,SessionPlayer,{onError:this.onError});return this.presentation.play(take);}return isSession(take)?this.player.play(take,options):this.legacy.play(take,options);}
+ setPresentationSleepGain(value){this.presentation?.setSleepGain(value);}
  transition(take,options){if(!this.presentation)throw new Error('Start presentation playback first.');return this.presentation.transition(take,options);}
  async preload(take){await this.player.prepare(take);const environment=new EnvironmentSynth(this.audio);environment.prepare(take.snapshot.environment);for(const e of take.events)if(e.kind==='settings')environment.prepare(e.data.environment);}
  stop(){this.presentation?.dispose();this.presentation=null;this.player.stop();this.legacy.stop();}

@@ -19,7 +19,7 @@ failing.setEnabled(true);now+=180;await failing.tick();assert.equal(failing.enab
 // Exercise the actual controls and shared Next-track path, with an audio clock.
 const elements=new Map();
 const classList={add(){},remove(){}};
-function element(id){return {id,hidden:false,disabled:false,checked:false,value:'3',style:{},dataset:{},parentNode:{style:{},insertBefore(){}},listeners:{},classList,
+function element(id){return {id,hidden:false,disabled:false,checked:false,value:'3',style:{setProperty(){}},dataset:{},parentNode:{style:{},insertBefore(){}},listeners:{},classList,
  addEventListener(type,fn){this.listeners[type]=fn;},append(){},prepend(){},getAttribute(){return null;},setAttribute(){},removeAttribute(){},contains(){return false;}};}
 for(const match of fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8').matchAll(/\bid="([^"]+)"/g))elements.set(match[1],element(match[1]));
 const $=id=>elements.get(id);

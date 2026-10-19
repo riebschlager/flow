@@ -24,15 +24,15 @@ await assert.rejects(retry.next(),/offline/);assert.equal((await retry.next()).i
 
 const base={ctx:{currentTime:10}},decks=[];
 const makeDeck=async()=>{
- const events=[],deck={events,disposed:0,gain:{gain:{setValueAtTime:(value,at)=>events.push({value,at}),linearRampToValueAtTime:(value,at)=>events.push({value,at})}},
+ const events=[],sleepEvents=[],deck={events,sleepEvents,disposed:0,sleepGain:{gain:{value:1,setTargetAtTime:(value,at,tau)=>sleepEvents.push({value,at,tau})}},gain:{gain:{setValueAtTime:(value,at)=>events.push({value,at}),linearRampToValueAtTime:(value,at)=>events.push({value,at})}},
  player:{async play(take){if(take.bad)throw Error('bad instruments');return base.ctx.currentTime+.16;},retire(at){deck.retired=at;}},dispose(){this.disposed++;}};
  decks.push(deck);return deck;
 };
 const mixer=new PresentationMixer(base,null,{makeDeck});
-assert.equal(await mixer.play({}),10.16);const first=decks[0];
+assert.equal(await mixer.play({}),10.16);const first=decks[0];mixer.setSleepGain(.2);assert.deepEqual(first.sleepEvents.at(-1),{value:.2,at:10,tau:.1});
 await assert.rejects(mixer.transition({bad:true}),/bad instruments/);
 assert.equal(first.disposed,0);assert.equal(first.retired,undefined,'failed incoming preparation leaves current deck untouched');assert.equal(decks[1].disposed,1);
-const handoff=await mixer.transition({},{duration:5});assert.equal(handoff.start,10.16);assert.equal(first.retired,10.16);
+const handoff=await mixer.transition({},{duration:5});assert.equal(handoff.start,10.16);assert.equal(first.retired,10.16);assert.equal(decks[2].sleepGain.gain.value,.2,'incoming deck inherits the sleep fade before playback');mixer.setSleepGain(.01);assert.equal(first.sleepEvents.at(-1).value,.01);assert.equal(decks[2].sleepEvents.at(-1).value,.01);
 assert.deepEqual(first.events.at(-1),{value:0,at:15.16});assert.deepEqual(decks[2].events.at(-1),{value:1,at:15.16});
 await assert.rejects(mixer.transition({}),/already transitioning/);
 base.ctx.currentTime=15;mixer.service();assert.equal(first.disposed,0);

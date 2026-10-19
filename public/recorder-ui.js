@@ -1,5 +1,5 @@
 import {CaptureTimeline,VisualTimeline,MAX_SECONDS,encodePerformance,decodePerformance,wavFile,clone,isSession,takeDuration,forkSession,isSetupDraft} from './recorder-core.js?rev=gestures-32';
-import {SessionBackend} from './session-player.js?rev=continuity-76';
+import {SessionBackend} from './session-player.js?rev=present-sleep-78';
 import {PerformanceStore,takeSummary} from './performance-store.js?rev=delete-70';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const time=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -64,5 +64,6 @@ export function createRecorderController(bridge,{store=new PerformanceStore(),ma
   return new Promise(resolve=>{transition={...ready,take,onMidpoint,onProgress,resolve,started:false,midpoint:false};});
  },
  async saveExternal(take){if(busy())throw new Error('Stop playback or finish recording before saving a copy.');bridge.validate(take);take.id=globalThis.crypto.randomUUID();take.created=new Date().toISOString();await keep(take);if(draft)throw new Error(error);return take;},
+setPresentationSleepGain:value=>backend.setPresentationSleepGain(value),
 get presentationTime(){return audio.ctx?.currentTime??0;},get recording(){return phase==='recording';},get replaying(){return ['playing','exporting'].includes(phase);},get arming(){return phase==='recording'&&audio.ctx.currentTime<timeline.start;},get blocked(){return ['preparing','finalizing','playing','exporting'].includes(phase)||(phase==='recording'&&audio.ctx.currentTime<timeline.start);},get phase(){return phase;},finish,stopPlayback,cancel};
 }

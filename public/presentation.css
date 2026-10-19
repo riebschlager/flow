@@ -63,3 +63,5 @@ body.presentation-mode>*:not(#presentationShell):not(.svg-defs){display:none!imp
 .presentation-controls{display:grid;grid-template-columns:repeat(3,minmax(0,max-content))}
 .presentation-auto{grid-column:1/-1;justify-self:end}
 .presentation-controls .presentation-next-status{grid-column:1/-1}
+
+#presentationShell #stage::after{content:"";position:absolute;inset:0;background:#000;opacity:var(--presentation-sleep-dim,0);z-index:8;pointer-events:none}.presentation-sleep{grid-column:1/-1;justify-self:end;display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101318db;border:1px solid #ffffff35;border-radius:6px;color:#eee;font-size:11px}.presentation-sleep select{width:120px;padding:7px 25px 7px 9px;font:inherit}
