@@ -1,0 +1,47 @@
+<!doctype html><html><meta charset="utf-8"><title>Flow GPU renderer verification</title><style>body{background:#070a11;color:#ddd;font:16px monospace}canvas{width:45%;image-rendering:auto}pre{white-space:pre-wrap}</style><h1>GPU renderer verification</h1><p>Left: Canvas2D reference. Right: WebGL2, effects off.</p><canvas id="cpu"></canvas><canvas id="display"></canvas><pre id="result">Running…</pre><script type="module">
+import {GPUFluidRenderer} from '../public/gpu-fluid-renderer.js';
+import {Fluid} from '../public/fluid.js';
+import {createFluidColorizer,renderFluidPixels} from '../public/fluid-renderer.js';
+import {WaterSurface} from '../public/water-surface.js';
+import {canonicalDyes,colorPalettes} from '../public/palettes.js';
+const result=document.querySelector('#result'),cpu=document.querySelector('#cpu'),display=document.querySelector('#display'),context=cpu.getContext('2d'),output=display.getContext('2d');
+try{
+ const renderer=new GPUFluidRenderer({search:''});if(!renderer.ready)throw new Error('WebGL2 unavailable');
+ if(new URLSearchParams(location.search).get('format')==='8')renderer.float=false;
+ const format=renderer.float?'R16F':'R8',gl=renderer.gl;let worst=0,images=0,samples=0,failures=[];
+ function compare(sim,time,palette,luminance=1){
+  const expected=new Uint8ClampedArray(sim.n*4),actual=new Uint8Array(sim.n*4);renderFluidPixels(sim,expected,time,createFluidColorizer(palette),{luminance});
+  if(!renderer.render(sim,time,{palette,luminance,energy:0}))throw new Error('GPU render failed');gl.readPixels(0,0,sim.w,sim.h,gl.RGBA,gl.UNSIGNED_BYTE,actual);
+  let max=0;for(let y=0;y<sim.h;y++)for(let x=0;x<sim.w;x++)for(let j=0;j<3;j++){const delta=Math.abs(expected[(x+y*sim.w)*4+j]-actual[(x+(sim.h-1-y)*sim.w)*4+j]);max=Math.max(max,delta);samples++;}worst=Math.max(worst,max);images++;if(max>2)failures.push({w:sim.w,h:sim.h,time,palette,max});
+ }
+ for(const [w,h] of [[8,8],[61,43],[111,145],[241,144]]){
+  const sim=new Fluid(w,h);
+  for(let frame=0;frame<44;frame++){
+   sim.swirl=frame%9/8;sim.persistence=frame%7/6;
+   if(frame%3===0)sim.splat(.14+(frame%7)*.1,.18+(frame%5)*.13,canonicalDyes[frame%4],.06,Math.sin(frame)*45,Math.cos(frame)*32);
+   if(frame%4===0)sim.pulse(.3,.7,.8,.2,frame%8?-1:1);if(frame%5===0)sim.force(.75,.3,100,-60,.12);
+   if(frame===22)sim.resize(h,w);if(frame===33)sim.clear();sim.step([0,1/120,1/60,.033,.05][frame%5]);
+   if([0,21,22,33].includes(frame))for(const palette of Object.keys(colorPalettes))compare(sim,frame/60,palette);
+  }
+  for(const palette of Object.keys(colorPalettes))for(const time of [0,12.345])compare(sim,time,palette,1.25);
+ }
+ const sim=new Fluid(224,156);for(let i=0;i<30;i++)sim.splat(.2+(i%6)*.12,.2+Math.floor(i/6)*.12,canonicalDyes[i%4],.07,3,-2);for(let i=0;i<20;i++)sim.step(1/30);
+ for(const palette of Object.keys(colorPalettes))compare(sim,3,palette);
+ for(const palette of Object.keys(colorPalettes))for(const dye of canonicalDyes){['r','g','b'].forEach((k,j)=>sim[k].fill(dye[j]*100));compare(sim,4,palette);}
+ sim.clear();for(let i=0;i<30;i++)sim.splat(.2+(i%6)*.12,.2+Math.floor(i/6)*.12,canonicalDyes[i%4],.07,3,-2);for(let i=0;i<20;i++)sim.step(1/30);
+ // Count upload, all passes and immediate 2D composition, including a final GPU fence.
+ cpu.width=display.width=224;cpu.height=display.height=156;const image=context.createImageData(224,156),colorize=createFluidColorizer('porcelain');
+ const bench=(fn,n=90)=>{for(let i=0;i<15;i++)fn(i);gl.finish();const start=performance.now();for(let i=0;i<n;i++)fn(i);gl.finish();return (performance.now()-start)/n;};
+ const cpuMs=bench(t=>{renderFluidPixels(sim,image.data,t,colorize);context.putImageData(image,0,0);});
+ const gpuMs=bench(t=>{renderer.render(sim,t,{palette:'porcelain',energy:.7,reverb:.5});output.drawImage(renderer.canvas,0,0);});
+ const surface=new WaterSurface(),water={enabled:true,swell:45,speed:30,refraction:40,caustics:35,reflection:40};
+ const cpuWaterMs=bench(t=>{renderFluidPixels(sim,image.data,t,colorize);surface.render(image.data,224,156,t,{...water,swell:31.5,refraction:28,caustics:24.5,reflection:28,flow:sim});context.putImageData(image,0,0);});
+ const gpuWaterMs=bench(t=>{renderer.render(sim,t,{palette:'porcelain',energy:.7,reverb:.5,water});output.drawImage(renderer.canvas,0,0);});
+ // Exercise real context-loss events and restoration; the app retains its 2D surface.
+ const ext=gl.getExtension('WEBGL_lose_context');let lifecycle='extension unavailable';
+ if(ext){await new Promise(resolve=>{renderer.canvas.addEventListener('webglcontextlost',()=>{lifecycle=renderer.render(sim,0)===false?'CPU fallback ready':'FAIL';setTimeout(()=>ext.restoreContext(),50);},{once:true});renderer.canvas.addEventListener('webglcontextrestored',()=>{lifecycle+='; restored '+renderer.render(sim,0);resolve();},{once:true});ext.loseContext();});}
+ renderFluidPixels(sim,image.data,4,colorize);context.putImageData(image,0,0);renderer.render(sim,4,{palette:'porcelain',energy:0});output.drawImage(renderer.canvas,0,0);
+ const captured=output.getImageData(0,0,224,156).data;let exportError=0;for(let i=0;i<captured.length;i++)exportError=Math.max(exportError,Math.abs(captured[i]-image.data[i]));
+ result.textContent=JSON.stringify({status:failures.length||exportError>2||lifecycle.includes('FAIL')||!lifecycle.includes('restored true')?'FAIL':'PASS',format,images,samples,worstChannelError:worst,tolerance:2,cpuMs,gpuMs,cpuWaterMs,gpuWaterMs,exportError,lifecycle,failures:failures.slice(0,10)},null,2);
+}catch(error){result.textContent='ERROR: '+error.stack;}
+</script></html>
