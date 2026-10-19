@@ -1,3 +1,4 @@
+import {schedulingLookahead} from './background-continuity.js?rev=continuity-76';
 import {parseChord,instruments} from './music.js?rev=gestures-32-echo52';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRoots=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
@@ -86,7 +87,7 @@ export class ArpEngine{
   if(key!==this.key){this.cancelFuture(now);this.key=key;this.chordKey=null;this.pattern.reset();this.nextStep=Math.max(0,Math.ceil((now+.025-clock.origin)/step-1e-9));this.onEvent({type:'reset'});}
   if(clock.origin+this.nextStep*step<now+.003)this.nextStep=Math.max(this.nextStep,Math.ceil((now+.025-clock.origin)/step-1e-9));
   for(let guard=0;guard<32;guard++){
-   const time=clock.origin+this.nextStep*step;if(time>now+.12)break;this.nextStep++;
+   const time=clock.origin+this.nextStep*step;if(time>now+schedulingLookahead())break;this.nextStep++;
    const chordIndex=Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm))%clock.chords.length,chord=clock.chords[chordIndex];
    // Restart at chord boundaries by default; continuous mode preserves the pattern phase.
    const chordKey=chordIndex+'|'+Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm));

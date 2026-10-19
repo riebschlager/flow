@@ -1,5 +1,5 @@
 import {instruments,instrumentGroups,noteName,parseChord} from './music.js?rev=gestures-32-echo52';
-import {arpNotes,arpPatterns,arpScales,arpRoots,arpRootForChord,normalizeArp,arpEnvelope,arpGlide,ArpEngine} from './arpeggiator.js?rev=follow-root-75';
+import {arpNotes,arpPatterns,arpScales,arpRoots,arpRootForChord,normalizeArp,arpEnvelope,arpGlide,ArpEngine} from './arpeggiator.js?rev=continuity-76';
 const $=id=>document.getElementById(id);
 export function createArpeggiatorController({audio,getClock,getChord,onChange=()=>{},onNote=()=>{},getColors=()=>['#e7d7ff','#f4edff']}){
  let config;try{config=normalizeArp(JSON.parse(localStorage.getItem('chromaflow-arp-v1')));}catch{config=normalizeArp();}
@@ -47,5 +47,5 @@ export function createArpeggiatorController({audio,getClock,getChord,onChange=()
   pulses=pulses.filter(p=>now-p.time<.8);
  }
  function draw(ctx,w,h){if(!config.enabled||(!audio.playing&&!audio.replaying)||!audio.ctx)return;const now=audio.ctx.currentTime;ctx.save();const colors=getColors();ctx.globalCompositeOperation='screen';for(const pulse of pulses){ctx.strokeStyle=ctx.fillStyle=colors[(pulse.index||0)%colors.length];const age=now-pulse.time,fade=Math.max(0,1-age/.8),x=pulse.x*w,y=pulse.y*h;ctx.globalAlpha=fade*.4;ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(x,y,8+age*55,3+age*17,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=fade*.6;ctx.beginPath();ctx.arc(x,y,1.5+fade*1.5,0,Math.PI*2);ctx.fill();}ctx.restore();}
- sync();return {getState:()=>JSON.parse(JSON.stringify(config)),restore(raw,persistSettings=false){stop();config=normalizeArp(raw);sync();if(persistSettings)persist();},trim(at){engine.trim(at);},freeze(at){engine.freeze(at);pending=pending.filter(e=>e.time<at);},replayNote(event){pending.push(event);},start,stop,frame,draw,transportChanged:syncStatus,get requiredVoice(){return config.enabled?config.voice:null;},clearVisuals(){pending=[];pulses=[];}};
+ sync();return {backgroundChanged(){if(engine.timer!==null)engine.tick();},getState:()=>JSON.parse(JSON.stringify(config)),restore(raw,persistSettings=false){stop();config=normalizeArp(raw);sync();if(persistSettings)persist();},trim(at){engine.trim(at);},freeze(at){engine.freeze(at);pending=pending.filter(e=>e.time<at);},replayNote(event){pending.push(event);},start,stop,frame,draw,transportChanged:syncStatus,get requiredVoice(){return config.enabled?config.voice:null;},clearVisuals(){pending=[];pulses=[];}};
 }

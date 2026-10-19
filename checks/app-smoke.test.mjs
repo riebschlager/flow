@@ -1,5 +1,5 @@
 import fs from 'node:fs';import assert from 'node:assert/strict';
-const ids=new Map(),all=[];let frame,clock=0,resizeCallback;let surface={width:1000,height:600};const rasterSizes=[],copies=[];
+const ids=new Map(),all=[];let frame,clock=0,resizeCallback,serviceTimers=()=>{};let surface={width:1000,height:600};const rasterSizes=[],copies=[];
 const drawing=new Proxy({createImageData:(w,h)=>{rasterSizes.push({w,h});return {data:new Uint8ClampedArray(w*h*4)};},drawImage:(canvas,...args)=>copies.push({w:canvas.width,h:canvas.height,args}),createRadialGradient:()=>({addColorStop(){}})}, {get:(obj,key)=>obj[key]??(()=>{})});
 function make(tag='div',a={}){const classes=new Set((a.class||'').split(/\s+/));const e={tagName:tag.toUpperCase(),id:a.id||'',dataset:{},style:{setProperty(k,v){this[k]=v;}},value:a.value||'',min:a.min||'0',max:a.max||'100',type:a.type||'',checked:!!a.checked,hidden:!!a.hidden,listeners:{},textContent:'',options:[],classList:{add(...v){v.forEach(s=>classes.add(s));},remove(...v){v.forEach(s=>classes.delete(s));},contains:s=>classes.has(s),toggle(s,on){const value=on??!classes.has(s);value?classes.add(s):classes.delete(s);}},setAttribute(k,v){this[k]=String(v);},removeAttribute(k){delete this[k];},prepend(node){node.parentElement=this;},addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);},click(){this.clicked=true;},focus(){document.activeElement=this;},showModal(){this.open=true;},close(){this.open=false;},querySelector(){return make();},getBoundingClientRect:()=>({left:0,top:0,right:surface.width,bottom:surface.height,...surface}),getContext:()=>drawing,setPointerCapture(){}};for(const [k,v] of Object.entries(a))if(k.startsWith('data-'))e.dataset[k.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=v;Object.defineProperty(e,'innerHTML',{set(value){this.html=value;parse(value);},get(){return this.html||'';}});Object.defineProperty(e,'selectedOptions',{get(){return [this.options.find(o=>o.value===this.value)||{textContent:'Still water'}];}});all.push(e);if(e.id)ids.set(e.id,e);return e;}
 function attrs(raw){const a=Object.fromEntries([...raw.matchAll(/([\w-]+)="([^"]*)"/g)].map(m=>[m[1],m[2]]));a.checked=/\bchecked\b/.test(raw);a.hidden=/\bhidden\b/.test(raw);return a;}
@@ -7,7 +7,7 @@ function parse(html){for(const t of html.matchAll(/<([\w-]+)(\s[^>]*?)?>/g))make
 const body=make('body',{id:'body'});globalThis.document={body,activeElement:body,events:{},getElementById:id=>{assert(ids.has(id),'Missing ID: '+id);return ids.get(id);},querySelectorAll:selector=>all.filter(e=>selector.split('.').filter(Boolean).every(c=>e.classList.contains(c))),querySelector(selector){return this.querySelectorAll(selector)[0];},addEventListener(k,fn){(this.events[k]??=[]).push(fn);},createElement:tag=>make(tag)};const mobileMedia={matches:false,addEventListener(){}};globalThis.window={innerWidth:1200,devicePixelRatio:1,matchMedia:()=>mobileMedia};globalThis.ResizeObserver=class{constructor(fn){resizeCallback=fn;}observe(){}};globalThis.requestAnimationFrame=fn=>{frame=fn;return 1;};Object.defineProperty(globalThis,'performance',{value:{now:()=>clock},configurable:true});const store=new Map();globalThis.localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};parse(fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8'));
 const {ChordAtmosphere}=await import('../public/chord-atmosphere.js?rev=gestures-32-echo52');let atmosphereFrame;const atmosphereStep=ChordAtmosphere.prototype.frame;ChordAtmosphere.prototype.frame=function(dt,options){atmosphereStep.call(this,dt,options);atmosphereFrame={...options,light:this.light,pulse:this.pulse};};
 globalThis.location={pathname:'/',search:'',hash:''};globalThis.history={pushState(){},replaceState(){}};globalThis.addEventListener=()=>{};globalThis.setInterval=()=>0;
-await import('../public/app.js');assert.equal(typeof frame,'function');const $=document.getElementById;function tick(){clock+=16;frame(clock);}for(let i=0;i<3;i++)tick();
+await import('../public/app.js');assert.equal(typeof frame,'function');const $=document.getElementById;function tick(){clock+=16;serviceTimers();frame(clock);}for(let i=0;i<3;i++)tick();
 for(const [w,h,viewport] of [[366,488,390],[744,360,844],[406.25,508.5,430],[1000,600,1200]]){surface={width:w,height:h};window.innerWidth=viewport;window.matchMedia=query=>({matches:query==='(pointer: coarse)'&&viewport!==1200});window.devicePixelRatio=2;resizeCallback();tick();const grid=rasterSizes.at(-1),copy=copies.at(-1);assert(grid.w*grid.h<=(viewport===1200?35000:16128));assert(Math.abs(w*grid.h/(h*grid.w)-1)<.02);assert.equal(copy.w,grid.w);assert.equal(copy.h,grid.h);assert.deepEqual(copy.args,[0,0,w,h]);assert.equal($('fluid').width,Math.round(w*1.7));assert.equal($('particles').height,Math.round(h*1.7));}
 const beforeHidden=rasterSizes.length;surface={width:0,height:0};resizeCallback();assert.equal(rasterSizes.length,beforeHidden);surface={width:1000,height:600};window.innerWidth=1200;window.devicePixelRatio=1;resizeCallback();
 console.log('PASS: real app resizes both canvases and the ink raster through portrait, landscape, fractional DPR and desktop layouts without stretching; zero-size transitions preserve the fluid.');
@@ -52,10 +52,38 @@ const notes=[],percussionHits=[],timers=new Map();let timerID=0;
 const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
 try{
  globalThis.setInterval=function(fn,ms){assert.equal(this,globalThis);assert([15,25].includes(ms));timers.set(++timerID,fn);return timerID;};
+ serviceTimers=()=>{for(const fn of timers.values())fn();};
  globalThis.clearInterval=function(id){assert.equal(this,globalThis);timers.delete(id);};
  AmbientAudio.prototype.initialize=async function(){this.ctx={get currentTime(){return clock/1000;},createGain(){return {gain:{value:0,events:[],setTargetAtTime(value,time){this.events.push({value,time});}},connect(){}};}};};
  AmbientAudio.prototype.load=async()=>({});
  AmbientAudio.prototype.note=async function(key,pitch,expression,options={}){notes.push({key,pitch,expression,...options,observedAt:clock/1000});const when=options.when??this.ctx.currentTime+.008;const cancel=this.onSessionEvent?.('note',{voice:key,pitch,expression:expression||null,bus:options.target?'arp':'voices',noteLength:options.noteLength??null,noteEnvelope:options.noteEnvelope??null,pitchGlide:options.pitchGlide??null,levelScale:.9},when);if(cancel&&options.signal)options.signal.addEventListener('abort',()=>cancel(this.ctx.currentTime));return {when,cancel(){},audioBufferSourceNode:{stop(){}}};};
+ if(process.env.FLOW_BACKGROUND_CHECK){
+  const {Fluid}=await import('../public/fluid.js?rev=performance-39');let steps=0,splats=0;const step=Fluid.prototype.step,splat=Fluid.prototype.splat;
+  Fluid.prototype.step=function(...args){steps++;return step.apply(this,args);};Fluid.prototype.splat=function(...args){splats++;return splat.apply(this,args);};
+  const {PercussionSynth}=await import('../public/rhythm.js?rev=continuity-76');for(const method of ['connect','setLevel','setEffects','stop'])PercussionSynth.prototype[method]=function(){};
+  PercussionSynth.prototype.hit=function(voice,time,velocity,options){percussionHits.push({voice,time,velocity,...options});this.audio.onSessionEvent?.('drum',{voice,velocity,pitch:options?.pitch??null},time);};
+  const fire=id=>{for(const fn of $(id).listeners.change||[])fn();};
+  $('rain').value='100';$('autoPour').checked=true;$('quantizeEnabled').checked=process.env.FLOW_BACKGROUND_QUANTIZED==='1';$('quantizeBeats').value='1';fire('quantizeEnabled');
+  $('rhythmEnabled').checked=true;fire('rhythmEnabled');$('arpEnabled').checked=true;fire('arpEnabled');
+  const origin=clock/1000;document.hidden=process.env.FLOW_BACKGROUND_QUANTIZED==='1';await $('start').listeners.click[0]();
+  document.hidden=true;for(const fn of document.events.visibilitychange)fn();const beforeSteps=steps,beforeCopies=copies.length;
+  // Before continuity: 600 seconds without frames yielded zero rain notes and stale Cmaj7.
+  for(let i=0;i<600;i++){clock+=1000;serviceTimers();await Promise.resolve();await Promise.resolve();}
+  assert.equal(steps,beforeSteps);assert.equal(copies.length,beforeCopies);frame(clock);assert.equal(steps,beforeSteps);assert.equal(copies.length,beforeCopies);
+  const rain=notes.filter(n=>!n.target&&!n.signal?.aborted),arp=notes.filter(n=>n.target&&!n.signal?.aborted);
+  assert(rain.length>990);assert(arp.length>1000);assert(percussionHits.length>1000);
+  for(let i=2;i<rain.length;i++)assert(process.env.FLOW_BACKGROUND_QUANTIZED==='1'?rain[i].when-rain[i-1].when>=-1e-7&&rain[i].when-rain[i-1].when<1.08:rain[i].when-rain[i-1].when>.44&&rain[i].when-rain[i-1].when<.76,'rain stays continuous with its flight and quantization');
+  const {parseChord,progressions}=await import('../public/music.js?rev=next-62');
+  for(const n of rain){const chord=progressions.daydream[Math.floor((n.when-origin)/(8*60/56))%4];assert(parseChord(chord).some(p=>p%12===n.pitch%12),'rain chooses harmony at the scheduled landing');}
+  assert(rain.every(n=>n.when>=n.observedAt));
+  // Locked color has a fixed x under deterministic randomness, so harmony must change over time.
+  assert(new Set(rain.map(n=>n.pitch)).size>1);
+  const beforeReturn=notes.length,beforeSplats=splats;document.hidden=false;for(const fn of document.events.visibilitychange)fn();frame(clock);
+  assert.equal(notes.length,beforeReturn);assert(splats-beforeSplats<=1,'no hidden splash burst on return');assert.equal(steps,beforeSteps+1);
+  assert(!$('audioState').textContent.startsWith('Cmaj7'),'display catches up to the current chord');
+  await $('start').listeners.click[0]();assert.equal(timers.size,0);assert(rain.every(n=>n.when<=clock/1000||n.signal.aborted),'pause cancels future rain');
+  console.log(`PASS: 600s hidden with no frames and 1s timers: ${rain.length} rain, ${arp.length} arp, ${percussionHits.length} drum notes; zero solver/render work; smooth return and clean pause.`);process.exit(0);
+ }
  assert.equal($('dropletsVolume').value,'100');$('dropletsVolume').value='67';for(const fn of $('dropletsVolume').listeners.input)fn();assert.equal($('dropletsVolumeValue').textContent,'67%');assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.dropletsVolume,'67');
  const fire=id=>{for(const fn of $(id).listeners.change||[])fn();};
  // Palette changes update every control and preserve voices, timing, and color lock.
@@ -75,9 +103,9 @@ try{
  tap();const prior=notes.length;for(let i=0;i<150&&notes.length===prior;i++){tick();for(const fn of timers.values())fn();}assert.equal(notes.length,prior+1);const waiting=notes.at(-1);assert(clock/1000<waiting.when);$('clear').onclick();assert.equal(waiting.signal.aborted,true);
  // A grid edit replaces pending audio instead of leaving a ghost note behind.
  tap();const count=notes.length;for(let i=0;i<150&&notes.length===count;i++)tick();const old=notes.at(-1);$('quantizeBeats').value='.125';fire('quantizeBeats');assert.equal(old.signal.aborted,true);
- $('quantizeEnabled').checked=false;fire('quantizeEnabled');assert.equal(timers.size,0);assert.equal($('quantizeBeats').disabled,true);for(let i=0;i<60;i++)tick();assert.equal(notes.at(-1).when,null);
+ $('quantizeEnabled').checked=false;fire('quantizeEnabled');assert.equal(timers.size,1);assert.equal($('quantizeBeats').disabled,true);for(let i=0;i<60;i++)tick();assert(Number.isFinite(notes.at(-1).when));
  // Run the real percussion scheduler with its synth stubbed, then change tempo.
- const {PercussionSynth}=await import('../public/rhythm.js?rev=gestures-32-echo52');
+ const {PercussionSynth}=await import('../public/rhythm.js?rev=continuity-76');
  for(const method of ['connect','setLevel','setEffects','stop'])PercussionSynth.prototype[method]=function(){};PercussionSynth.prototype.hit=function(voice,time,velocity,options){percussionHits.push({voice,time,velocity,...options});this.audio.onSessionEvent?.('drum',{voice,velocity,pitch:options?.pitch??null},time);return [];};
  $('clear').onclick();$('quantizeBeats').value='1';$('quantizeEnabled').checked=true;fire('quantizeEnabled');$('rhythmEnabled').checked=true;fire('rhythmEnabled');assert.equal($('rhythmControls').open,true);$('rhythmRate').value='2';fire('rhythmRate');assert.equal(timers.size,2);
  const advanceToNote=(count=notes.length)=>{for(let i=0;i<160&&notes.length===count;i++){tick();for(const fn of timers.values())fn();}assert.equal(notes.length,count+1);return notes.at(-1);};

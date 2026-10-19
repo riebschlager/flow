@@ -298,3 +298,9 @@ Sites remains the deployment source. Complete the normal Sites workflow and veri
 ## Diminished and suspended chords
 
 Sound → Chord progression includes a Diminished & suspended group: Suspended sky (Csus2 → Gsus4 → Asus2 → Fsus4), Passing cloud (Cmaj7 → C#dim7 → Dm7 → G7), and Dusk turn (Am → Bdim → E7 → Am). Custom progression accepts dim (0, 3, 6 semitones), dim7 (0, 3, 6, 9), sus2 (0, 2, 7), and sus4 (0, 5, 7). The aliases ° / °7 mean dim / dim7; sus means sus4. Naturals, sharps and flats work with every quality. These chords use the shared parser for canvas notes, arpeggios, tuned percussion, saved sessions and harmonic glow.
+
+## Background continuity
+
+Rain and its chord pitches follow the audio clock, including while the tab is hidden. Hidden tabs use a 1.25-second scheduling horizon for droplets, rhythm and arpeggios; the visible horizon stays at 120 ms. Rendering and fluid stepping stop while hidden, and old splashes are discarded on return. Zen view requests a screen Wake Lock while playing, where supported. Browser media controls show the soundscape and offer play/pause. These behaviors add no saved settings and keep the existing session format.
+
+The baseline fake-browser check produced zero rain notes during ten minutes with no animation frames and one-second timers. `checks/background-app.test.mjs` covers that scenario after the fix. Browsers and operating systems may still suspend audio or throttle timers beyond this horizon. Locked-screen playback has **not been verified on real iPhone or Android hardware**; Flow keeps its existing direct audio output. No experimental MediaStream-to-`<audio>` route is enabled without that device validation.
