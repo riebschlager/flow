@@ -22,3 +22,9 @@ $('conductScene').checked=false;for(const fn of $('conductScene').listeners.chan
 let prevented=0;fire('contextmenu',0,0,{preventDefault:()=>prevented++});assert.equal(prevented,1);blocked=true;const before=drops.length;fire('pointerdown');fire('contextmenu',0,0,{preventDefault:()=>prevented++});controller.frame(.016,time);assert.equal(drops.length,before);assert.equal(prevented,1);
 assert.deepEqual(normalizePerformance(),{cutoff:18000,resonance:.4,pan:0,gain:1,space:0,echo:0});assert.equal(normalizeGestureSettings({}).tool,'paint');assert.equal(normalizePerformance({space:50,echo:-2}).space,1);
 console.log('PASS: right/Shift Conduct, Alt Space, touch tools, no accidental note generation, audible Gather, four-tone Bloom, much stronger Silk/Rush articulation across all 28 voices, broad forces, settling/cancel/blur, whole-scene off and read-only playback.');
+blocked=false;$('conductScene').checked=true;for(const fn of $('conductScene').listeners.change)fn();controller.reset();
+const syntheticBefore=drops.length;controller.perform({kind:'silk',x:.4,y:.6,time:12});assert.equal(drops.length,syntheticBefore+1);assert.equal(drops.at(-1)[4].kind,'ribbon');assert.equal(drops.at(-1)[5],12);
+for(let i=0;i<100;i++){time+=50;controller.perform({kind:'gather',x:.5,y:.5,held:i/100,time:time/1000,amount:1});}assert(tones.at(-1).space>.4);
+for(let i=0;i<4;i++)controller.perform({kind:'bloom',x:.3+i*.12,y:.5,chordTone:i,visual:i===0,time:18});assert.deepEqual(drops.slice(-4).map(d=>d[4].chordTone),[0,1,2,3]);assert(gestures.some(g=>g.kind==='bloom'&&g.ended));
+controller.perform({kind:'settle'});assert.equal(tones.at(-1).space,0);blocked=true;const blockedBefore=drops.length;controller.perform({kind:'tap',x:.4,y:.5,time:20});assert.equal(drops.length,blockedBefore);
+console.log('PASS: synthetic Silk, Gather and soft four-tone Bloom reuse production expression and gesture events; clock timestamps survive and playback blocks synthetic notes.');

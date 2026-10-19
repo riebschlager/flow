@@ -369,3 +369,8 @@ body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle:afte
 @media(prefers-reduced-motion:reduce){body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle{animation:none;box-shadow:0 0 0 3px #b6e1c933}}
 
 .arp-note.chord-tone{border-color:#b7a0d6;color:#e1cdef}.arp-chord-mark{display:block;font-size:10px;line-height:5px;margin-top:5px;color:#c6a7e6}.arp-note.active .arp-chord-mark{color:#24192f}
+
+.sleep-veil{position:absolute;inset:0;background:#000;opacity:var(--sleep-dim,0);pointer-events:none;z-index:5}.zen-sleep{display:none;align-items:center;gap:8px;font-size:11px;color:var(--muted)}body.zen .zen-sleep{display:flex}.zen-sleep select{width:112px;font-size:11px;padding:5px 8px}.drift-controls select{margin:8px 0 16px}.drift-controls .option-row{margin-bottom:16px}
+
+.sleep-notice{position:absolute;top:20px;left:50%;transform:translateX(-50%);z-index:20;padding:9px 16px;border:1px solid #ffffff24;border-radius:24px;background:#111a1ee8;color:#dce5df;font-size:12px;pointer-events:none}.sleep-notice:empty{display:none}
+body.zen .zen-sleep{position:absolute;right:12px;bottom:116px;pointer-events:auto;padding:6px 10px;border:1px solid #ffffff24;border-radius:8px;background:#10161deb;color:#cdd7d1}body.zen .zen-sleep select{pointer-events:auto;margin:0}body.zen .sleep-notice{top:76px}

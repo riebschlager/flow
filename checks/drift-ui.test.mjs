@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {createDriftController} from '../public/drift-ui.js';
+import {progressions,parseChord} from '../public/music.js';
+let now=0;const nodes=new Map(),store=new Map(),actions=[],harmonies=[],gains=[],wet=[];let reduced=false,paused=0,playing=true,blocked=false,harmony=null;
+for(const id of ['driftEnabled','driftWander','driftStyle','sleepTimer','zenSleepTimer','driftStatus','sleepNotice','fluid'])nodes.set(id,{value:'',checked:false,listeners:{},addEventListener(type,fn){this.listeners[type]=fn;}});
+globalThis.document={body:{style:{setProperty(){}}},getElementById:id=>nodes.get(id)};globalThis.localStorage={getItem:key=>store.get(key),setItem:(key,value)=>store.set(key,value)};
+Object.defineProperty(globalThis,'performance',{value:{now:()=>now*1000},configurable:true});
+const $=document.getElementById,fire=id=>$(id).listeners.change();
+const audio={ctx:{get currentTime(){return now;},destination:{} ,createGain:()=>({gain:{value:1,setTargetAtTime:(value,at,tau)=>gains.push({value,at,tau})},connect(){}})},master:{disconnect(){},connect(){}},wet:{gain:{setTargetAtTime:v=>wet.push(v)}},reverb:.6,update(){}};
+let seed=1;const random=Math.random;Math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+const controller=createDriftController({audio,performanceUI:{perform:a=>actions.push(a)},playing:()=>playing,blocked:()=>blocked,pause:()=>{playing=false;paused++;},getProgression:()=>harmony||'daydream',progressions,parseChord,setHarmony:key=>{harmony=key;harmonies.push(key);},phrase:()=>Math.floor(now/32)});Math.random=random;
+assert($('driftEnabled').checked);for(let i=0;i<40000;i++){now=i/40;controller.service();}assert(actions.some(a=>a.kind==='tap'));assert(harmonies.some(Boolean));controller.input();assert.equal(harmony,null);assert(!controller.active);assert(!store.has('chromaflow-v1'));assert(!store.has('chromaflow-drift-v1'));
+$('driftStyle').value='box';fire('driftStyle');assert.equal(JSON.parse(store.get('chromaflow-drift-v1')).style,'box');assert.equal(JSON.parse(store.get('chromaflow-drift-v1')).enabled,true);
+$('sleepTimer').value='15';fire('sleepTimer');assert.equal($('zenSleepTimer').value,'15');now+=780;controller.service();assert(Math.abs(gains.at(-1).value-.01)<1e-8);assert(wet.at(-1)>.6*.9);$('fluid').listeners.pointerdown();assert.equal($('sleepTimer').value,'0');assert.equal(gains.at(-1).value,1);assert.match($('driftStatus').textContent,/cancelled/);
+$('zenSleepTimer').value='15';fire('zenSleepTimer');now+=900;controller.service();assert.equal(paused,1);assert.equal(playing,false);assert.equal($('sleepTimer').value,'0');controller.resume();assert.equal(gains.at(-1).value,1);
+playing=true;blocked=true;const count=actions.filter(a=>a.kind!=='settle').length;now+=100;controller.service();assert.equal(actions.filter(a=>a.kind!=='settle').length,count);assert.equal(harmony,null);
+console.log('PASS: controller preferences, temporary harmony restoration without saving, hidden-clock actions, shared sleep controls, smooth monitor-only gain, cancellation, pause/resume, and replay blocking.');
