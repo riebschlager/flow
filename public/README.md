@@ -287,3 +287,8 @@ Each person has one active like per track, enforced by the database primary key.
 ## Validation
 
 After a current build, run `for test_file in checks/*.test.mjs; do node "$test_file" || exit 1; done` and `npx tsc --noEmit`. Tests cover the full live app/recorder bridge, worklet-free session capture, cancelled/ended musical events, data-file roundtrips, loop scheduling, voice preloading, expression/glide/FX automation, tab recovery, local WAV export controls/cancellation, legacy PCM file compatibility, IndexedDB atomicity, and all existing musical features. Community tests exercise actual SQLite queries and ephemeral native D1/R2 bindings, session-only storage and audio rejection, ownership, text gates, votes/charts and failure cleanup. A native offline Web Audio check also verified production WebAudioFont/percussion synthesis over three repeated cycles and an explicit WAV export through the actual capture worklet and encoder.
+
+
+## Diminished and suspended chords
+
+Sound → Chord progression includes a Diminished & suspended group: Suspended sky (Csus2 → Gsus4 → Asus2 → Fsus4), Passing cloud (Cmaj7 → C#dim7 → Dm7 → G7), and Dusk turn (Am → Bdim → E7 → Am). Custom progression accepts dim (0, 3, 6 semitones), dim7 (0, 3, 6, 9), sus2 (0, 2, 7), and sus4 (0, 5, 7). The aliases ° / °7 mean dim / dim7; sus means sus4. Naturals, sharps and flats work with every quality. These chords use the shared parser for canvas notes, arpeggios, tuned percussion, saved sessions and harmonic glow.

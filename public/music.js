@@ -43,9 +43,15 @@ export const progressions={daydream:['Cmaj7','Am7','Fmaj7','G'],weightless:['Dma
  velvetundertow:["Am9","Fmaj9","Dm9","Em7"],
  borrowedlight:["Cmaj9","Em7","Fmaj9","Fm6"],
  chromaticorbit:["Cmaj9","Abmaj9","Emaj9","Abmaj9"],
- slowdescent:["Fmaj9","Em7","Dm9","C6"]
+ slowdescent:["Fmaj9","Em7","Dm9","C6"],
+ suspendedsky:["Csus2","Gsus4","Asus2","Fsus4"],
+ passingcloud:["Cmaj7","C#dim7","Dm7","G7"],
+ duskturn:["Am","Bdim","E7","Am"]
 };
 export const progressionDetails={
+ suspendedsky:{name:'Suspended sky',text:'Open seconds and fourths float without a major or minor third.',pair:'Glass house',length:16},
+ passingcloud:{name:'Passing cloud',text:'A passing diminished seventh gently connects C major warmth to D minor.',pair:'Night garden',length:8},
+ duskturn:{name:'Dusk turn',text:'A diminished triad adds a little tension before returning to a quiet minor home.',pair:'Soft horizon',length:8},
  "stilllight": {
   "name": "Still light",
   "text": "Warm ninths and shared tones, with a soft return to the beginning.",
@@ -107,7 +113,7 @@ export const soundscapes={
  orbitalrelay:{voices:['echofragments','prismaticair','newage','oohs'],reverb:72,delay:84,text:'Echo fragments, opening spectral air, and voices relayed through space.'}
 };
 const roots={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
-export function parseChord(symbol){const m=/^([A-G])([#b]?)(maj9|maj7|m9|m7|m6|m|9|7|6|sus2|sus4|add9)?$/.exec(symbol.trim());if(!m)throw new Error('Use chords such as Cmaj9, Dm9, G9, Fm6, C6, or Dsus2.');let root=roots[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0);root=(root+12)%12;const shape={maj9:[0,4,7,11,14],m9:[0,3,7,10,14],9:[0,4,7,10,14],6:[0,4,7,9],m6:[0,3,7,9],maj7:[0,4,7,11],m7:[0,3,7,10],m:[0,3,7],7:[0,4,7,10],sus2:[0,2,7],sus4:[0,5,7],add9:[0,4,7,14]}[m[3]]||[0,4,7];return shape.map(n=>48+root+n);}
+export function parseChord(symbol){const m=/^([A-G])([#b]?)(maj9|maj7|dim7|dim|°7|°|m9|m7|m6|m|9|7|6|sus2|sus4|sus|add9)?$/.exec(symbol.trim());if(!m)throw new Error('Try Cmaj7, Am7, Bdim, C#dim7, Dsus2, or Gsus4 (sus means sus4).');let root=roots[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0);root=(root+12)%12;const shape={dim:[0,3,6],dim7:[0,3,6,9],"°":[0,3,6],"°7":[0,3,6,9],sus:[0,5,7],maj9:[0,4,7,11,14],m9:[0,3,7,10,14],9:[0,4,7,10,14],6:[0,4,7,9],m6:[0,3,7,9],maj7:[0,4,7,11],m7:[0,3,7,10],m:[0,3,7],7:[0,4,7,10],sus2:[0,2,7],sus4:[0,5,7],add9:[0,4,7,14]}[m[3]]||[0,4,7];return shape.map(n=>48+root+n);}
 export function normalizeOctaveRange({down=0,up=1}={}){
  const octave=(value,fallback)=>Number.isFinite(Number(value))?Math.max(0,Math.min(3,Math.round(Number(value)))):fallback;
  return {down:octave(down,0),up:octave(up,1)};
