@@ -1,4 +1,4 @@
-import {PresentationSleep} from './presentation-sleep.js?rev=present-sleep-78';
+import {PresentationSleep} from './presentation-sleep.js?rev=first-run-80';
 import {PresentationAutoAdvance} from './presentation-auto.js?rev=auto-63';
 const $=id=>document.getElementById(id);
 export const presentationUrl=(id,ratio)=>'/recordings/'+encodeURIComponent(id)+'?present='+(ratio==='portrait'?'portrait':'landscape');

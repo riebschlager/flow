@@ -63,3 +63,9 @@ for(const id of [...sessions.keys()])await deleteClick(id);
 assert.equal(sessions.size,0);assert.match(el('recentSessions').innerHTML,/Your sessions will appear here/);
 await sharedWorkspace.init();assert.equal(sessions.size,0);
 console.log('PASS: cancel/confirm session deletion, playback guard, storage failure, retained shared takes, escaped names, refreshed list, empty state and reload persistence.');
+// A true first visit opens the seeded live scene, while returning visitors retain home.
+location.pathname='/';location.search='';const seeded=structuredClone(scene);seeded.r[0]=.4;scene=seeded;snapshot.main.settings.energy=70;
+const firstVisit=createSessionWorkspace({bridge,recorder,store,firstRun:true,community:{openRoute:async()=>{}}});
+await firstVisit.init();assert(sessionRoute(location.pathname));assert.equal(el('sessionHome').hidden,true);assert.equal(scene.r[0],.4);assert.equal(snapshot.main.settings.energy,70);assert.equal(sessions.size,1);
+location.pathname='/';await firstVisit.init();assert.equal(el('sessionHome').hidden,false);assert.equal(sessions.size,1);
+console.log('PASS: true first visit opens a seeded live session with current settings; return to root retains existing home behavior.');

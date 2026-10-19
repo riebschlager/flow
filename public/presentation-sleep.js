@@ -1,4 +1,4 @@
-import {SleepTimer} from './drift.js?rev=drift-77';
+import {SleepTimer} from './drift.js?rev=first-run-80';
 export class PresentationSleep{
  constructor({now,change,finish,setTimer=(fn,ms)=>globalThis.setInterval(fn,ms),clearTimer=id=>globalThis.clearInterval(id)}){
   Object.assign(this,{setTimer,clearTimer});this.timer=null;

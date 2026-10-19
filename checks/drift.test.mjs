@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {DriftEngine,SleepTimer,normalizeDrift,breathPhase,driftLimits,relatedProgressions} from '../public/drift.js';
 import {progressions,parseChord} from '../public/music.js';
 const seeded=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
-assert.deepEqual(normalizeDrift(null),{enabled:true,wander:true,idleSeconds:20,style:'drift'});
+assert.deepEqual(normalizeDrift(null),{enabled:true,wander:true,idleSeconds:20,density:1,style:'drift'});
 assert.equal(normalizeDrift({idleSeconds:'oops',style:'bad'}).idleSeconds,20);
 function hour(){let now=0;const events=[],densities=[],wander=[];const engine=new DriftEngine({random:seeded(77),clock:()=>now,emit:e=>events.push(e),wander:()=>wander.push(now)});for(let i=0;i<=144000;i++){now=i/40;engine.service({phrase:Math.floor(now/32)});if(i%2400===0)densities.push(engine.density);}return {events,densities,wander,engine};}
 const first=hour(),second=hour();assert.deepEqual(first.events,second.events);
