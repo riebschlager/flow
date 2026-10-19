@@ -65,11 +65,12 @@ function hideListeningHint(){document.body.classList.remove('listening-invitatio
 function inviteListening(){
  if(listeningDiscovered||listeningHintShown||busy||state.playing||recorder?.blocked)return;
  listeningHintShown=true;listeningHintUntil=performance.now()+10000;
- for(const id of ['listeningHint','mobileListeningHint'])$(id).textContent='Your flow has a soundtrack. Begin listening to hear it.';
+ $('listeningHint').textContent='Your flow has a soundtrack. Press Play to hear it.';
+ $('mobileListeningHint').textContent='Your flow has a soundtrack. Tap Begin listening to hear it.';
  document.body.classList.add('listening-invitation');
 }
 function syncListeningHint(){
- if(state.playing||recorder?.replaying){listeningDiscovered=true;try{localStorage.setItem('flow-listening-discovered','1');}catch{}hideListeningHint();}
+ if(state.playing||recorder?.replaying){if(!listeningDiscovered){listeningDiscovered=true;try{localStorage.setItem('flow-listening-discovered','1');}catch{}}hideListeningHint();}
 }
 $('start').addEventListener('click',togglePlay);
 function syncAudio(){document.dispatchEvent?.(new Event("flow:selects"));audio.dropletsVolume=Number($('dropletsVolume').value)/100;audio.volume=Number($('volume').value)/100;audio.reverb=Number($('reverb').value)/100;audio.delay=Number($('delay').value)/100;audio.bpm=state.bpm;audio.update();}

@@ -166,11 +166,11 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;over
 .listening-hint{position:absolute;left:0;bottom:calc(100% + 18px);z-index:25;width:235px;padding:12px 15px;border:1px solid #b6e1c94d;border-radius:10px;background:#192620f5;box-shadow:0 8px 28px #0005;color:#d6eddf;font-size:11px;line-height:1.6;font-weight:400;letter-spacing:.1px;pointer-events:none;opacity:0;transform:translateY(5px);transition:opacity .4s,transform .4s}
 .listening-hint:after{content:'';position:absolute;bottom:-5px;left:17px;width:8px;height:8px;background:#192620;border-right:1px solid #b6e1c94d;border-bottom:1px solid #b6e1c94d;transform:rotate(45deg)}
 .listening-invitation .listening-hint{opacity:1;transform:translateY(0)}
-.listening-invitation :is(.play-button,.mobile-play){animation:listening-halo 2.8s ease-out 3;box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}
+.listening-invitation :is(#quickPlay,.mobile-play){animation:listening-halo 2.8s ease-out 3;box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}
 @keyframes listening-halo{0%,100%{box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}55%{box-shadow:0 0 0 11px #b6e1c900,0 0 35px #b6e1c955}}
 .mobile-dock>.listening-hint{left:max(12px,env(safe-area-inset-left));bottom:calc(100% + 12px);width:min(235px,calc(100vw - 24px))}
 .mobile-dock>.listening-hint:after{left:35px}
-@media(prefers-reduced-motion:reduce){.listening-invitation :is(.play-button,.mobile-play){animation:none}}
+@media(prefers-reduced-motion:reduce){.listening-invitation :is(#quickPlay,.mobile-play){animation:none}}
 
 .mini-row #voiceDelayBeats{width:170px;max-width:58%;font-size:11px}
 
@@ -354,3 +354,16 @@ body.session-home::after{
 
 /* Session cards keep opening and deletion as separate keyboard controls. */
 .recent-session{position:relative;padding:0;gap:0;overflow:hidden}.recent-session-open{display:grid;gap:14px;padding:22px 50px 22px 22px;text-align:left;width:100%;min-width:0;color:inherit}.recent-session-open strong{overflow-wrap:anywhere}.recent-session-delete{position:absolute;top:12px;right:10px;display:grid;place-items:center;width:32px;height:32px;margin:0;padding:8px;border:0;border-radius:6px;color:#aa9b96}.recent-session-delete svg{display:block;pointer-events:none}.recent-session-delete:hover{background:#49302c;border-color:#bd8278}.recent-session-open:focus-visible,.recent-session-delete:focus-visible{outline:2px solid #d1e4c6;outline-offset:-4px}
+
+/* The invitation follows the current session transport, including rail and Zen layouts. */
+.listening-play-control{position:relative;display:inline-flex;flex-shrink:0}
+.listening-play-control>.listening-hint{top:calc(100% + 12px);bottom:auto;left:0;width:225px;max-width:calc(100vw - 40px);text-align:left;white-space:normal}
+.listening-play-control>.listening-hint:after{top:-5px;bottom:auto;left:18px;transform:rotate(225deg)}
+.listening-invitation #quickPlay{border-color:var(--mint);color:#d6eddf;background:#b6e1c91a}
+body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle{animation:listening-halo 2.8s ease-out 3;border-color:var(--mint)}
+body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle:after{content:'Show transport, then press Play to hear your flow';position:absolute;top:calc(100% + 10px);left:0;padding:10px 14px;max-width:calc(100vw - 40px);border:1px solid #b6e1c94d;border-radius:8px;background:#192620f5;color:#d6eddf;white-space:normal;pointer-events:none}
+@media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){
+ body:not(.zen) .listening-play-control>.listening-hint{display:none}
+ body:not(.zen).listening-invitation #quickPlay{animation:none;box-shadow:none;border-color:#454b49;background:transparent;color:inherit}
+}
+@media(prefers-reduced-motion:reduce){body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle{animation:none;box-shadow:0 0 0 3px #b6e1c933}}
