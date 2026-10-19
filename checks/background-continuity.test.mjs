@@ -22,8 +22,8 @@ const before=times.length;rain.service(900,{enabled:true,interval:.6,key:1,emit:
 rain.service(901,{enabled:false,interval:.6,key:1,emit:()=>assert.fail()});assert.equal(rain.next,null);globalThis.document=old;
 console.log('PASS: audio-clock rain, bounded stall recovery, visibility lookahead, Wake Lock lifecycle/races/denial/absence, Media Session metadata and idempotent transport.');
 // Compare dense/swinging hidden schedules against the same engines serviced every 25ms.
-const {RhythmEngine,defaultRhythm}=await import('../public/rhythm.js?rev=continuity-76');
-const {ArpEngine,normalizeArp}=await import('../public/arpeggiator.js?rev=continuity-76');
+const {RhythmEngine,defaultRhythm}=await import('../public/rhythm.js?rev=visible-sound-79');
+const {ArpEngine,normalizeArp}=await import('../public/arpeggiator.js?rev=visible-sound-79');
 function scheduled(hidden,delta){
  globalThis.document={hidden};const hits=[],notes=[],ctx={currentTime:0,createGain:()=>({gain:{setTargetAtTime(){}},connect(){}})},audio={ctx,bpm:100,playing:true,bus:{},note:async()=>null};
  const cfg=defaultRhythm();cfg.enabled=true;cfg.rate=2;cfg.swing=65;cfg.humanize=0;cfg.lanes.forEach(l=>{l.steps=Array(16).fill(1);});

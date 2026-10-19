@@ -1,5 +1,5 @@
 import {schedulingLookahead} from './background-continuity.js?rev=continuity-76';
-import {parseChord,instruments} from './music.js?rev=gestures-32-echo52';
+import {parseChord,instruments} from './music.js?rev=visible-sound-79';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRoots=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const arpScales={

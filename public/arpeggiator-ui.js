@@ -1,7 +1,7 @@
-import {instruments,instrumentGroups,noteName,parseChord} from './music.js?rev=gestures-32-echo52';
-import {arpNotes,arpPatterns,arpScales,arpRoots,arpRootForChord,normalizeArp,arpEnvelope,arpGlide,ArpEngine} from './arpeggiator.js?rev=continuity-76';
+import {instruments,instrumentGroups,noteName,parseChord} from './music.js?rev=visible-sound-79';
+import {arpNotes,arpPatterns,arpScales,arpRoots,arpRootForChord,normalizeArp,arpEnvelope,arpGlide,ArpEngine} from './arpeggiator.js?rev=visible-sound-79';
 const $=id=>document.getElementById(id);
-export function createArpeggiatorController({audio,getClock,getChord,onChange=()=>{},onNote=()=>{},getColors=()=>['#e7d7ff','#f4edff']}){
+export function createArpeggiatorController({audio,getClock,getChord,onChange=()=>{},onNote=()=>{},onImpact=()=>{},getColors=()=>['#e7d7ff','#f4edff']}){
  let config;try{config=normalizeArp(JSON.parse(localStorage.getItem('chromaflow-arp-v1')));}catch{config=normalizeArp();}
  let pending=[],pulses=[],generation=0,preparing=false,error=null,poolKey='',envelopeKey='';
  const engine=new ArpEngine(audio,()=>config,getClock,event=>{if(event.type==='reset'){pending=[];return;}onNote(event);pending.push(event);if(pending.length>64)pending.shift();},{onError:failure=>{error=failure;preparing=false;syncStatus();}});
@@ -43,7 +43,7 @@ export function createArpeggiatorController({audio,getClock,getChord,onChange=()
  for(const [id,key] of [['arpPattern','pattern'],['arpRate','beats']])$(id).addEventListener('change',()=>{config[key]=key==='beats'?Number($(id).value):$(id).value;change();});
  for(const [id,key] of [['arpProbability','probability'],['arpCount','count'],['arpVolume','volume'],['arpLength','length'],['arpAttack','attack'],['arpDecay','decay'],['arpSustain','sustain'],['arpGlideTime','glideTime'],['arpGlideAmount','glideAmount']])$(id).addEventListener('input',()=>{config[key]=Number($(id).value);change();});
  function frame(){renderPool();renderEnvelope();if((!audio.playing&&!audio.replaying)||!audio.ctx)return;const now=audio.ctx.currentTime;
-  while(pending.length&&pending[0].time<=now){const event=pending.shift();if(now-event.time>.15)continue;document.querySelectorAll('.arp-note.active').forEach(el=>el.classList.remove('active'));if(event.rest){$('arpCurrent').textContent='—';continue;}$('arpNote'+event.index)?.classList.add('active');$('arpCurrent').textContent=noteName(event.pitch);pulses.push({...event,x:event.count===1?.5:.12+.76*event.index/(event.count-1),y:.54+Math.sin(event.index*1.7)*.055});if(pulses.length>48)pulses.shift();}
+  while(pending.length&&pending[0].time<=now){const event=pending.shift();if(now-event.time>.15)continue;document.querySelectorAll('.arp-note.active').forEach(el=>el.classList.remove('active'));if(event.rest){$('arpCurrent').textContent='—';continue;}$('arpNote'+event.index)?.classList.add('active');$('arpCurrent').textContent=noteName(event.pitch);const pulse={...event,x:event.count===1?.5:.12+.76*event.index/(event.count-1),y:.54+Math.sin(event.index*1.7)*.055};pulses.push(pulse);onImpact(pulse);if(pulses.length>48)pulses.shift();}
   pulses=pulses.filter(p=>now-p.time<.8);
  }
  function draw(ctx,w,h){if(!config.enabled||(!audio.playing&&!audio.replaying)||!audio.ctx)return;const now=audio.ctx.currentTime;ctx.save();const colors=getColors();ctx.globalCompositeOperation='screen';for(const pulse of pulses){ctx.strokeStyle=ctx.fillStyle=colors[(pulse.index||0)%colors.length];const age=now-pulse.time,fade=Math.max(0,1-age/.8),x=pulse.x*w,y=pulse.y*h;ctx.globalAlpha=fade*.4;ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(x,y,8+age*55,3+age*17,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=fade*.6;ctx.beginPath();ctx.arc(x,y,1.5+fade*1.5,0,Math.PI*2);ctx.fill();}ctx.restore();}

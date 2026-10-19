@@ -374,3 +374,5 @@ body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle:afte
 
 .sleep-notice{position:absolute;top:20px;left:50%;transform:translateX(-50%);z-index:20;padding:9px 16px;border:1px solid #ffffff24;border-radius:24px;background:#111a1ee8;color:#dce5df;font-size:12px;pointer-events:none}.sleep-notice:empty{display:none}
 body.zen .zen-sleep{position:absolute;right:12px;bottom:116px;pointer-events:auto;padding:6px 10px;border:1px solid #ffffff24;border-radius:8px;background:#10161deb;color:#cdd7d1}body.zen .zen-sleep select{pointer-events:auto;margin:0}body.zen .sleep-notice{top:76px}
+
+.zen-energy{display:none;align-items:center;gap:8px;font-size:11px;color:var(--muted)}body.zen .zen-energy{display:flex;position:absolute;right:12px;bottom:160px;pointer-events:auto;padding:7px 10px;border:1px solid #ffffff24;border-radius:8px;background:#10161deb}.zen-energy input[type=range]{width:94px;margin:0}.zen-energy output{width:28px}

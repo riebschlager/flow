@@ -1,10 +1,10 @@
-import {AmbientAudio} from './music.js?rev=next-62';
+import {AmbientAudio} from './music.js?rev=visible-sound-79';
 
 // Each deck owns its instruments' envelopes and effects; only decoded samples
 // and the AudioContext clock are shared. Scene automation cannot touch fades.
 export async function createPresentationDeck(base,Player,onError){
  const c=base.ctx,gain=c.createGain(),sleepGain=c.createGain(),audio=new AmbientAudio();
- gain.gain.value=0;sleepGain.gain.value=1;gain.connect(sleepGain);sleepGain.connect(c.destination);audio.loaded=base.loaded;
+ gain.gain.value=0;sleepGain.gain.value=1;gain.connect(sleepGain);sleepGain.connect(c.destination);audio.loaded=base.loaded;audio.onVisualNote=note=>base.onVisualNote?.(note);
  try{await audio.initialize({context:c,destination:gain});}
  catch(error){gain.disconnect();sleepGain.disconnect();throw error;}
  const player=new Player(audio,{onError});
