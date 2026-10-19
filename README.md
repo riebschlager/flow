@@ -293,3 +293,8 @@ After a current build, run `for test_file in checks/*.test.mjs; do node "$test_f
 The source is mirrored to https://github.com/riebschlager/flow on `main`, preserving Sites history. In every fresh checkout run `node scripts/github-sync-install.mjs` once. The tracked post-commit hook then pushes each new commit to GitHub using your existing Git credentials. Verify or retry manually with `node scripts/github-sync.mjs`. The installer preserves any different existing hooks configuration by stopping for integration.
 
 Sites remains the deployment source. Complete the normal Sites workflow and verify GitHub sync after each update. Sync never force-pushes. A failed hook leaves the local commit intact and must be retried; it does not undo the commit. New clones need the installer because Git does not clone local hook configuration. This is commit-based sync, not a background file watcher.
+
+
+## Diminished and suspended chords
+
+Sound → Chord progression includes a Diminished & suspended group: Suspended sky (Csus2 → Gsus4 → Asus2 → Fsus4), Passing cloud (Cmaj7 → C#dim7 → Dm7 → G7), and Dusk turn (Am → Bdim → E7 → Am). Custom progression accepts dim (0, 3, 6 semitones), dim7 (0, 3, 6, 9), sus2 (0, 2, 7), and sus4 (0, 5, 7). The aliases ° / °7 mean dim / dim7; sus means sus4. Naturals, sharps and flats work with every quality. These chords use the shared parser for canvas notes, arpeggios, tuned percussion, saved sessions and harmonic glow.

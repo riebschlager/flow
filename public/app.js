@@ -1,16 +1,16 @@
-import {createSessionWorkspace} from './session-workspace.js?rev=ambient-67';
+import {createSessionWorkspace} from './session-workspace.js?rev=follow-root-75-trash-71';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
-import {createWorkspaceController} from './workspace-ui.js?rev=workspace-35';
+import {createWorkspaceController} from './workspace-ui.js?rev=follow-root-75-workspace-35';
 import {createEnvironmentController} from './environment-ui.js?rev=performance-39';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=halftone-68';
 import {createPresentationController} from './presentation.js?rev=auto-63';
-import {createRecorderController} from './recorder-ui.js?rev=auto-63';
-import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=water-49-echo52';
+import {createRecorderController} from './recorder-ui.js?rev=delete70-auto-63';
+import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=follow-root-75';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=gestures-32-echo52';
-import {createArpeggiatorController} from './arpeggiator-ui.js?rev=probability-33-echo52';
+import {createArpeggiatorController} from './arpeggiator-ui.js?rev=follow-root-75';
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
 import {Fluid} from './fluid.js?rev=performance-39';
@@ -41,7 +41,7 @@ function syncPitchRange(){
  $('pitchRangeValue').textContent=`${cycling?'Base range':colors[voice].name}: ${noteName(notes[0])} → ${noteName(notes.at(-1))} · ${notes.length} notes`;
 }
 for(const id of ['octavesDown','octavesUp'])$(id).addEventListener('change',()=>{syncPitchRange();syncDropScheduler();save();});
-function renderChords(){recorder?.stateChanged();const list=activeChords(),detail=progressionDetails[state.progression],descriptions={daydream:'Familiar major-seventh warmth with a gentle lift at the end.',weightless:'A clear major-key circle, balanced between lift and repose.',afterhours:'Soft minor colors, without a strong dominant resolution.',openwater:'An unhurried major-to-minor drift with shared chord tones.',custom:'Your own four-chord loop. Ninths, sixths and suspended chords are welcome.'};$('progressionDescription').textContent=detail?`${detail.text} Try ${detail.pair} · ${detail.length} beats per chord.`:descriptions[state.progression];$('chords').innerHTML=list.map((c,i)=>`${i?'<span class="chord-arrow" aria-hidden="true">→</span>':''}<button class="chord-chip ${i===state.chordIndex?'active':''}" data-chord="${i}" aria-label="Jump to ${c}" ${i===state.chordIndex?'aria-current="true"':''}>${c}<span class="progress"></span></button>`).join('');syncPitchRange();}
+function renderChords(){recorder?.stateChanged();const list=activeChords(),detail=progressionDetails[state.progression],descriptions={daydream:'Familiar major-seventh warmth with a gentle lift at the end.',weightless:'A clear major-key circle, balanced between lift and repose.',afterhours:'Soft minor colors, without a strong dominant resolution.',openwater:'An unhurried major-to-minor drift with shared chord tones.',custom:'Your own four-chord loop. Diminished, sus2 and sus4 chords are welcome, along with sixths, sevenths and ninths.'};$('progressionDescription').textContent=detail?`${detail.text} Try ${detail.pair} · ${detail.length} beats per chord.`:descriptions[state.progression];$('chords').innerHTML=list.map((c,i)=>`${i?'<span class="chord-arrow" aria-hidden="true">→</span>':''}<button class="chord-chip ${i===state.chordIndex?'active':''}" data-chord="${i}" aria-label="Jump to ${c}" ${i===state.chordIndex?'aria-current="true"':''}>${c}<span class="progress"></span></button>`).join('');syncPitchRange();}
 function syncColorMode(){const cycling=$('cycleColors').checked;document.querySelectorAll('.color').forEach((el,j)=>{const selected=!cycling&&state.selected===j;el.classList.toggle('selected',selected);el.setAttribute('aria-pressed',String(selected));});$('paletteHint').textContent=cycling?'RANDOM COLORS':colors[state.selected].name.toUpperCase()+' ONLY';$('cursor').style.borderColor=colors[state.selected].hex+'80';syncPitchRange();}
 function applyPalette(){
  const key=normalizePalette($('colorPalette').value);$('colorPalette').value=key;if(key===paletteKey)return;
@@ -65,11 +65,12 @@ function hideListeningHint(){document.body.classList.remove('listening-invitatio
 function inviteListening(){
  if(listeningDiscovered||listeningHintShown||busy||state.playing||recorder?.blocked)return;
  listeningHintShown=true;listeningHintUntil=performance.now()+10000;
- for(const id of ['listeningHint','mobileListeningHint'])$(id).textContent='Your flow has a soundtrack. Begin listening to hear it.';
+ $('listeningHint').textContent='Your flow has a soundtrack. Press Play to hear it.';
+ $('mobileListeningHint').textContent='Your flow has a soundtrack. Tap Begin listening to hear it.';
  document.body.classList.add('listening-invitation');
 }
 function syncListeningHint(){
- if(state.playing||recorder?.replaying){listeningDiscovered=true;try{localStorage.setItem('flow-listening-discovered','1');}catch{}hideListeningHint();}
+ if(state.playing||recorder?.replaying){if(!listeningDiscovered){listeningDiscovered=true;try{localStorage.setItem('flow-listening-discovered','1');}catch{}}hideListeningHint();}
 }
 $('start').addEventListener('click',togglePlay);
 function syncAudio(){document.dispatchEvent?.(new Event("flow:selects"));audio.dropletsVolume=Number($('dropletsVolume').value)/100;audio.volume=Number($('volume').value)/100;audio.reverb=Number($('reverb').value)/100;audio.delay=Number($('delay').value)/100;audio.bpm=state.bpm;audio.update();}

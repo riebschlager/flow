@@ -1,5 +1,5 @@
-import {SessionStore,sessionRoute} from './session-store.js?rev=sessions-55';
-import {mainDefaults,sanitizeSnapshot} from './recording-state.js?rev=water-49-echo52';
+import {SessionStore,sessionRoute} from './session-store.js?rev=delete-70';
+import {mainDefaults,sanitizeSnapshot} from './recording-state.js?rev=follow-root-75';
 import {isSetupDraft,encodePerformance,decodePerformance} from './recorder-core.js?rev=gestures-32';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fresh=()=>sanitizeSnapshot({main:{settings:{...mainDefaults},voices:['piano','vibes','strings','celesta'],custom:['Cmaj7','Am7','Fmaj7','G'],bpm:56,selected:0}});
@@ -27,7 +27,23 @@ export function createSessionWorkspace({bridge,recorder,community,store=new Sess
   if(saveCurrent)await save();bridge.stopLive();if(!scene){const old=bridge.scene();scene={w:old.w,h:old.h,...Object.fromEntries(['u','v','r','g','b'].map(k=>[k,Array(old.w*old.h).fill(0)]))};}
   await open({id:crypto.randomUUID(),name,snapshot,scene,origin,takeIds,selectedTake:null,updated:new Date().toISOString()});await save();$('sessionNotice').hidden=true;
  }
- async function home(navigate=true){if(recorder.unsaved)throw new Error('Save or download your unsaved take from Library before leaving.');if(recorder.phase!=='idle')throw new Error('Stop playback or finish your take before leaving this session.');await save();bridge.stopLive();current=null;shell();if(navigate)url('/');const sessions=await store.list();$('recentSessions').innerHTML=sessions.map(s=>`<button class="recent-session" data-session="${esc(s.id)}"><strong>${esc(s.name)}</strong><span>${s.takeIds.length} ${s.takeIds.length===1?'take':'takes'} · ${new Date(s.updated).toLocaleDateString()}</span><small>Open session ↗</small></button>`).join('')||'<p class="helper">Your sessions will appear here. No account needed.</p>';if(location.pathname==='/'&&!location.hash)void community.loadHome?.();}
+ async function renderSessions(){const sessions=await store.list();if(current)return;$('recentSessions').innerHTML=sessions.map(s=>`<article class="recent-session"><button class="recent-session-open" data-session="${esc(s.id)}"><strong>${esc(s.name)}</strong><span>${s.takeIds.length} ${s.takeIds.length===1?'take':'takes'} · ${new Date(s.updated).toLocaleDateString()}</span><small>Open session ↗</small></button><button class="recent-session-delete" data-delete-session="${esc(s.id)}" aria-label="Delete ${esc(s.name)}" title="Delete session"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button></article>`).join('')||'<p class="helper">Your sessions will appear here. No account needed.</p>';}
+ async function home(navigate=true){if(recorder.unsaved)throw new Error('Save or download your unsaved take from Library before leaving.');if(recorder.phase!=='idle')throw new Error('Stop playback or finish your take before leaving this session.');await save();bridge.stopLive();current=null;shell();if(navigate)url('/');await renderSessions();if(location.pathname==='/'&&!location.hash)void community.loadHome?.();}
+ let deleting=false;
+ async function deleteSession(id){
+  if(deleting||current)return;
+  if(recorder.phase!=='idle'||recorder.unsaved)throw new Error('Stop playback or finish saving your take before deleting a session.');
+  deleting=true;
+  try{
+   const sessions=await store.list(),session=sessions.find(s=>s.id===id);if(!session)return;
+   if(!confirm(`Delete “${session.name}” from this device? Its local takes will also be deleted unless another session uses them. Shared community recordings will stay available. This cannot be undone.`))return;
+   const retained=new Set(sessions.filter(s=>s.id!==id).flatMap(s=>s.takeIds));
+   await recorder.removeTakes(session.takeIds.filter(take=>!retained.has(take)));
+   await store.remove(id);await renderSessions();
+   $('sessionNotice').textContent=`“${session.name}” deleted from this device.`;$('sessionNotice').hidden=false;
+   const buttons=$('recentSessions').querySelectorAll('button');(buttons[0]||$('homeNewSession')).focus();
+  }finally{deleting=false;}
+ }
  async function route(){
   community.leavePresentation?.();$('communityDialog').close();const requested=location.pathname,query=new URLSearchParams(location.search);if(recorder.phase!=='idle'){url(path(),true);throw new Error('Stop playback or finish recording before changing sessions.');}
   const id=sessionRoute(requested);if(id){if(current?.id===id){const take=query.get('take');if(take&&current.takeIds.includes(take)){await recorder.selectTake(take);current.selectedTake=take;mark();}shell();await renderTakes();return;}
@@ -39,7 +55,7 @@ export function createSessionWorkspace({bridge,recorder,community,store=new Sess
  $('newSession').onclick=$('homeNewSession').onclick=run(()=>newSession());$('allSessions').onclick=run(()=>home());
  document.querySelector('.brand').onclick=run(async e=>{e.preventDefault();await home();});
  $('sessionTitle').addEventListener('input',()=>{if(current){current.name=$('sessionTitle').value.trim().slice(0,80)||'Untitled session';document.title=current.name+' · Flow';mark();}});
- $('recentSessions').onclick=run(async e=>{const id=e.target.closest('[data-session]')?.dataset.session;if(id){await save();const session=await store.get(id);if(session)await open(session);}});
+ $('recentSessions').onclick=run(async e=>{const deleteId=e.target.closest('[data-delete-session]')?.dataset.deleteSession;if(deleteId){await deleteSession(deleteId);return;}if(deleting)return;const id=e.target.closest('[data-session]')?.dataset.session;if(id){await save();const session=await store.get(id);if(session)await open(session);}});
  $('sessionTakes').onclick=run(async e=>{const id=e.target.closest('[data-take]')?.dataset.take;if(!id||recorder.phase!=='idle')return;await recorder.selectTake(id);current.selectedTake=id;url(path()+'?take='+encodeURIComponent(id));mark();await renderTakes();});
  $('quickRecord').onclick=run(async()=>{if(recorder.replaying)recorder.stopPlayback();if(!current)await newSession();await save();$('recordName').value=current.name+' · Take '+(current.takeIds.length+1);await recorder.record();});
  $('quickStop').onclick=()=>{if(recorder.recording)recorder.finish();else if(recorder.replaying){recorder.stopPlayback();}else if(recorder.phase!=='idle')recorder.cancel();else bridge.stopLive();};

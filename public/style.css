@@ -166,11 +166,11 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;over
 .listening-hint{position:absolute;left:0;bottom:calc(100% + 18px);z-index:25;width:235px;padding:12px 15px;border:1px solid #b6e1c94d;border-radius:10px;background:#192620f5;box-shadow:0 8px 28px #0005;color:#d6eddf;font-size:11px;line-height:1.6;font-weight:400;letter-spacing:.1px;pointer-events:none;opacity:0;transform:translateY(5px);transition:opacity .4s,transform .4s}
 .listening-hint:after{content:'';position:absolute;bottom:-5px;left:17px;width:8px;height:8px;background:#192620;border-right:1px solid #b6e1c94d;border-bottom:1px solid #b6e1c94d;transform:rotate(45deg)}
 .listening-invitation .listening-hint{opacity:1;transform:translateY(0)}
-.listening-invitation :is(.play-button,.mobile-play){animation:listening-halo 2.8s ease-out 3;box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}
+.listening-invitation :is(#quickPlay,.mobile-play){animation:listening-halo 2.8s ease-out 3;box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}
 @keyframes listening-halo{0%,100%{box-shadow:0 0 0 3px #b6e1c933,0 0 25px #b6e1c926}55%{box-shadow:0 0 0 11px #b6e1c900,0 0 35px #b6e1c955}}
 .mobile-dock>.listening-hint{left:max(12px,env(safe-area-inset-left));bottom:calc(100% + 12px);width:min(235px,calc(100vw - 24px))}
 .mobile-dock>.listening-hint:after{left:35px}
-@media(prefers-reduced-motion:reduce){.listening-invitation :is(.play-button,.mobile-play){animation:none}}
+@media(prefers-reduced-motion:reduce){.listening-invitation :is(#quickPlay,.mobile-play){animation:none}}
 
 .mini-row #voiceDelayBeats{width:170px;max-width:58%;font-size:11px}
 
@@ -333,3 +333,39 @@ body.zen #sharedPreview:not([hidden]){display:flex;position:relative;flex-shrink
 .session-home-panel>p.home-tagline{font-size:clamp(20px,2.4vw,28px);line-height:1.4;color:#bdd4c3;margin:0 0 22px}
 #intro{right:7%}#intro p{font-size:clamp(28px,3.3vw,50px)}
 @media(max-width:720px){#intro p{font-size:clamp(26px,6.5vw,40px);letter-spacing:-1px}}
+
+/* A slow wash of Original glow colors welcomes listeners to the home page. */
+body.session-home{position:relative;isolation:isolate;background:#101316}
+body.session-home::before,body.session-home::after{content:"";position:fixed;inset:-18%;z-index:-1;pointer-events:none;background-repeat:no-repeat;will-change:transform}
+body.session-home::before{
+ background-image:radial-gradient(ellipse at 16% 22%,#b7a0ff38,transparent 48%),radial-gradient(ellipse at 86% 35%,#73e2d033,transparent 49%),radial-gradient(ellipse at 52% 90%,#ff9e9e2b,transparent 48%);
+ animation:home-color-drift 38s ease-in-out infinite alternate;
+}
+body.session-home::after{
+ background-image:radial-gradient(ellipse at 82% 82%,#edca8229,transparent 46%),radial-gradient(ellipse at 38% 52%,#b7a0ff1c,transparent 45%);
+ animation:home-color-drift 53s ease-in-out -19s infinite alternate-reverse;
+}
+@keyframes home-color-drift{
+ 0%{transform:translate3d(-4%,-3%,0) rotate(-5deg) scale(1)}
+ 50%{transform:translate3d(3%,4%,0) rotate(3deg) scale(1.06)}
+ 100%{transform:translate3d(5%,-2%,0) rotate(7deg) scale(1.02)}
+}
+@media(prefers-reduced-motion:reduce){body.session-home::before,body.session-home::after{animation:none;will-change:auto}}
+
+/* Session cards keep opening and deletion as separate keyboard controls. */
+.recent-session{position:relative;padding:0;gap:0;overflow:hidden}.recent-session-open{display:grid;gap:14px;padding:22px 50px 22px 22px;text-align:left;width:100%;min-width:0;color:inherit}.recent-session-open strong{overflow-wrap:anywhere}.recent-session-delete{position:absolute;top:12px;right:10px;display:grid;place-items:center;width:32px;height:32px;margin:0;padding:8px;border:0;border-radius:6px;color:#aa9b96}.recent-session-delete svg{display:block;pointer-events:none}.recent-session-delete:hover{background:#49302c;border-color:#bd8278}.recent-session-open:focus-visible,.recent-session-delete:focus-visible{outline:2px solid #d1e4c6;outline-offset:-4px}
+
+/* The invitation follows the current session transport, including rail and Zen layouts. */
+.listening-play-control{position:relative;display:inline-flex;flex-shrink:0}
+.listening-play-control>.listening-hint{top:calc(100% + 12px);bottom:auto;left:0;width:225px;max-width:calc(100vw - 40px);text-align:left;white-space:normal}
+.listening-play-control>.listening-hint:after{top:-5px;bottom:auto;left:18px;transform:rotate(225deg)}
+.listening-invitation #quickPlay{border-color:var(--mint);color:#d6eddf;background:#b6e1c91a}
+body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle{animation:listening-halo 2.8s ease-out 3;border-color:var(--mint)}
+body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle:after{content:'Show transport, then press Play to hear your flow';position:absolute;top:calc(100% + 10px);left:0;padding:10px 14px;max-width:calc(100vw - 40px);border:1px solid #b6e1c94d;border-radius:8px;background:#192620f5;color:#d6eddf;white-space:normal;pointer-events:none}
+@media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){
+ body:not(.zen) .listening-play-control>.listening-hint{display:none}
+ body:not(.zen).listening-invitation #quickPlay{animation:none;box-shadow:none;border-color:#454b49;background:transparent;color:inherit}
+}
+@media(prefers-reduced-motion:reduce){body.zen.listening-invitation.zen-transport-collapsed .zen-transport-toggle{animation:none;box-shadow:0 0 0 3px #b6e1c933}}
+
+.arp-note.chord-tone{border-color:#b7a0d6;color:#e1cdef}.arp-chord-mark{display:block;font-size:10px;line-height:5px;margin-top:5px;color:#c6a7e6}.arp-note.active .arp-chord-mark{color:#24192f}
