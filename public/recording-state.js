@@ -1,17 +1,19 @@
+import {normalizeFluidListens} from './fluid-listen.js?rev=fluid-feedback-82';
 import {DEFAULT_MASTER_VOLUME} from './output.js?rev=levels-38';
 import {normalizeEnvironment} from './environment.js?rev=environment-34';
 import {normalizePalette} from './palettes.js?rev=gestures-32';
-import {instruments,progressions,soundscapes,parseChord} from './music.js?rev=visible-sound-79';
-import {normalizeRhythm,drumVoices} from './rhythm.js?rev=visible-sound-79';
-import {normalizeArp} from './arpeggiator.js?rev=visible-sound-79';
+import {instruments,progressions,soundscapes,parseChord} from './music.js?rev=fluid-feedback-82';
+import {normalizeRhythm,drumVoices} from './rhythm.js?rev=fluid-feedback-82';
+import {normalizeArp} from './arpeggiator.js?rev=fluid-feedback-82';
 import {normalizeGestureSettings,normalizePerformance} from './gestures.js?rev=gestures-32';
 import {normalizeDyeTitle} from './dye-text.js?rev=titles-81';
 const number=(n,lo,hi,fallback)=>Number.isFinite(Number(n))?Math.max(lo,Math.min(hi,Number(n))):fallback;
-export const mainDefaults={energy:60,colorPalette:'classic',soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:DEFAULT_MASTER_VOLUME,dropletsVolume:100,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65,waterEnabled:true,waterSwell:45,waterSpeed:30,waterRefraction:40,waterCaustics:35,waterReflection:40};
+export const mainDefaults={fluidListens:false,energy:60,colorPalette:'classic',soundscape:'stillwater',progression:'daydream',chordLength:'8',reverb:65,delay:35,volume:DEFAULT_MASTER_VOLUME,dropletsVolume:100,swirl:60,persistence:70,dropSize:45,rain:35,cycleColors:true,autoPour:true,quantizeEnabled:false,quantizeBeats:.5,octavesDown:0,octavesUp:1,chordAtmosphere:65,waterEnabled:true,waterSwell:45,waterSpeed:30,waterRefraction:40,waterCaustics:35,waterReflection:40};
 export function sanitizeSnapshot(raw){
  if(!raw?.main||!Array.isArray(raw.main.voices)||raw.main.voices.length!==4||raw.main.voices.some(v=>!Object.hasOwn(instruments,v)))throw new Error('A performance references an unknown melodic voice.');
  const main=raw.main,settings={...mainDefaults,...Object.fromEntries(Object.entries(main.settings||{}).filter(([k])=>Object.hasOwn(mainDefaults,k)))};
  if(!Object.hasOwn(main.settings||{},'waterEnabled'))settings.waterEnabled=false;
+ settings.fluidListens=normalizeFluidListens(settings.fluidListens);
  settings.colorPalette=normalizePalette(settings.colorPalette);
  if(settings.soundscape!=='custom'&&!Object.hasOwn(soundscapes,settings.soundscape))throw new Error('Unknown soundscape in performance.');if(settings.progression!=='custom'&&!Object.hasOwn(progressions,settings.progression))throw new Error('Unknown progression in performance.');
  if(!Array.isArray(main.custom)||main.custom.length!==4)throw new Error('The custom chord setup is incomplete.');main.custom.forEach(parseChord);

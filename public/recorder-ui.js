@@ -1,6 +1,6 @@
 import {ClipCapture} from './session-export.js?rev=titles-81';
 import {CaptureTimeline,VisualTimeline,MAX_SECONDS,encodePerformance,decodePerformance,wavFile,clone,isSession,takeDuration,forkSession,isSetupDraft} from './recorder-core.js?rev=titles-81';
-import {SessionBackend} from './session-player.js?rev=titles-81';
+import {SessionBackend} from './session-player.js?rev=fluid-feedback-82';
 import {PerformanceStore,takeSummary} from './performance-store.js?rev=titles-81';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const time=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;

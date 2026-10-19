@@ -1,5 +1,5 @@
 import {schedulingLookahead} from './background-continuity.js?rev=continuity-76';
-import {parseChord,instruments} from './music.js?rev=visible-sound-79';
+import {parseChord,instruments} from './music.js?rev=fluid-feedback-82';
 export const arpPatterns={up:'Ascending',down:'Descending',bounce:'Up & down',reverse:'Down & up',outside:'Outside in',random:'Random · no repeats'};
 export const arpRoots=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const arpScales={
@@ -64,8 +64,8 @@ function probabilitySource(){
  return ()=>{state^=state<<13;state^=state>>>17;state^=state<<5;return (state>>>0)/4294967296;};
 }
 export class ArpEngine{
- constructor(audio,getConfig,getClock,onEvent,{setTimer=(fn,ms)=>globalThis.setInterval(fn,ms),clearTimer=id=>globalThis.clearInterval(id),random=Math.random,probabilityRandom=probabilitySource(),onError=()=>{}}={}){
-  Object.assign(this,{audio,getConfig,getClock,onEvent,setTimer,clearTimer,onError,probabilityRandom});this.pattern=new ArpPattern(random);this.timer=null;this.bus=null;this.notes=[];this.key=null;this.chordKey=null;this.nextStep=0;this.previousPitch=null;this.lastStartedPitch=null;this.lastStartedTime=-Infinity;
+ constructor(audio,getConfig,getClock,onEvent,{setTimer=(fn,ms)=>globalThis.setInterval(fn,ms),clearTimer=id=>globalThis.clearInterval(id),random=Math.random,probabilityRandom=probabilitySource(),onError=()=>{},getFluid=()=>null}={}){
+  Object.assign(this,{audio,getConfig,getClock,onEvent,setTimer,clearTimer,onError,probabilityRandom,getFluid});this.pattern=new ArpPattern(random);this.timer=null;this.bus=null;this.notes=[];this.key=null;this.chordKey=null;this.nextStep=0;this.previousPitch=null;this.lastStartedPitch=null;this.lastStartedTime=-Infinity;
  }
  connect(){if(this.bus)return;this.bus=this.audio.ctx.createGain();this.bus.gain.value=0;this.bus.connect(this.audio.bus);}
  setVolume(){const volume=this.getConfig().volume;if(this.bus&&this.volume!==volume){this.bus.gain.setTargetAtTime(volume/100,this.audio.ctx.currentTime,.025);this.volume=volume;}}
@@ -87,7 +87,7 @@ export class ArpEngine{
   if(key!==this.key){this.cancelFuture(now);this.key=key;this.chordKey=null;this.pattern.reset();this.nextStep=Math.max(0,Math.ceil((now+.025-clock.origin)/step-1e-9));this.onEvent({type:'reset'});}
   if(clock.origin+this.nextStep*step<now+.003)this.nextStep=Math.max(this.nextStep,Math.ceil((now+.025-clock.origin)/step-1e-9));
   for(let guard=0;guard<32;guard++){
-   const time=clock.origin+this.nextStep*step;if(time>now+schedulingLookahead())break;this.nextStep++;
+   let time=clock.origin+this.nextStep*step;if(time>now+schedulingLookahead())break;this.nextStep++;
    const chordIndex=Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm))%clock.chords.length,chord=clock.chords[chordIndex];
    // Restart at chord boundaries by default; continuous mode preserves the pattern phase.
    const chordKey=chordIndex+'|'+Math.floor(Math.max(0,time-clock.chordOrigin)/(clock.chordBeats*60/clock.bpm));
@@ -99,8 +99,9 @@ export class ArpEngine{
    if(probability<=0||(probability<100&&this.probabilityRandom()*100>=probability)){this.onEvent({type:'rest',rest:true,time,pitch,index,count:pool.length,chord,voice:cfg.voice});continue;}
    const shape=arpEnvelope(cfg,step),length=shape.duration;
    const glide=arpGlide(cfg,step),pitchGlide=glide.enabled&&this.previousPitch!==null?{from:this.previousPitch,time:glide.time,amount:glide.amount}:null;this.previousPitch=pitch;
+   const response=this.getFluid(index,pool.length);if(response)time=Math.max(now+.002,time+response.push);
    const note={pitch,time,end:time+length+.15,cancel:new AbortController(),envelope:null};this.notes.push(note);
-   const expression={velocity:.9,sustain:1,pan:pool.length===1?0:(index/(pool.length-1)*2-1)*.45,cutoff:11000,energy:.15};
+   const expression={velocity:.9,sustain:1,pan:pool.length===1?0:(index/(pool.length-1)*2-1)*.45,cutoff:11000,energy:.15};if(response){expression.velocity*=response.velocity;expression.cutoff=response.cutoff;}
    Promise.resolve(this.audio.note(cfg.voice,pitch,expression,{when:time,signal:note.cancel.signal,target:this.bus,noteLength:length,noteEnvelope:shape.envelope,pitchGlide})).then(envelope=>{note.envelope=envelope;if(note.cancel.signal.aborted&&envelope){envelope.cancel();try{envelope.audioBufferSourceNode?.stop();}catch{}}}).catch(error=>{if(!note.cancel.signal.aborted)this.fail(error);});
    this.onEvent({type:'note',time,pitch,index,count:pool.length,chord,voice:cfg.voice});
   }

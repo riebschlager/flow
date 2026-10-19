@@ -15,7 +15,7 @@ console.log('PASS: bounded chunked PCM, WAV header, stereo and sample-clock fade
 // Exercise the production backend/worklet bridge with a short clock-controlled render.
 const {SessionBackend}=await import('../public/session-player.js');
 const {EnvironmentSynth}=await import('../public/environment.js?rev=performance-39');
-const {PercussionSynth}=await import('../public/rhythm.js?rev=visible-sound-79');
+const {PercussionSynth}=await import('../public/rhythm.js?rev=fluid-feedback-82');
 const {sessionFixture}=await import('./session-fixture.mjs');
 for(const method of ['prepare','apply','stop','dispose'])EnvironmentSynth.prototype[method]=function(){};
 const param=()=>({value:0,setTargetAtTime(){},cancelScheduledValues(){}}),gain=()=>({gain:param(),connect(){},disconnect(){}});

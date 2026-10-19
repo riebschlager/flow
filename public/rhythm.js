@@ -1,5 +1,5 @@
 import {schedulingLookahead} from './background-continuity.js?rev=continuity-76';
-import {parseChord} from './music.js?rev=visible-sound-79';
+import {parseChord} from './music.js?rev=fluid-feedback-82';
 import {delaySeconds,delayGlide,maxDelaySeconds,normalizeEchoBeats} from './timing.js?rev=gestures-32-echo52';
 // Beat patterns and audio-clock scheduling. One loop is sixteen sixteenth notes.
 export const drumVoices={
