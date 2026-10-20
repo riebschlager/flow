@@ -1,4 +1,4 @@
-import {createPresentationControls} from './presentation-controls.js?rev=quiet-controls-87';
+import {createPresentationControls} from './presentation-controls.js?rev=zen-controls-88';
 import {PresentationSleep} from './presentation-sleep.js?rev=listening-85';
 import {PresentationAutoAdvance} from './presentation-auto.js?rev=auto-63';
 const $=id=>document.getElementById(id);

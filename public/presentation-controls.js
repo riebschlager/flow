@@ -1,10 +1,10 @@
-// Presentation chrome opens only through its button. Scene input stays quiet.
-export function createPresentationControls({shell,panel,trigger,hint,doc=document,storage=()=>localStorage,setTimer=setTimeout,clearTimer=clearTimeout}){
+// Shared quiet chrome for presentation and Zen. Scene input stays quiet.
+export function createPresentationControls({shell,panel,trigger,hint,doc=document,storage=()=>localStorage,setTimer=setTimeout,clearTimer=clearTimeout,label="presentation",storageKey="flow:presentation-controls-seen"}){
  let enabled=false,hovered=false,idle=null,discovery=null;
  const hasFocus=()=>panel.contains(doc.activeElement);
  function hideHint(){clearTimer(discovery);hint.hidden=true;}
  function close({restoreFocus=false}={}){
-  clearTimer(idle);const focused=hasFocus();panel.inert=true;panel.hidden=true;trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-label','Show presentation controls');
+  clearTimer(idle);const focused=hasFocus();panel.inert=true;panel.hidden=true;trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-label','Show '+label+' controls');
   if(restoreFocus&&focused)trigger.focus({preventScroll:true});
  }
  function schedule(){
@@ -12,7 +12,7 @@ export function createPresentationControls({shell,panel,trigger,hint,doc=documen
   if(!enabled||panel.hidden||hovered||hasFocus())return;
   idle=setTimer(()=>{if(!hovered&&!hasFocus())close();},6000);
  }
- function open(){if(!enabled)return;hideHint();panel.inert=false;panel.hidden=false;trigger.setAttribute('aria-expanded','true');trigger.setAttribute('aria-label','Hide presentation controls');schedule();}
+ function open(){if(!enabled)return;hideHint();panel.inert=false;panel.hidden=false;trigger.setAttribute('aria-expanded','true');trigger.setAttribute('aria-label','Hide '+label+' controls');schedule();}
  trigger.addEventListener('click',()=>{if(panel.hidden)open();else close({restoreFocus:true});});
  panel.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse'){hovered=true;clearTimer(idle);}});
  panel.addEventListener('pointerleave',()=>{hovered=false;schedule();});
@@ -27,7 +27,7 @@ export function createPresentationControls({shell,panel,trigger,hint,doc=documen
  });
  return {
   open,close,
-  start(){enabled=true;hovered=false;trigger.hidden=false;close();hideHint();let seen=false;try{seen=storage().getItem('flow:presentation-controls-seen')==='1';storage().setItem('flow:presentation-controls-seen','1');}catch{}if(!seen){hint.hidden=false;discovery=setTimer(hideHint,4500);}},
+  start(){enabled=true;hovered=false;trigger.hidden=false;close();hideHint();let seen=false;try{seen=storage().getItem(storageKey)==='1';storage().setItem(storageKey,'1');}catch{}if(!seen){hint.hidden=false;discovery=setTimer(hideHint,4500);}},
   stop(){enabled=false;hovered=false;close();hideHint();trigger.hidden=true;}
  };
 }
