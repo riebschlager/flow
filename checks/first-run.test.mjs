@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {intents,normalizeIntent,normalizeLayout,intentDefaults,IntentRamp,PerformerTrail,createPresentControls} from '../public/first-run.js';
-import {soundscapes} from '../public/music.js?rev=fluid-feedback-82';
+import {soundscapes} from '../public/music.js?rev=chaos-86';
 assert.deepEqual(normalizeIntent({selected:'bad',voiceOverlay:3}),{selected:'play',voiceOverlay:null});
 assert.equal(normalizeLayout(null).panelHidden,true);assert.equal(normalizeLayout(null,true).panelHidden,false);assert.equal(normalizeLayout({panelHidden:true},true).panelHidden,true);
 const voices=['rhodes','bells','piano','strings'];for(const key of Object.keys(intents)){assert.deepEqual(intentDefaults(key,{voices,customized:true,soundscapes}).voices,voices);}

@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {AmbientAudio,instruments,instrumentKeys,isColorVoice,resolveColorVoice} from '../public/music.js';
+import {sanitizeSnapshot,sanitizeTake} from '../public/recording-state.js';
+assert.equal(instrumentKeys.length,28);
+assert.equal(isColorVoice('chaos'),true);assert.equal(isColorVoice('missing'),false);
+assert.equal(isColorVoice('toString'),false);
+assert(!Object.hasOwn(instruments,'chaos'),'chaos stays out of fixed instrument and arp lists');
+assert.deepEqual(instrumentKeys.map((_,i)=>resolveColorVoice('chaos',()=> (i+.5)/28)),instrumentKeys);
+assert.equal(resolveColorVoice('piano',()=>{throw Error('fixed voice randomized');}),'piano');
+const raw={main:{voices:['chaos','piano','chaos','strings'],custom:['Cmaj7','Am7','Fmaj7','G'],settings:{soundscape:'custom'}}};
+assert.deepEqual(sanitizeSnapshot(raw).main.voices,raw.main.voices);
+assert.throws(()=>sanitizeTake({snapshot:raw,events:[{kind:'note',data:{voice:'chaos',bus:'voices'}}]}),/Invalid session voice/,'recordings contain resolved instruments');
+const audio=new AmbientAudio();let active=0,peak=0,calls=0;
+audio.load=async key=>{calls++;active++;peak=Math.max(peak,active);await new Promise(resolve=>setTimeout(resolve,1));active--;return key;};
+await Promise.all([audio.loadChaos(),audio.loadChaos(),audio.loadChaos()]);
+assert.equal(calls,28);assert.equal(peak,2);await audio.loadChaos();assert.equal(calls,28);
+const retry=new AmbientAudio();let fail=true;retry.load=async()=>{if(fail){fail=false;throw Error('offline');}};
+await assert.rejects(retry.loadChaos(),/offline/);await retry.loadChaos();
+// Real note dispatch must record the resolved sample key, allowing exact replay.
+const playing=new AmbientAudio();playing.ctx={currentTime:1};playing.playing=true;playing.droplets={};
+playing.load=async key=>{assert(Object.hasOwn(instruments,key));return {zones:[]};};
+let recorded;playing.onSessionEvent=(kind,data)=>{recorded=data.voice;};
+playing.player={envelopes:[],queueWaveTable(){return {when:2,audioBufferSourceNode:{}};}};
+await playing.note('chaos',60);assert(Object.hasOwn(instruments,recorded));
+console.log('PASS: chaos reaches all 28 instruments, fixed voices stay fixed, snapshots preserve chaos, recorded notes resolve to samples, and loading is shared, bounded and retryable.');

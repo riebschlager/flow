@@ -16,7 +16,7 @@ import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=titles-81';
 import {createPresentationController} from './presentation.js?rev=listening-85';
 import {createRecorderController} from './recorder-ui.js?rev=multitouch-83';
-import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=multitouch-83';
+import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=chaos-86';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=fluid-feedback-82';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=fluid-feedback-82';
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
@@ -24,7 +24,7 @@ import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
 import {Fluid} from './fluid.js?rev=performance-39';
 import {createPerformanceController} from './performance.js?rev=listening-85';
 import {createRhythmController} from './rhythm-ui.js?rev=fluid-feedback-82';
-import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=fluid-feedback-82';
+import {AmbientAudio,isColorVoice,resolveColorVoice,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=chaos-86';
 import {createNoteReadout} from './note-readout.js?rev=crossfade-41';
 const $=id=>document.getElementById(id);
 const showNote=createNoteReadout($('noteToast'),[$('notePitchA'),$('notePitchB')],[$('noteVoiceA'),$('noteVoiceB')]);
@@ -40,10 +40,10 @@ const effectiveVoices=()=>intent.voiceOverlay?soundscapes[intent.voiceOverlay].v
 function persistIntent(){try{localStorage.setItem('chromaflow-intent-v1',JSON.stringify(intent));}catch{}}
 function saveLayout(){layout={panelHidden:document.body.classList.contains('panel-hidden'),mobileOpen:document.body.classList.contains('mobile-controls-open')};try{localStorage.setItem('chromaflow-layout-v1',JSON.stringify(layout));}catch{}}
 document.body.classList.toggle('panel-hidden',layout.panelHidden);document.body.classList.toggle('canvas-first',layout.panelHidden);
-$('voices').innerHTML=colors.map((c,i)=>`<div id="voiceRow${i}" class="voice-row" style="--color:${c.hex}"><span class="voice-dot"></span><label id="voiceLabel${i}" for="voice${i}">${c.name}</label><select id="voice${i}" aria-label="${c.name} instrument">${instrumentGroups.map(group=>`<optgroup label="${group}">${Object.entries(instruments).filter(([,v])=>v.group===group).map(([k,v])=>`<option value="${k}" ${state.voices[i]===k?'selected':''}>${v.name}</option>`).join('')}</optgroup>`).join('')}</select></div>`).join('');
+$('voices').innerHTML=colors.map((c,i)=>`<div id="voiceRow${i}" class="voice-row" style="--color:${c.hex}"><span class="voice-dot"></span><label id="voiceLabel${i}" for="voice${i}">${c.name}</label><select id="voice${i}" aria-label="${c.name} instrument"><option value="chaos" ${state.voices[i]==='chaos'?'selected':''}>Chaos · random instrument per droplet</option>${instrumentGroups.map(group=>`<optgroup label="${group}">${Object.entries(instruments).filter(([,v])=>v.group===group).map(([k,v])=>`<option value="${k}" ${state.voices[i]===k?'selected':''}>${v.name}</option>`).join('')}</optgroup>`).join('')}</select></div>`).join('');
 const persisted=['fluidListens','energy','colorPalette','soundscape','progression','chordLength','reverb','delay','volume','dropletsVolume','swirl','persistence','dropSize','rain','cycleColors','autoPour','quantizeEnabled','quantizeBeats','octavesDown','octavesUp','chordAtmosphere','waterEnabled','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'];
 function save(){try{localStorage.setItem('chromaflow-v1',JSON.stringify({settings:Object.fromEntries(persisted.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),voices:state.voices,custom:state.custom,bpm:state.bpm,selected:state.selected}));}catch{}recorder?.stateChanged();}
-function restore(){try{const s=JSON.parse(localStorage.getItem('chromaflow-v1'));if(!s)return;for(const [id,value] of Object.entries(s.settings||{})){if(!persisted.includes(id))continue;const el=$(id);if(el.type==='checkbox')el.checked=id==='fluidListens'?value===true:!!value;else el.value=id==='energy'?normalizeEnergy(value):value;}if(s.voices?.length===4&&s.voices.every(v=>instruments[v]))state.voices=s.voices;if(s.custom?.length===4){s.custom.forEach(parseChord);state.custom=s.custom;$('chordInput').value=s.custom.join(', ');}if(Number.isInteger(s.selected)&&s.selected>=0&&s.selected<4)state.selected=s.selected;state.bpm=Math.max(30,Math.min(100,Number(s.bpm)||56));if(!$('progression').value)$('progression').value='daydream';if(!$('soundscape').value)$('soundscape').value='stillwater';state.progression=$('progression').value;state.voices.forEach((v,i)=>$('voice'+i).value=v);}catch{}}
+function restore(){try{const s=JSON.parse(localStorage.getItem('chromaflow-v1'));if(!s)return;for(const [id,value] of Object.entries(s.settings||{})){if(!persisted.includes(id))continue;const el=$(id);if(el.type==='checkbox')el.checked=id==='fluidListens'?value===true:!!value;else el.value=id==='energy'?normalizeEnergy(value):value;}if(s.voices?.length===4&&s.voices.every(isColorVoice))state.voices=s.voices;if(s.custom?.length===4){s.custom.forEach(parseChord);state.custom=s.custom;$('chordInput').value=s.custom.join(', ');}if(Number.isInteger(s.selected)&&s.selected>=0&&s.selected<4)state.selected=s.selected;state.bpm=Math.max(30,Math.min(100,Number(s.bpm)||56));if(!$('progression').value)$('progression').value='daydream';if(!$('soundscape').value)$('soundscape').value='stillwater';state.progression=$('progression').value;state.voices.forEach((v,i)=>$('voice'+i).value=v);}catch{}}
 restore();
 if(!returning){$('energy').value='70';$('autoPour').checked=false;}
 effectiveVoices().forEach((v,i)=>$('voice'+i).value=v);
@@ -238,7 +238,7 @@ function prepareDrop(d,clock){if(d.replay)return;
 function playDrop(d,when=null,signal=null){
  if(!state.playing)return;
  const chordIndex=chordAt(when??audio.ctx.currentTime);
- d.pitch=pitchForPosition(activeChords()[chordIndex],(d.x-.04)/.92,d.color,octaveRange());d.voice=effectiveVoices()[d.color];
+ d.pitch=pitchForPosition(activeChords()[chordIndex],(d.x-.04)/.92,d.color,octaveRange());d.voice=resolveColorVoice(effectiveVoices()[d.color]);
  if(Number.isInteger(d.expression?.chordTone)){const chord=parseChord(activeChords()[chordIndex]),i=d.expression.chordTone,shift=Math.floor((d.pitch-chord[0])/12)*12;d.pitch=Math.max(0,Math.min(127,chord[i%chord.length]+Math.floor(i/chord.length)*12+shift));}
  audio.note(d.voice,d.pitch,d.expression,{when,signal}).catch(loadFail);
 }

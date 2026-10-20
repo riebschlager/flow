@@ -1,4 +1,4 @@
-import {AmbientAudio} from './music.js?rev=fluid-feedback-82';
+import {AmbientAudio} from './music.js?rev=chaos-86';
 
 // Each deck owns its instruments' envelopes and effects; only decoded samples
 // and the AudioContext clock are shared. Scene automation cannot touch fades.

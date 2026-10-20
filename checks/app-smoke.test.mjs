@@ -12,7 +12,7 @@ for(const [w,h,viewport] of [[366,488,390],[744,360,844],[406.25,508.5,430],[100
 if(process.env.FLOW_FIRST_RUN){
  assert(document.body.classList.contains('panel-hidden'));assert(document.body.classList.contains('canvas-first'));
  assert.equal($('energy').value,'70');assert(copies.length>0,'silent scene renders before audio');
- const {AmbientAudio}=await import('../public/music.js?rev=fluid-feedback-82');let resolveVoice,initialized=0,played=[];
+ const {AmbientAudio}=await import('../public/music.js?rev=chaos-86');let resolveVoice,initialized=0,played=[];
  const ready=new Promise(resolve=>resolveVoice=resolve);
  AmbientAudio.prototype.initialize=async function(){initialized++;this.ctx={get currentTime(){return clock/1000;}};};
  AmbientAudio.prototype.load=()=>ready;AmbientAudio.prototype.note=async function(voice,pitch,expression,options){played.push({voice,pitch,...options});};
@@ -22,7 +22,7 @@ if(process.env.FLOW_FIRST_RUN){
  for(let i=0;i<90;i++)tick();assert.equal(initialized,1);assert.equal(played.length,0);
  resolveVoice({});for(let i=0;i<20;i++)await Promise.resolve();
  for(let i=0;i<60;i++)tick();assert.equal(played.length,1,'first canvas tap survives voices resolving after its original flight');
- const {pitchForPosition}=await import('../public/music.js?rev=fluid-feedback-82');assert.equal(played[0].pitch,pitchForPosition('Cmaj7',(.3-.04)/.92,0,{down:0,up:1}),'first note comes from the tap position');
+ const {pitchForPosition}=await import('../public/music.js?rev=chaos-86');assert.equal(played[0].pitch,pitchForPosition('Cmaj7',(.3-.04)/.92,0,{down:0,up:1}),'first note comes from the tap position');
  $('togglePanel').onclick();assert.equal(JSON.parse(store.get('chromaflow-layout-v1')).panelHidden,false);
  const voices=[0,1,2,3].map(i=>$('voice'+i).value),progression=$('progression').value;
  $('voice0').value='rhodes';for(const fn of $('voice0').listeners.change)await fn();
@@ -68,7 +68,7 @@ assert.equal($('waterSwell').disabled,false);tick();
 console.log('PASS: water presets, custom values, local persistence and disabled/bypassed surface controls.');
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
 // Exercise the live app's quantized launch, scheduler, splash, and transport controls.
-const {AmbientAudio}=await import('../public/music.js?rev=fluid-feedback-82');
+const {AmbientAudio}=await import('../public/music.js?rev=chaos-86');
 const {EnvironmentSynth}=await import('../public/environment.js?rev=performance-39');const environmentEvents=[];for(const method of ['prepare','apply','stop','dispose'])EnvironmentSynth.prototype[method]=function(...args){environmentEvents.push({method,args:structuredClone(args)});};
 const notes=[],percussionHits=[],timers=new Map();let timerID=0;
 const originalSet=globalThis.setInterval,originalClear=globalThis.clearInterval;
@@ -95,7 +95,7 @@ try{
   const rain=notes.filter(n=>!n.target&&!n.signal?.aborted),arp=notes.filter(n=>n.target&&!n.signal?.aborted);
   assert(rain.length>990);assert(arp.length>1000);assert(percussionHits.length>1000);
   for(let i=2;i<rain.length;i++)assert(process.env.FLOW_BACKGROUND_QUANTIZED==='1'?rain[i].when-rain[i-1].when>=-1e-7&&rain[i].when-rain[i-1].when<1.08:rain[i].when-rain[i-1].when>.44&&rain[i].when-rain[i-1].when<.76,'rain stays continuous with its flight and quantization');
-  const {parseChord,progressions}=await import('../public/music.js?rev=fluid-feedback-82');
+  const {parseChord,progressions}=await import('../public/music.js?rev=chaos-86');
   for(const n of rain){const chord=progressions.daydream[Math.floor((n.when-origin)/(8*60/56))%4];assert(parseChord(chord).some(p=>p%12===n.pitch%12),'rain chooses harmony at the scheduled landing');}
   assert(rain.every(n=>n.when>=n.observedAt));
   // Locked color has a fixed x under deterministic randomness, so harmony must change over time.
@@ -196,7 +196,7 @@ try{
  const soundCount=notes.length;$('chordAtmosphere').value='0';for(const fn of $('chordAtmosphere').listeners.input)fn();tick();assert.deepEqual(atmosphereFrame.light,{brightness:1,tint:[1,1,1]});assert.equal(notes.length,soundCount);assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.chordAtmosphere,'0');
  console.log('PASS: canvas atmosphere tracks automatic chord boundaries and paused manual jumps, with a persisted zero setting and no extra audio events.');
  // Selecting new soundscapes applies all four voices/effects without changing timing.
- const {soundscapes,instruments}=await import('../public/music.js?rev=fluid-feedback-82');
+ const {soundscapes,instruments}=await import('../public/music.js?rev=chaos-86');
  const beforeScapes={bpm:$('bpmLabel').textContent,rate:$('rhythmRate').value,spacing:$('voiceDelayBeats').value,notes:notes.length};
  for(const key of ['glassorganisms','submergedcinema','strangeattractor','orbitalrelay']){
   $('soundscape').value=key;for(const fn of $('soundscape').listeners.change)await fn();const scape=soundscapes[key];
@@ -205,7 +205,7 @@ try{
  for(const key of Object.keys(instruments).filter(key=>instruments[key].group==='Experimental textures')){assert($('voices').html.includes('value="'+key+'"'));assert($('arpVoice').html.includes('value="'+key+'"'));}
  assert.equal($('bpmLabel').textContent,beforeScapes.bpm);assert.equal($('rhythmRate').value,beforeScapes.rate);assert.equal($('voiceDelayBeats').value,beforeScapes.spacing);assert.equal(notes.length,beforeScapes.notes);
  console.log('PASS: all experimental preset selections update four voices, effects, description, and saved settings; new voices appear in color and arpeggio menus without changing timing or triggering extra notes.');
- const {progressions,progressionDetails}=await import('../public/music.js?rev=fluid-feedback-82');
+ const {progressions,progressionDetails}=await import('../public/music.js?rev=chaos-86');
  const beforeHarmony={bpm:$('bpmLabel').textContent,rate:$('rhythmRate').value,voice:$('voice0').value,reverb:$('reverb').value,length:$('chordLength').value};
  for(const [key,detail] of Object.entries(progressionDetails)){
   assert($('progression').options.some(option=>option.value===key));$('progression').value=key;fire('progression');tick();

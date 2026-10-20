@@ -1,4 +1,4 @@
-import {instruments,instrumentGroups,noteName,parseChord} from './music.js?rev=fluid-feedback-82';
+import {instruments,instrumentGroups,noteName,parseChord} from './music.js?rev=chaos-86';
 import {arpNotes,arpPatterns,arpScales,arpRoots,arpRootForChord,normalizeArp,arpEnvelope,arpGlide,ArpEngine} from './arpeggiator.js?rev=fluid-feedback-82';
 const $=id=>document.getElementById(id);
 export function createArpeggiatorController({audio,getClock,getChord,onChange=()=>{},onNote=()=>{},onImpact=()=>{},getFluid=()=>null,getColors=()=>['#e7d7ff','#f4edff']}){
