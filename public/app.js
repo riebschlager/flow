@@ -1,9 +1,9 @@
 import {FluidListen,shimmerNote} from './fluid-listen.js?rev=fluid-feedback-82';
 import {writeInDye,normalizeDyeTitle} from './dye-text.js?rev=titles-81';
-import {intents,normalizeIntent,normalizeLayout,intentDefaults,IntentRamp,PerformerTrail,createPresentControls} from './first-run.js?rev=first-run-80';
+import {intents,normalizeIntent,normalizeLayout,intentDefaults,IntentRamp,PerformerTrail,createPresentControls} from './first-run.js?rev=listening-85';
 import {VisibleSound,normalizeEnergy} from './visible-sound.js?rev=fluid-feedback-82';
 import {delaySeconds} from './timing.js?rev=gestures-32-echo52';
-import {createDriftController} from './drift-ui.js?rev=titles-81';
+import {createDriftController} from './drift-ui.js?rev=listening-85';
 import {RainClock,schedulingLookahead,createBackgroundContinuity} from './background-continuity.js?rev=continuity-76';
 import {createSessionWorkspace} from './session-workspace.js?rev=multitouch-83';
 import {WaterSurface} from './water-surface.js?rev=water-49';
@@ -14,7 +14,7 @@ import {GPUFluidRenderer} from './gpu-fluid-renderer.js?rev=gpu-84';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=titles-81';
-import {createPresentationController} from './presentation.js?rev=first-run-80';
+import {createPresentationController} from './presentation.js?rev=listening-85';
 import {createRecorderController} from './recorder-ui.js?rev=multitouch-83';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=multitouch-83';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=fluid-feedback-82';
@@ -22,7 +22,7 @@ import {createArpeggiatorController} from './arpeggiator-ui.js?rev=fluid-feedbac
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
 import {Fluid} from './fluid.js?rev=performance-39';
-import {createPerformanceController} from './performance.js?rev=multitouch-83';
+import {createPerformanceController} from './performance.js?rev=listening-85';
 import {createRhythmController} from './rhythm-ui.js?rev=fluid-feedback-82';
 import {AmbientAudio,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=fluid-feedback-82';
 import {createNoteReadout} from './note-readout.js?rev=crossfade-41';
@@ -247,7 +247,7 @@ function serviceMusic(){
  serviceIntent();if(!state.playing)return;
  driftUI?.service();if(!state.playing)return;const now=audio.ctx.currentTime;state.elapsed=Math.max(0,now-clockOrigin);state.chordIndex=chordAt(now);
  const interval=4.5-Number($('rain').value)/100*3.9;
- rainClock.service(now,{enabled:!recorder?.blocked&&!driftUI?.active&&$('autoPour').checked,interval,key:[clockOrigin,interval,$('autoPour').checked].join('|'),emit:time=>drop(.16+Math.random()*.71,.25+Math.random()*.53,state.selected,null,null,time)});
+ rainClock.service(now,{enabled:!recorder?.blocked&&$('autoPour').checked,interval,key:[clockOrigin,interval,$('autoPour').checked].join('|'),emit:time=>drop(.16+Math.random()*.71,.25+Math.random()*.53,state.selected,null,null,time)});
  if(!recorder?.blocked||recorder?.renderingDrift)serviceDrops();
 }
 function serviceDrops(){
@@ -334,7 +334,7 @@ const rhythmUI=createRhythmController({audio,togglePlay,onFlare:hit=>visibleSoun
 const arpUI=createArpeggiatorController({audio,getFluid:index=>$('fluidListens').checked&&!recorder?.replaying?fluidListen.arp(index,$('quantizeEnabled').checked):null,onImpact:event=>visualImpact({...event,color:(event.index||0)%4},'arp'),getColors:()=>colors.map(c=>c.hex),onNote:event=>{recorder?.capture('arpeggio',event,event.time);},onChange:()=>recorder?.stateChanged(),getClock:()=>({origin:rhythmUI.timingOrigin??clockOrigin,chordOrigin:clockOrigin,bpm:state.bpm,rate:audio.rhythmRate,chordBeats:Number($('chordLength').value),chords:activeChords()}),getChord:()=>activeChords()[state.playing?chordAt(audio.ctx.currentTime):state.chordIndex]});
 const environmentUI=createEnvironmentController({audio,getOrigin:()=>clockOrigin,onChange:()=>recorder?.stateChanged(),readOnly:()=>!!recorder?.blocked});
 const workspaceUI=createWorkspaceController({switchTab});
-driftUI=createDriftController({audio,performanceUI,playing:()=>state.playing,blocked:()=>!!recorder?.blocked&&!recorder?.renderingDrift||!!recorder?.arming,pause:togglePlay,getProgression:()=>state.driftProgression||state.progression,progressions,parseChord,setHarmony:key=>{if(state.driftProgression===key)return;state.driftProgression=key;renderChords();},phrase:()=>Math.floor(Math.max(0,audio.ctx.currentTime-clockOrigin)/(Number($('chordLength').value)*60/state.bpm*4))});
+driftUI=createDriftController({audio,performanceUI,intent:intent.selected,energy:()=>visibleSound.energy,automaticDrops:()=>$('autoPour').checked,playing:()=>state.playing,blocked:()=>!!recorder?.blocked&&!recorder?.renderingDrift||!!recorder?.arming,pause:togglePlay,getProgression:()=>state.driftProgression||state.progression,progressions,parseChord,setHarmony:key=>{if(state.driftProgression===key)return;state.driftProgression=key;renderChords();},phrase:()=>Math.floor(Math.max(0,audio.ctx.currentTime-clockOrigin)/(Number($('chordLength').value)*60/state.bpm*4))});
 continuity=createBackgroundContinuity({playing:()=>state.playing||!!recorder?.replaying,zen:()=>document.body.classList.contains('zen'),title:()=>$('soundscape').selectedOptions[0].textContent,togglePlay,visibility:()=>{lastFrame=performance.now();if(document.hidden){visibleSound.clear();ripples=[];glows=[];}serviceMusic();rhythmUI.backgroundChanged();arpUI.backgroundChanged();}});
 sliders();syncAudio();$('bpmLabel').textContent=state.bpm;$('customChords').hidden=state.progression!=='custom';$('scapeDescription').textContent=soundscapes[$('soundscape').value]?.text||'Four colors. Four voices. Entirely your own.';document.querySelector('.autopour').classList.toggle('off',!$('autoPour').checked);sim.swirl=Number($('swirl').value)/100;sim.persistence=Number($('persistence').value)/100;renderChords();updateTransport();applyPalette();syncColorMode();resize();seed();requestAnimationFrame(tick);
 

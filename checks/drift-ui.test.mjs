@@ -15,3 +15,11 @@ $('sleepTimer').value='15';fire('sleepTimer');assert.equal($('zenSleepTimer').va
 $('zenSleepTimer').value='15';fire('zenSleepTimer');now+=900;controller.service();assert.equal(paused,1);assert.equal(playing,false);assert.equal($('sleepTimer').value,'0');controller.resume();assert.equal(gains.at(-1).value,1);
 playing=true;blocked=true;const count=actions.filter(a=>a.kind!=='settle').length;now+=100;controller.service();assert.equal(actions.filter(a=>a.kind!=='settle').length,count);assert.equal(harmony,null);
 console.log('PASS: controller preferences, temporary harmony restoration without saving, hidden-clock actions, shared sleep controls, smooth monitor-only gain, cancellation, pause/resume, and replay blocking.');
+// Hovering must not stop the performer; pressing/dragging must still yield.
+blocked=false;playing=true;$('driftStyle').value='drift';fire('driftStyle');controller.resume();controller.service();assert(controller.active);
+$('fluid').listeners.pointermove({buttons:0});assert(controller.active);
+controller.applyIntent({energy:10,idleSeconds:4,noteSeconds:9,density:.2});assert(controller.active,'Changing mode preserves the active performer');
+assert.equal(JSON.parse(store.get('chromaflow-drift-v1')).noteSeconds,9);
+$('fluid').listeners.pointermove({buttons:1});assert(!controller.active);
+controller.resume();controller.service();assert(controller.active);$('fluid').listeners.pointerdown();assert(!controller.active);
+console.log('PASS: hover leaves music playing, mode changes preserve playback, deliberate dragging yields and explicit resume starts promptly.');

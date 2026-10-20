@@ -14,3 +14,8 @@ $('gestureTool').value='paint';change('gestureTool');
 $('conductScene').checked=false;change('conductScene');controller.frame(.016,time+16);assert.equal(tones.at(-1).cutoff,18000);assert.equal(tones.at(-1).pan,0);
 $('expressionEnabled').checked=false;change('expressionEnabled');time=9000;fire('pointerdown',300,300);assert.equal(drops.at(-1)[4],null);time=9010;fire('pointerup',300,300);document.activeElement=canvas;let prevented=0;controller.key({key:'ArrowLeft',preventDefault:()=>prevented++});controller.key({key:'Enter',shiftKey:false,preventDefault:()=>prevented++});assert.equal(prevented,2);assert.equal(drops.at(-1)[4],null);$('performanceHint').onclick();assert.equal(guide,1);assert.equal(saved.enabled,false);controller.reset();assert.equal(tones.at(-1).gain,1);
 console.log('PASS: pointer lifecycle, multi-pointer exclusion, flick and hold-release, circle momentum, conductor off, classic mode, keyboard, guide, reset, and settings persistence.');
+$('expressionEnabled').checked=true;change('expressionEnabled');
+controller.perform({kind:'tap',x:.5,y:.5,time:10,amount:.1});const quiet=drops.at(-1)[4];
+controller.perform({kind:'tap',x:.5,y:.5,time:11,amount:.7});const lively=drops.at(-1)[4];
+assert(lively.velocity>quiet.velocity);assert(lively.cutoff>quiet.cutoff);
+console.log('PASS: listening energy reaches automatic note velocity and tone.');
