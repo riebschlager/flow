@@ -8,11 +8,23 @@ export class WavChunks{
 }
 export const clipSizes={'9:16':[720,1280],'1:1':[1080,1080],'16:9':[1280,720]};
 export function clipMime(Recorder=globalThis.MediaRecorder){if(!Recorder)throw new Error('Video export needs MediaRecorder support.');for(const mime of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'])if(Recorder.isTypeSupported(mime))return mime;throw new Error('This browser cannot record MP4 or WebM clips.');}
-export function compositeFrame(ctx,canvas,layers){ctx.fillStyle='#070b11';ctx.fillRect(0,0,canvas.width,canvas.height);for(const layer of layers){const scale=Math.min(canvas.width/layer.width,canvas.height/layer.height),w=layer.width*scale,h=layer.height*scale;ctx.drawImage(layer,(canvas.width-w)/2,(canvas.height-h)/2,w,h);}}
+// Normalized source bounds keep fluid and overlay aligned even at different DPRs.
+export function clipFrame(width,height,targetWidth,targetHeight,framing='fill'){
+ const scale=(framing==='fit'?Math.min:Math.max)(targetWidth/width,targetHeight/height);
+ const w=Math.min(1,targetWidth/(width*scale)),h=Math.min(1,targetHeight/(height*scale));
+ return {x:(1-w)/2,y:(1-h)/2,w,h,dx:Math.max(0,(targetWidth-width*scale)/2),dy:Math.max(0,(targetHeight-height*scale)/2),dw:Math.min(targetWidth,width*scale),dh:Math.min(targetHeight,height*scale)};
+}
+export function compositeFrame(ctx,canvas,layers,{framing='fill'}={}){
+ ctx.fillStyle='#070b11';ctx.fillRect(0,0,canvas.width,canvas.height);
+ const source=layers.find(layer=>layer.width>0&&layer.height>0);if(!source)return;
+ const f=clipFrame(source.width,source.height,canvas.width,canvas.height,framing);
+ for(const layer of layers){if(layer.width>0&&layer.height>0)ctx.drawImage(layer,f.x*layer.width,f.y*layer.height,f.w*layer.width,f.h*layer.height,f.dx,f.dy,f.dw,f.dh);}
+}
 export class ClipCapture{
- constructor(audio,layers,{aspect='9:16',Recorder=globalThis.MediaRecorder,Stream=globalThis.MediaStream,makeCanvas=()=>document.createElement('canvas')}={}){this.audio=audio;this.layers=layers;this.Recorder=Recorder;this.Stream=Stream;this.mime=clipMime(Recorder);this.canvas=makeCanvas();[this.canvas.width,this.canvas.height]=clipSizes[aspect]||clipSizes['9:16'];this.ctx=this.canvas.getContext('2d');this.parts=[];}
+ constructor(audio,layers,{aspect='9:16',framing='fill',Recorder=globalThis.MediaRecorder,Stream=globalThis.MediaStream,makeCanvas=()=>document.createElement('canvas')}={}){this.audio=audio;this.layers=layers;this.framing=framing==='fit'?'fit':'fill';this.Recorder=Recorder;this.Stream=Stream;this.mime=clipMime(Recorder);this.canvas=makeCanvas();[this.canvas.width,this.canvas.height]=clipSizes[aspect]||clipSizes['9:16'];this.ctx=this.canvas.getContext('2d');this.parts=[];}
  start(){if(!this.canvas.captureStream||!this.audio.ctx.createMediaStreamDestination)throw new Error('This browser cannot capture canvas video with audio.');this.destination=this.audio.ctx.createMediaStreamDestination();this.audio.master.connect(this.destination);this.video=this.canvas.captureStream(30);this.stream=new this.Stream([...this.video.getVideoTracks(),...this.destination.stream.getAudioTracks()]);this.recorder=new this.Recorder(this.stream,{mimeType:this.mime,videoBitsPerSecond:4000000});this.done=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.recorder.ondataavailable=e=>{if(e.data?.size)this.parts.push(e.data);};this.recorder.onerror=()=>{this.reject(new Error('Video capture failed. Try another browser.'));this.cancel();};this.recorder.onstop=()=>{const blob=this.cancelled?null:new Blob(this.parts,{type:this.recorder.mimeType||this.mime});this.parts=[];this.cleanup();this.resolve(blob);};this.draw();this.recorder.start(1000);return this.done;}
- draw(){compositeFrame(this.ctx,this.canvas,this.layers);}
+ draw(){compositeFrame(this.ctx,this.canvas,this.layers,{framing:this.framing});}
+ get frame(){const source=this.layers[0];return clipFrame(source.width,source.height,this.canvas.width,this.canvas.height,this.framing);}
  stop(){if(this.recorder?.state==='recording')this.recorder.stop();}
  cleanup(){if(this.cleaned)return;this.cleaned=true;try{this.audio.master.disconnect(this.destination);}catch{}for(const track of this.stream?.getTracks()||[])track.stop();this.destination?.disconnect();}
  cancel(){this.cancelled=true;this.parts=[];this.stop();this.cleanup();this.resolve?.(null);}

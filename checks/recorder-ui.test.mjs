@@ -61,6 +61,13 @@ try{
  document.createElement=tag=>tag==='canvas'?{getContext:()=>({fillRect(){},drawImage(){}}),captureStream:()=>({getVideoTracks:()=>[{stop(){trackStops++;}}]})}:oldCreate(tag);
  globalThis.MediaStream=class{constructor(tracks){this.tracks=tracks;}getTracks(){return this.tracks;}};
  globalThis.MediaRecorder=class{static isTypeSupported(type){return type==='video/mp4';}constructor(stream,{mimeType}){clipRecorder=this;this.mimeType=mimeType;}start(){this.state='recording';}stop(){this.state='inactive';this.ondataavailable({data:new Blob(['clip'])});this.onstop();}};
+ // Preview and capture share the chosen aspect and explicit fit/fill behavior.
+ const previewCalls=[];$('clipPreview').getContext=()=>({fillRect(){},drawImage(...args){previewCalls.push(args);}});
+ $('recordDialog').open=true;$('clipExportOptions').open=true;$('clipFraming').value='fill';$('clipAspect').value='9:16';
+ $('clipAspect').listeners.change[0]();assert.deepEqual([$('clipPreview').width,$('clipPreview').height],[180,320]);assert.deepEqual(previewCalls.at(-1).slice(5),[0,0,180,320]);
+ $('clipFraming').value='fit';$('clipFraming').listeners.change[0]();assert(previewCalls.at(-1)[6]>0,'fit preview shows borders');
+ $('clipAspect').value='16:9';$('clipAspect').listeners.change[0]();assert.deepEqual([$('clipPreview').width,$('clipPreview').height],[320,180]);
+ $('recordDialog').open=false;$('clipFraming').value='fill';
  $('clipLength').value='15';$('clipAspect').value='9:16';let before=downloads.length;const clipExport=$('takeClip').onclick();for(let i=0;i<15;i++)await Promise.resolve();audio.ctx.currentTime+=.08;clipTick();assert.equal(recorder.phase,'exporting');assert.equal(clipRecorder.state,'recording');audio.ctx.currentTime+=13;clipTick();assert.equal(titles.at(-1)[0],'Flow');const cardCount=titles.length;clipTick();assert.equal(titles.length,cardCount);audio.ctx.currentTime+=2;clipTick();await clipExport;assert.equal(downloads.length,before+1);assert(downloads.at(-1).download.endsWith('.mp4'));assert.equal(recorder.phase,'idle');assert.equal(trackStops,2);
  before=downloads.length;const clipCancel=$('takeClip').onclick();for(let i=0;i<15;i++)await Promise.resolve();audio.ctx.currentTime+=.08;clipTick();$('recordBarStop').onclick();await clipCancel;assert.equal(downloads.length,before);assert.equal(recorder.phase,'idle');assert($('recorderStatus').textContent.includes('Clip export cancelled'));assert.equal(trackStops,4);
  const hiddenClip=$('takeClip').onclick();for(let i=0;i<15;i++)await Promise.resolve();document.hidden=true;clipTick();await hiddenClip;assert.equal(recorder.phase,'idle');assert($('recorderStatus').textContent.includes('tab was hidden'));document.hidden=false;
