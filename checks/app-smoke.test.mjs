@@ -7,10 +7,10 @@ function parse(html){for(const t of html.matchAll(/<([\w-]+)(\s[^>]*?)?>/g))make
 const body=make('body',{id:'body'});globalThis.document={body,activeElement:body,events:{},getElementById:id=>{assert(ids.has(id),'Missing ID: '+id);return ids.get(id);},querySelectorAll:selector=>all.filter(e=>selector.split('.').filter(Boolean).every(c=>e.classList.contains(c))),querySelector(selector){return this.querySelectorAll(selector)[0];},addEventListener(k,fn){(this.events[k]??=[]).push(fn);},createElement:tag=>make(tag)};const mobileMedia={matches:false,addEventListener(){}};globalThis.window={innerWidth:1200,devicePixelRatio:1,matchMedia:()=>mobileMedia};globalThis.ResizeObserver=class{constructor(fn){resizeCallback=fn;}observe(){}};globalThis.requestAnimationFrame=fn=>{frame=fn;return 1;};Object.defineProperty(globalThis,'performance',{value:{now:()=>clock},configurable:true});const store=new Map(process.env.FLOW_FIRST_RUN?[]:[['chromaflow-v1','{"settings":{}}']]);globalThis.localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};parse(fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8'));
 const {ChordAtmosphere}=await import('../public/chord-atmosphere.js?rev=fluid-feedback-82');let atmosphereFrame;const atmosphereStep=ChordAtmosphere.prototype.frame;ChordAtmosphere.prototype.frame=function(dt,options){atmosphereStep.call(this,dt,options);atmosphereFrame={...options,light:this.light,pulse:this.pulse};};
 globalThis.location={pathname:'/',search:'',hash:''};globalThis.history={pushState(){},replaceState(){}};globalThis.addEventListener=()=>{};globalThis.setInterval=()=>0;
-await import('../public/app.js');ids.get('driftEnabled').checked=false;for(const fn of ids.get('driftEnabled').listeners.change)fn();assert.equal(typeof frame,'function');const $=document.getElementById;function tick(){clock+=16;serviceTimers();frame(clock);}for(let i=0;i<3;i++)tick();
+await import('../public/app.js');ids.get('driftEnabled').checked=false;for(const fn of ids.get('driftEnabled').listeners.change)fn();assert.equal(typeof frame,'function');const $=document.getElementById;function tick(){clock+=16;serviceTimers();frame(clock);}for(let i=0;i<3;i++)tick();document.body.classList.remove('session-home');$('sharedPreview').hidden=true;
 for(const [w,h,viewport] of [[366,488,390],[744,360,844],[406.25,508.5,430],[1000,600,1200]]){surface={width:w,height:h};window.innerWidth=viewport;window.matchMedia=query=>({matches:query==='(pointer: coarse)'&&viewport!==1200});window.devicePixelRatio=2;resizeCallback();tick();const grid=rasterSizes.at(-1),copy=copies.at(-1);assert(grid.w*grid.h<=(viewport===1200?35000:16128));assert(Math.abs(w*grid.h/(h*grid.w)-1)<.02);assert.equal(copy.w,grid.w);assert.equal(copy.h,grid.h);assert.deepEqual(copy.args,[0,0,w,h]);assert.equal($('fluid').width,Math.round(w*1.7));assert.equal($('particles').height,Math.round(h*1.7));}
 if(process.env.FLOW_FIRST_RUN){
- assert(document.body.classList.contains('panel-hidden'));assert(document.body.classList.contains('canvas-first'));
+ assert(!document.body.classList.contains('panel-hidden'));assert(!document.body.classList.contains('canvas-first'));assert(!ids.has('intentPicker'));assert(!ids.has('beginFlow'));
  assert.equal($('energy').value,'70');assert(copies.length>0,'silent scene renders before audio');
  const {AmbientAudio}=await import('../public/music.js?rev=chaos-86');let resolveVoice,initialized=0,played=[];
  const ready=new Promise(resolve=>resolveVoice=resolve);
@@ -23,14 +23,15 @@ if(process.env.FLOW_FIRST_RUN){
  resolveVoice({});for(let i=0;i<20;i++)await Promise.resolve();
  for(let i=0;i<60;i++)tick();assert.equal(played.length,1,'first canvas tap survives voices resolving after its original flight');
  const {pitchForPosition}=await import('../public/music.js?rev=chaos-86');assert.equal(played[0].pitch,pitchForPosition('Cmaj7',(.3-.04)/.92,0,{down:0,up:1}),'first note comes from the tap position');
- $('togglePanel').onclick();assert.equal(JSON.parse(store.get('chromaflow-layout-v1')).panelHidden,false);
+ $('togglePanel').onclick();assert.equal(JSON.parse(store.get('chromaflow-layout-v1')).panelHidden,true);$('togglePanel').onclick();
  const voices=[0,1,2,3].map(i=>$('voice'+i).value),progression=$('progression').value;
  $('voice0').value='rhodes';for(const fn of $('voice0').listeners.change)await fn();
- $('intentPicker').value='sleep';for(const fn of $('intentPicker').listeners.change)await fn();
- assert.equal($('voice0').value,'rhodes');assert.equal($('progression').value,progression);assert.equal($('energy').value,'10');assert.equal($('sleepTimer').value,'45');
- assert.equal(JSON.parse(store.get('chromaflow-intent-v1')).selected,'sleep');
+ $('driftPace').value='9';for(const fn of $('driftPace').listeners.change)fn();
+ $('sleepTimer').value='45';for(const fn of $('sleepTimer').listeners.change)fn();
+ assert.equal($('voice0').value,'rhodes');assert.equal($('progression').value,progression);assert.equal($('zenSleepTimer').value,'45');
+ assert.equal(JSON.parse(store.get('chromaflow-drift-v1')).noteSeconds,9);
  $('volume').value='61';for(const fn of $('volume').listeners.input)fn();assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.volume,'61');
- console.log('PASS: empty-storage canvas, delayed first-touch voice plays exactly once at the tapped pitch, saved layout, intent preserves custom voices/harmony, sleep timer and manual override.');process.exit(0);
+ console.log('PASS: empty-storage canvas, delayed first-touch voice plays exactly once at the tapped pitch, saved layout, independent pace preserves custom voices/harmony, sleep timer and manual override.');process.exit(0);
 }
 const beforeHidden=rasterSizes.length;surface={width:0,height:0};resizeCallback();assert.equal(rasterSizes.length,beforeHidden);surface={width:1000,height:600};window.innerWidth=1200;window.devicePixelRatio=1;resizeCallback();
 console.log('PASS: real app resizes both canvases and the ink raster through portrait, landscape, fractional DPR and desktop layouts without stretching; zero-size transitions preserve the fluid.');

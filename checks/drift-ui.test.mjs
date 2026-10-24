@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createDriftController} from '../public/drift-ui.js';
 import {progressions,parseChord} from '../public/music.js';
 let now=0;const nodes=new Map(),store=new Map(),actions=[],harmonies=[],gains=[],wet=[];let reduced=false,paused=0,playing=true,blocked=false,harmony=null;
-for(const id of ['driftEnabled','driftWander','driftStyle','sleepTimer','zenSleepTimer','driftStatus','sleepNotice','fluid'])nodes.set(id,{value:'',checked:false,listeners:{},addEventListener(type,fn){this.listeners[type]=fn;}});
+for(const id of ['driftEnabled','driftWander','driftStyle','driftPace','driftPaceValue','sleepTimer','zenSleepTimer','driftStatus','sleepNotice','fluid'])nodes.set(id,{value:'',checked:false,listeners:{},addEventListener(type,fn){this.listeners[type]=fn;}});
 globalThis.document={body:{style:{setProperty(){}}},getElementById:id=>nodes.get(id)};globalThis.localStorage={getItem:key=>store.get(key),setItem:(key,value)=>store.set(key,value)};
 Object.defineProperty(globalThis,'performance',{value:{now:()=>now*1000},configurable:true});
 const $=document.getElementById,fire=id=>$(id).listeners.change();
@@ -18,8 +18,8 @@ console.log('PASS: controller preferences, temporary harmony restoration without
 // Hovering must not stop the performer; pressing/dragging must still yield.
 blocked=false;playing=true;$('driftStyle').value='drift';fire('driftStyle');controller.resume();controller.service();assert(controller.active);
 $('fluid').listeners.pointermove({buttons:0});assert(controller.active);
-controller.applyIntent({energy:10,idleSeconds:4,noteSeconds:9,density:.2});assert(controller.active,'Changing mode preserves the active performer');
+$('driftPace').value='9';fire('driftPace');assert(controller.active,'Changing pace keeps the performer running');assert.equal($('driftPaceValue').textContent,'9 s');
 assert.equal(JSON.parse(store.get('chromaflow-drift-v1')).noteSeconds,9);
 $('fluid').listeners.pointermove({buttons:1});assert(!controller.active);
 controller.resume();controller.service();assert(controller.active);$('fluid').listeners.pointerdown();assert(!controller.active);
-console.log('PASS: hover leaves music playing, mode changes preserve playback, deliberate dragging yields and explicit resume starts promptly.');
+console.log('PASS: hover leaves music playing, pace changes preserve preferences, deliberate dragging yields and explicit resume starts promptly.');

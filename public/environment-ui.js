@@ -6,7 +6,7 @@ export function createEnvironmentController({audio,getOrigin=()=>0,onChange=()=>
  function sync(){
   $('environmentEnabled').checked=config.enabled;$('environmentPreset').value=config.preset;$('environmentDescription').textContent=environmentPresets[config.preset].description;
   for(const [id,key] of [['environmentVolume','volume'],['environmentActivity','activity'],['environmentTone','tone']]){$(id).value=config[key];$(id+'Value').textContent=Math.round(config[key])+'%';$(id).style.setProperty('--pct',config[key]+'%');}
-  $('environmentStatus').textContent=!config.enabled?'Off · an optional world behind the music':config.volume===0?'Muted · raise the atmosphere mix':audio.replaying?'Recorded atmosphere · follows this session':audio.playing?'Playing · '+environmentPresets[config.preset].name:'Ready · press Begin listening';
+  $('environmentStatus').textContent=!config.enabled?'Off · an optional world behind the music':config.volume===0?'Muted · raise the atmosphere mix':audio.replaying?'Recorded atmosphere · follows this session':audio.playing?'Playing · '+environmentPresets[config.preset].name:'Ready · press Play';
  }
  function persist(){try{localStorage.setItem('chromaflow-environment-v1',JSON.stringify(config));}catch{}onChange();}
  function update(){config=normalizeEnvironment(config);sync();if(audio.playing&&!readOnly())synth.apply(config,audio.ctx.currentTime,{origin:phaseOrigin});persist();}

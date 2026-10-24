@@ -1,16 +1,18 @@
 import {createPresentationControls} from './presentation-controls.js?rev=zen-controls-88';
 const clamp=(n,lo=0,hi=1)=>Math.max(lo,Math.min(hi,n));
-export const intents={play:{energy:70,soundscape:null,idleSeconds:2,noteSeconds:2,density:1,rain:0,timer:0,volume:70},focus:{energy:45,soundscape:'softhorizon',idleSeconds:3,noteSeconds:4,density:.5,rain:0,timer:0,volume:65},unwind:{energy:35,soundscape:'nightgarden',idleSeconds:3,noteSeconds:6,density:.65,rain:0,timer:0,volume:65},sleep:{energy:10,soundscape:'submergedcinema',idleSeconds:4,noteSeconds:9,density:.2,rain:0,timer:45,volume:48}};
-export function normalizeIntent(raw){return {selected:Object.hasOwn(intents,raw?.selected)?raw.selected:'play',voiceOverlay:typeof raw?.voiceOverlay==='string'&&['softhorizon','nightgarden','submergedcinema'].includes(raw.voiceOverlay)?raw.voiceOverlay:null};}
-export function normalizeLayout(raw,returning=false){return {panelHidden:typeof raw?.panelHidden==='boolean'?raw.panelHidden:!returning,mobileOpen:raw?.mobileOpen===true};}
-export function intentDefaults(key,{voices,customized=false,soundscapes}){const preset=intents[key]||intents.play,scape=soundscapes[preset.soundscape];return {...preset,voices:[...(customized||!scape?voices:scape.voices)],reverb:scape?.reverb,delay:scape?.delay};}
-export class IntentRamp{
- constructor(){this.pending=new Map();}
- set(key,from,to,now,duration=4){this.pending.set(key,{from,to,now,duration});}
- value(key,fallback,now){const p=this.pending.get(key);if(!p)return fallback;const t=clamp((now-p.now)/p.duration),smooth=t*t*(3-2*t);if(t===1)this.pending.delete(key);return p.from+(p.to-p.from)*smooth;}
- cancel(key){this.pending.delete(key);}
- clear(){this.pending.clear();}
+// Convert retired listening presets once; working sessions already contain concrete settings.
+export function migrateListeningPreferences(storage,soundscapes){
+ try{
+  const raw=storage.getItem('chromaflow-intent-v1');if(!raw)return;
+  const legacy=JSON.parse(raw),saved=JSON.parse(storage.getItem('chromaflow-v1')||'null');
+  const overlay=['softhorizon','nightgarden','submergedcinema'].includes(legacy?.voiceOverlay)?soundscapes[legacy.voiceOverlay]:null;
+  if(saved&&overlay){saved.voices=[...overlay.voices];saved.settings={...saved.settings,soundscape:legacy.voiceOverlay};storage.setItem('chromaflow-v1',JSON.stringify(saved));}
+  const timing={play:[2,2,1],focus:[3,4,.5],unwind:[3,6,.65],sleep:[4,9,.2]}[legacy?.selected];
+  if(timing){const drift=JSON.parse(storage.getItem('chromaflow-drift-v1')||'{}');const [idleSeconds,noteSeconds,density]=timing;storage.setItem('chromaflow-drift-v1',JSON.stringify({...drift,idleSeconds,noteSeconds,density}));}
+  storage.removeItem('chromaflow-intent-v1');
+ }catch{} // Keep the old preference available if browser storage is unavailable.
 }
+export function normalizeLayout(raw,returning=false){return {panelHidden:typeof raw?.panelHidden==='boolean'?raw.panelHidden:false,mobileOpen:raw?.mobileOpen===true};}
 export class PerformerTrail{
  constructor({reducedMotion=false}={}){this.points=[];this.reducedMotion=reducedMotion;this.lastMove=0;}
  move(x,y,now){this.lastMove=now;if(this.reducedMotion)return;this.points.push({x,y,now});if(this.points.length>48)this.points.shift();}
