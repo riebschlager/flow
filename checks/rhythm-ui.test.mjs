@@ -15,22 +15,25 @@ fire($('beatLanes'),'click',$('laneMute1'));assert.equal(stored.lanes[1].muted,t
 $('laneLevel2').value='22';fire($('beatLanes'),'input',$('laneLevel2'));assert.equal(stored.lanes[2].level,22);$('rhythmSwing').value='32';fire($('rhythmSwing'),'input');assert.equal(stored.swing,32);$('rhythmReverb').value='72';fire($('rhythmReverb'),'input');assert.equal(stored.reverb,72);assert.equal(Number($('studioReverb').value),72);$('studioDelay').value='100';fire($('studioDelay'),'input');assert.equal(stored.delay,100);assert.equal(Number($('rhythmDelay').value),100);$('studioDelayBeats').value='0.5';fire($('studioDelayBeats'),'change');assert.equal(stored.delayBeats,.5);assert.equal(Number($('voiceDelayBeats').value),.5);assert.equal(audio.delayBeats,.5);$('voiceDelayBeats').value='1';fire($('voiceDelayBeats'),'change');assert.equal(stored.delayBeats,1);assert.equal(Number($('studioDelayBeats').value),1);$('rhythmRate').value='2';fire($('rhythmRate'),'change');assert.equal(audio.rhythmRate,2);assert.match($('echoSyncLabel').textContent,/536 ms/);audio.bpm=100;ui.transportChanged();assert.match($('echoSyncLabel').textContent,/300 ms/);$('studioClear').onclick();assert(stored.lanes.every(l=>l.steps.every(v=>v===0)));
 $('studioEnabled').checked=false;fire($('studioEnabled'),'change');assert.equal($('rhythmEnabled').checked,false);assert.equal(stored.enabled,false);$('doneBeats').onclick();assert.equal($('beatDialog').open,false);ui.stop();
 console.log('PASS: UI initialization, studio open/close, optional enable, voice removal, all four step states, preset selection, mute, Euclidean density, rotation, lane levels, swing, clear, and settings persistence.');
-// Kits, patterns, and manual voices remain independently editable in both panels.
-const {drumKits,grooveDetails,grooves,drumVoices}=await import('../public/rhythm.js');
-assert.equal($('rhythmKit').value,'custom');
+// Beat studio is the kit's and voices' only home; patterns stay editable from both panels.
+const {drumKits,grooveDetails,grooves,drumVoices,applyDrumKit}=await import('../public/rhythm.js');
+for(const id of ['rhythmKit','rhythmKitDescription','rhythmVoices'])assert(!elements.has(id),id+' left the rail');
+assert.equal($('studioKit').value,'custom');
 for(const [key,kit] of Object.entries(drumKits)){
  const before={preset:stored.preset,steps:stored.lanes.map(l=>[...l.steps]),muted:stored.lanes.map(l=>l.muted),delay:stored.delay,reverb:stored.reverb,rate:stored.rate};
- const id=key==='glassgarden'?'studioKit':'rhythmKit';$(id).value=key;fire($(id),'change');
- assert.equal(stored.kit,key);assert.equal($('rhythmKit').value,key);assert.equal($('studioKit').value,key);assert.deepEqual(stored.lanes.map(l=>l.voice),kit.voices);assert.deepEqual(stored.lanes.map(l=>l.level),kit.levels);
- assert.deepEqual(stored.lanes.map(l=>l.steps),before.steps);assert.deepEqual(stored.lanes.map(l=>l.muted),before.muted);for(const prop of ['preset','delay','reverb','rate'])assert.equal(stored[prop],before[prop]);assert($('rhythmKitDescription').textContent.includes(kit.text));
+ $('studioKit').value=key;fire($('studioKit'),'change');
+ assert.equal(stored.kit,key);assert.equal($('studioKit').value,key);assert.deepEqual(stored.lanes.map(l=>l.voice),kit.voices);assert.deepEqual(stored.lanes.map(l=>l.level),kit.levels);
+ assert.deepEqual(stored.lanes.map(l=>l.steps),before.steps);assert.deepEqual(stored.lanes.map(l=>l.muted),before.muted);for(const prop of ['preset','delay','reverb','rate'])assert.equal(stored[prop],before[prop]);assert($('studioKitDescription').textContent.includes(kit.text));
 }
 for(const [key,text] of Object.entries(grooveDetails)){
  const voices=stored.lanes.map(l=>l.voice),kit=stored.kit;$('studioGroove').value=key;fire($('studioGroove'),'change');assert.equal($('groove').value,key);assert.equal(stored.preset,key);assert.equal(stored.kit,kit);assert.deepEqual(stored.lanes.map(l=>l.voice),voices);assert.equal($('grooveDescription').textContent,text);assert.equal($('studioGrooveDescription').textContent,text);
 }
 for(const key of Object.keys(drumVoices))assert($('beatLanes').html.includes('value="'+key+'"'));
 $('drumVoice1').value='glass';fire($('beatLanes'),'change',$('drumVoice1'));assert.equal(stored.kit,'custom');assert.equal($('studioKit').value,'custom');assert.equal(stored.preset,'fracture');
-$('rhythmKit').value='velvetroom';fire($('rhythmKit'),'change');$('laneLevel2').value='17';fire($('beatLanes'),'input',$('laneLevel2'));assert.equal(stored.kit,'custom');assert.equal($('rhythmKit').value,'custom');assert.equal(stored.lanes[2].level,17);
-console.log('PASS: all eight kits and eight new patterns in both panels, independent kit/pattern/mute/effects behavior, descriptions, twenty voice choices, custom detection, level edits and persistence.');
+$('studioKit').value='velvetroom';fire($('studioKit'),'change');$('laneLevel2').value='17';fire($('beatLanes'),'input',$('laneLevel2'));assert.equal(stored.kit,'custom');assert.equal($('studioKit').value,'custom');assert.equal(stored.lanes[2].level,17);
+// Restoring a session (or applying a preset) still sets the kit, now through beat studio.
+ui.restore(applyDrumKit(structuredClone(stored),'velvetroom'));assert.equal($('studioKit').value,'velvetroom');assert($('studioKitDescription').textContent.includes(drumKits.velvetroom.text));ui.restore({...structuredClone(stored),kit:'custom'});assert.equal($('studioKit').value,'custom');
+console.log('PASS: all eight kits in beat studio (their only home) and eight new patterns in both panels, kit restore, independent kit/pattern/mute/effects behavior, descriptions, twenty voice choices, custom detection, level edits and persistence.');
 // A failed host API must surface as an error rather than a false Playing status.
 $('rhythmEnabled').checked=true;fire($('rhythmEnabled'),'change');audio.playing=true;audio.ctx={currentTime:0};const originalError=console.error;let logged=0;
 try{console.error=()=>logged++;ui.start();assert.equal(logged,1);assert.match($('rhythmStatus').textContent,/couldn’t start/);ui.transportChanged();assert.match($('rhythmStatus').textContent,/couldn’t start/);}finally{console.error=originalError;audio.playing=false;audio.ctx=null;$('rhythmEnabled').checked=false;fire($('rhythmEnabled'),'change');ui.stop();}

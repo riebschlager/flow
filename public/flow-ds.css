@@ -153,8 +153,8 @@ progress::-moz-progress-bar{background:var(--accent)}
 .panel .slider-label.is-live output,.slider-label.is-live output{color:var(--accent-strong)}
 .panel .range-extents,.range-extents{font-size:11px;color:var(--text-3);margin-top:2px}
 .panel .mini-row{font-size:12px;color:var(--text-2)}
-.panel .option-row,.layer-card>.option-row,.layer-card>.rhythm-enable,.performance-enable{font:500 13px/1.3 var(--font-sans);color:var(--text-1)}
-.panel .option-row small,.panel .performance-enable small,.panel .rhythm-enable small{font-size:12px;line-height:1.35;color:var(--text-3);font-weight:400}
+.panel .option-row,.performance-enable{font:500 13px/1.3 var(--font-sans);color:var(--text-1)}
+.panel .option-row small,.panel .performance-enable small{font-size:12px;line-height:1.35;color:var(--text-3);font-weight:400}
 .panel .panel-bottom{font-size:12px;color:var(--text-3);border-top:1px solid var(--line)}
 .panel .mix-state{font:400 11px/1 var(--font-sans);letter-spacing:0;color:var(--text-3)}
 .panel .section-link{font-size:12px;color:var(--text-2)}
@@ -163,11 +163,7 @@ progress::-moz-progress-bar{background:var(--accent)}
 .voice-row label{font-size:12px;color:var(--text-2)}
 .voice-dot{width:8px;height:8px}
 
-/* Cards and folds */
-.layer-card{background:var(--bg-raised);border:1px solid var(--line);border-radius:var(--r-3);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.layer-card.is-enabled{border-color:var(--line-strong)}
-.layer-card.is-enabled>.option-row>span:before,.layer-card.is-enabled>.rhythm-enable>span:before{background:var(--live);box-shadow:none}
-.layer-card>.helper{font-size:12px}
+/* Folds */
 .control-fold{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;margin:0}
 .control-fold>summary{padding:16px 0;font:500 13px/1.3 var(--font-sans);color:var(--text-1);min-height:0}
 .control-fold>summary:hover{background:transparent}
@@ -176,11 +172,8 @@ progress::-moz-progress-bar{background:var(--accent)}
 .control-fold>summary>i{border-color:var(--text-3);transition:transform var(--dur-3) var(--ease-out)}
 .control-fold[open]>summary{border-bottom:0}
 .fold-content{padding:0 0 18px}
-.panel .control-fold:focus-within,.panel .layer-card:focus-within{border-color:var(--line-strong)}
-.layer-card>.layer-editor{border-top:1px solid var(--line);border-bottom:0;margin:0 -14px;padding:0 14px}
+.panel .control-fold:focus-within{border-color:var(--line-strong)}
 .control-fold .control-fold{background:transparent}
-.arp-shape>summary{font-size:13px;color:var(--text-1);cursor:pointer;padding:12px 0}
-.arp-shape>summary span{color:var(--text-3);font-size:12px}
 
 /* Inputs */
 select{font:400 13px/1.2 var(--font-sans);color:var(--text-1);background-color:var(--bg-well);border:1px solid transparent;border-radius:var(--r-2);transition:background-color var(--dur-1),border-color var(--dur-1)}
@@ -274,6 +267,30 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .layer-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-3) var(--ease-out)}
 .layer-body.is-open{grid-template-rows:1fr}
 .layer-body-inner{overflow:hidden;min-height:0}
+/* Once open, stop clipping so HelpTips inside the body can overflow it. */
+.layer-body.is-open>.layer-body-inner{overflow:visible;animation:layer-clip var(--dur-3)}
+@keyframes layer-clip{from,to{overflow:hidden}}
+
+/* Rail · Layers (Phase 3) */
+.layer>.option-row small{transition:color var(--dur-2)}
+.layer.is-on>.option-row small{color:var(--text-2)}
+.layer-controls{padding-top:6px}
+.layer-controls>.field:first-child,.layer-controls>.field-row:first-child{margin-top:4px}
+.field>label{display:flex;align-items:baseline;gap:8px}
+.field>label>output{margin-left:auto;font:400 11px/1 var(--font-mono);color:var(--text-3)}
+.field-row{display:flex;gap:10px;margin-top:14px}
+.field-row>.field{flex:1;min-width:0;margin-top:0}
+.field-row select,.select-action select{width:100%;min-width:0}
+.select-action{display:flex;gap:8px}
+.select-action>select{flex:1}
+.select-action>.compact-button{flex:none;width:auto;min-height:0;margin:0;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.select-action>.compact-button svg{width:14px;height:14px}
+.layer-controls>.layer-action{width:100%;margin-top:18px;display:flex;justify-content:center;gap:6px}
+.layer-controls>select{margin-top:4px;width:100%}
+.layer-controls>.note-shape{margin-top:14px;border-top:1px solid var(--line);border-bottom:0}
+.envelope-host{padding:4px 0 2px}
+.glide-row{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.note-shape .knob-row{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 4px}
 
 /* EnvelopeGraph (controls-kit.js) */
 .envelope-graph{display:block;width:100%;height:72px;overflow:visible}
@@ -353,9 +370,6 @@ dialog label{font-size:12px;color:var(--text-2)}
 .drum-step.playhead:after{background:var(--n-900);box-shadow:none}
 .arp-note{font-size:11px;border-radius:var(--r-1);border-color:var(--line-strong);background:var(--bg-well);color:var(--text-2)}
 .arp-note.active{background:var(--accent);color:var(--n-50);border-color:var(--accent);box-shadow:none}
-.arp-envelope polyline{stroke:var(--accent)}
-.arp-envelope polygon{fill:var(--accent-dim)}
-.arp-envelope-grid{stroke:var(--line-strong)}
 
 /* Zen strip & floating chrome */
 .present-strip,.presentation-controls{background:var(--bg-glass);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);border:1px solid var(--line-strong);border-radius:var(--r-3);box-shadow:var(--shadow-pop)}

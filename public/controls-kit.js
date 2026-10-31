@@ -33,7 +33,8 @@ function svg(tag,attrs,parent){const el=document.createElementNS('http://www.w3.
 function choiceGroup(select,className,renderOption){
  const group=make('div',className);group.setAttribute('role','radiogroup');
  const label=labelFor(select);
- if(label){label.id||=select.id+'Label';group.setAttribute('aria-labelledby',label.id);label.addEventListener('click',e=>{e.preventDefault();group.querySelector('[tabindex="0"]')?.focus();});}
+ // A generated label id must not take an id the app already writes to (rhythmRateLabel).
+ if(label){if(!label.id){let id=select.id+'Label';while(document.getElementById(id))id+='-group';label.id=id;}group.setAttribute('aria-labelledby',label.id);label.addEventListener('click',e=>{e.preventDefault();group.querySelector('[tabindex="0"]')?.focus();});}
  else if(select.getAttribute('aria-label'))group.setAttribute('aria-label',select.getAttribute('aria-label'));
  let buttons=[];
  function render(){
@@ -155,30 +156,37 @@ export function enhanceStepper(input,{label,unit}={}){
  return root;
 }
 
+// A switch's description mirrors a live status element, which stays in the
+// tree as a visually hidden live region.
+export function mirrorStatus(toggle,status,description){
+ if(!status||toggle.dataset.status)return null;
+ const label=labelFor(toggle)||toggle.closest?.('label');
+ let desc=description||label?.querySelector('small');
+ if(!desc&&label){desc=make('small');(label.querySelector('span')||label).append(desc);}
+ if(!desc)return null;
+ toggle.dataset.status=status.id||'1';
+ const mirror=()=>{if(desc.textContent!==status.textContent)desc.textContent=status.textContent;};
+ new MutationObserver(mirror).observe(status,{childList:true,characterData:true,subtree:true});
+ status.classList.add('sr-only');mirror();
+ return desc;
+}
+
 // The kit's Layer: the switch is the disclosure. Its body opens by animating
-// grid-template-rows and is inert while closed. The switch description mirrors
-// a live status element, which stays in the tree as a visually hidden live region.
+// grid-template-rows and is inert while closed. The description mirrors status.
 export function enhanceLayer(toggle,body,{status,description}={}){
  if(toggle.dataset.layer)return null;
  toggle.dataset.layer='1';
- const label=labelFor(toggle)||toggle.closest?.('label');
- let desc=description||label?.querySelector('small');
- if(status&&!desc&&label){desc=make('small');(label.querySelector('span')||label).append(desc);}
  const wrap=make('div','layer-body'),inner=make('div','layer-body-inner',wrap);
  wrap.id=(toggle.id||'layer')+'Body';
  body.before(wrap);inner.append(body);
  toggle.setAttribute('aria-controls',wrap.id);
- const host=toggle.closest?.('section,.layer-card');
+ const host=toggle.closest?.('section');
  function render(){
   const open=toggle.checked;
   wrap.classList.toggle('is-open',open);wrap.inert=!open;
   host?.classList.toggle('is-on',open);
  }
- if(status&&desc){
-  const mirror=()=>{if(desc.textContent!==status.textContent)desc.textContent=status.textContent;};
-  new MutationObserver(mirror).observe(status,{childList:true,characterData:true,subtree:true});
-  status.classList.add('sr-only');mirror();
- }
+ mirrorStatus(toggle,status,description);
  watchControl(toggle,render,['checked']);
  render();
  return wrap;
@@ -198,8 +206,10 @@ export function envelopePoints({attack=20,decay=120,sustain=.65,length=.85}){
 }
 const SEGMENTS={a:[0,1],d:[1,2],s:[2,3],r:[3,4]};
 export function enhanceEnvelopeGraph(host,ids=ENVELOPE){
+ if(host.dataset.enhanced)return null;
  const inputs=Object.fromEntries(Object.entries(ids).map(([k,id])=>[k,document.getElementById(id)]));
  if(Object.values(inputs).some(input=>!input))return null;
+ host.dataset.enhanced='envelope-graph';
  const {W,H,pad}=GRAPH;
  const root=svg('svg',{class:'envelope-graph',viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none',role:'img','aria-label':'Note envelope'});
  for(const f of [.25,.5,.75])svg('line',{class:'envelope-grid',x1:W*f,x2:W*f,y1:pad,y2:H-pad},root);

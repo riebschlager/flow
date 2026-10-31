@@ -8,7 +8,7 @@ import {RainClock,schedulingLookahead,createBackgroundContinuity} from './backgr
 import {createSessionWorkspace} from './session-workspace.js?rev=session-entry-90';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
-import {createWorkspaceController} from './workspace-ui.js?rev=follow-root-75-workspace-35';
+import {createWorkspaceController} from './workspace-ui.js?rev=controls-3';
 import {createEnvironmentController} from './environment-ui.js?rev=session-entry-90';
 import {GPUFluidRenderer} from './gpu-fluid-renderer.js?rev=gpu-84';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
@@ -18,12 +18,12 @@ import {createPresentationController} from './presentation.js?rev=zen-controls-8
 import {createRecorderController} from './recorder-ui.js?rev=clip-framing-89';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=chaos-86';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=fluid-feedback-82';
-import {createArpeggiatorController} from './arpeggiator-ui.js?rev=session-entry-90';
+import {createArpeggiatorController} from './arpeggiator-ui.js?rev=controls-3';
 import {stirPercussion} from './percussion-visuals.js?rev=gestures-32';
 import {landingTime,quantizeDivisions} from './quantize.js?rev=gestures-32';
 import {Fluid} from './fluid.js?rev=performance-39';
 import {createPerformanceController} from './performance.js?rev=listening-85';
-import {createRhythmController} from './rhythm-ui.js?rev=session-entry-90';
+import {createRhythmController} from './rhythm-ui.js?rev=controls-3';
 import {AmbientAudio,isColorVoice,resolveColorVoice,instruments,instrumentGroups,soundscapes,progressions,progressionDetails,parseChord,pitchForPosition,pitchesForRange,normalizeOctaveRange,noteName} from './music.js?rev=chaos-86';
 import {createNoteReadout} from './note-readout.js?rev=crossfade-41';
 const $=id=>document.getElementById(id);

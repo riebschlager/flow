@@ -41,9 +41,11 @@ class Node{
  dispatchEvent(e){Object.defineProperty(e,'target',{value:this,configurable:true});const path=[];for(let n=this.parentElement;n;n=n.parentElement)path.push(n);for(const n of [this,...path]){for(const fn of n.listeners[e.type]||[])fn(e);if(!e.bubbles)return !e.defaultPrevented;}if(this===doc.body||doc.body.contains(this))doc.dispatchEvent(e);return !e.defaultPrevented;}
  focus(){if(this.disabled||!('tabindex' in this.attrs)&&!['INPUT','SELECT','BUTTON'].includes(this.tagName))return;const prev=doc.activeElement;if(prev===this)return;doc.activeElement=this;prev?.dispatchEvent?.(new Event('focusout',{bubbles:true}));this.dispatchEvent(new Event('focusin',{bubbles:true}));}
  setPointerCapture(){}
- set innerHTML(html){const stack=[this];this.replaceChildren();for(const [,close,tag,raw,self] of html.matchAll(/<(\/)?([\w-]+)([^>]*?)(\/)?>/g)){if(close){stack.pop();continue;}const n=doc.createElement(tag);for(const [,k,v] of raw.matchAll(/([\w-]+)="([^"]*)"/g))k==='class'?n.className=v:n.attrs[k]=v;stack.at(-1).append(n);if(!self)stack.push(n);}}
+ // Enough HTML for the rail's markup: text, bare attributes, void elements, data-* and selected options.
+ set innerHTML(html){const stack=[this];this.replaceChildren();for(const [,close,tag,raw,self,text] of html.matchAll(/<(\/)?([\w-]+)([^>]*?)(\/)?>|([^<]+)/g)){if(text!==undefined){stack.at(-1).text+=text.replace(/&amp;/g,'&');continue;}if(close){stack.pop();continue;}const n=doc.createElement(tag);for(const [,k,v=''] of raw.matchAll(/([\w-]+)(?:="([^"]*)")?/g)){k==='class'?n.className=v:n.attrs[k]=v;if(k.startsWith('data-'))n.dataset[k.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=v;}if(n instanceof Input)n.raw=n.attrs.value||'';const parent=stack.at(-1);parent.append(n);if(n instanceof Option&&'selected' in n.attrs&&parent instanceof Select)parent.index=parent.options.length-1;if(!self&&!VOID.has(n.tagName))stack.push(n);}}
  click(){if(!this.disabled)this.dispatchEvent(new Event('click',{bubbles:true}));}
 }
+const VOID=new Set(['INPUT','BR','IMG','HR','META','LINK','SOURCE']);
 class Input extends Node{
  constructor(){super('input');this.raw='';}
  get type(){return this.attrs.type||'text';}set type(v){this.attrs.type=v;}
@@ -61,7 +63,7 @@ class Select extends Node{
  get value(){return this.options[this.selectedIndex]?.value??'';}set value(v){const i=this.options.findIndex(o=>o.value===String(v));this.index=i;}
 }
 const doc={activeElement:null,listeners:{},body:new Node('body'),
- createElement:tag=>tag==='input'?new Input():tag==='select'?new Select():new Node(tag),
+ createElement:tag=>tag==='input'?new Input():tag==='select'?new Select():tag==='option'?new Option('',''):new Node(tag),
  createElementNS:(_,tag)=>new Node(tag),
  getElementById(id){return this.body.querySelectorAll(`[id="${id}"]`)[0]||null;},
  querySelectorAll(sel){return this.body.querySelectorAll(sel);},
@@ -76,7 +78,7 @@ const pointer=(el,type,extra)=>{const e=new Event(type,{bubbles:true,cancelable:
 function log(el){const seen=[];el.addEventListener('input',()=>seen.push('input:'+el.value));el.addEventListener('change',()=>seen.push('change:'+el.value));return seen;}
 function select(id,values,label){const wrap=new Node('div');doc.body.append(wrap);if(label){const l=new Node('label');l.attrs.for=id;l.textContent=label;wrap.append(l);}const s=new Select();s.id=id;for(const [v,t] of values)s.append(new Option(v,t));wrap.append(s);return s;}
 
-const {KNOBS,SEGMENTED,SWATCH_GRIDS,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
+const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
 const html=fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');
 for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}">`),`${id} has a slider label`);}
 for(const level of ['volume','dropletsVolume','arpVolume','rhythmVolume','environmentVolume','rain','energy'])assert.ok(!(level in KNOBS),`${level} stays a slider`);
@@ -106,9 +108,8 @@ for(const marker of ['class="segmented','class="swatch-grid','class="stepper','c
  for(const id of ['swirl','persistence','dropSize','chordAtmosphere'])assert.ok(fluid.includes(`<input id="${id}" type="range"`),`${id} sits in The fluid`);
  assert.ok(!scene.includes('fluidListens'),'fluidListens waits for Phase 4');
  for(const id of ['soundscape','progression','chordInput','applyChords','chordLength','voices','voiceControls','energy','energyValue','colorPalette','palettePreview','paletteDescription','swirl','persistence','dropSize','chordAtmosphere','waterEnabled','waterPreset','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection','rhythmVisualControls','rhythmVisualMode','rhythmVisual'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
- assert.deepEqual(Object.keys(SEGMENTED),['chordLength','waterPreset','rhythmVisualMode']);assert.deepEqual(SWATCH_GRIDS,['colorPalette']);
+ assert.deepEqual(Object.keys(SEGMENTED).slice(0,3),['chordLength','waterPreset','rhythmVisualMode']);assert.deepEqual(SWATCH_GRIDS,['colorPalette']);
  for(const id of ['waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-2"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-2/);
 }
 assert.match(html,/<input id="bpm" type="number" min="30" max="100" step="2" value="56" aria-label="Tempo" hidden>/,'tempo state has a hidden number input for the Stepper');
 const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
@@ -313,4 +314,65 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.match(src,/enhanceHelpTips\(\);enhanceKnobs\(\);enhanceSliders\(\);enhanceRail\(\);/,'the rail is enhanced at startup from controls-ui.js');
  assert.ok(!fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8').includes('enhanceRail'),'app.js does not apply components');
 }
-console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup.');
+// Phase 3: Layers is three Layer blocks with at most one fold level and no visible status lines.
+{
+ const layers=html.match(/<div id="rhythmPanel"[^>]*>([\s\S]*?)\n<\/div>/)[1];
+ assert.equal(layers.match(/<details/g)?.length,1,'Note shape is the only fold');
+ const fold=layers.slice(layers.indexOf('<details'),layers.indexOf('</details>'));
+ assert.ok(fold.includes('id="arpShape"')&&!fold.slice(1).includes('<details'),'the fold holds no fold');
+ for(const gone of ['layer-card','layer-editor','nested-fold','Edit arpeggiator','Edit percussion','Edit atmospherics','Portamento','Groove feel','mixFromLayers','rhythmKit','rhythmVoices','arpOverview','rhythmOverview','environmentOverview','arpEnvelopeFill','arpEnvelopeLine','<svg id="arpEnvelope"'])assert.ok(!html.includes(gone),`${gone} is gone`);
+ assert.ok(html.includes('id="studioKit"'),'the kit lives on in beat studio');
+ for(const id of ['arpEnabled','arpStatus','arpControls','arpVoice','arpSource','arpRootMode','arpRoot','arpScale','arpPattern','arpRestart','arpRate','arpProbability','arpCount','arpEnvelope','arpEnvelopeSummary','arpLength','arpAttack','arpDecay','arpSustain','arpGlideEnabled','arpGlideSummary','arpGlideTime','arpGlideAmount','rhythmEnabled','rhythmStatus','rhythmControls','groove','varyGroove','rhythmRate','rhythmRateLabel','rhythmSwing','rhythmHumanize','openBeats','environmentEnabled','environmentStatus','environmentControls','environmentPreset','environmentActivity','environmentTone'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ const glide=fold.slice(fold.indexOf('class="glide-row"'));
+ for(const id of ['arpGlideEnabled','arpGlideTime','arpGlideAmount'])assert.ok(glide.includes(`id="${id}"`),`${id} sits in the Glide row inside Note shape`);
+ assert.deepEqual([...layers.matchAll(/<option value="[^"]*" data-label="([^"]*)"/g)].map(m=>m[1]).slice(0,7),['1','½','¼','1/8','1/16','1/32','⅛T'],'note rate has the kit\'s short segments');
+ for(const id of ['arpRate','rhythmRate'])assert.ok(id in SEGMENTED,`${id} is Segmented`);
+ for(const id of ['arpProbability','arpCount','environmentActivity','rhythmSwing','rhythmHumanize'])assert.ok(KNOBS[id]&&!KNOBS[id].sm,`${id} is a knob`);
+ for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
+ assert.equal(KNOBS.environmentTone.bipolar,true);
+ assert.deepEqual(Object.keys(LAYERS),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.deepEqual(SWITCH_STATUS,{arpGlideEnabled:'arpGlideSummary'});
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-3"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-3/);
+
+ // The real markup, enhanced the way startup does it.
+ doc.body.replaceChildren();
+ const content=new Node('div');content.className='panel-content';doc.body.append(content);
+ content.innerHTML=html.match(/<div id="rhythmPanel"[^>]*>[\s\S]*?\n<\/div>/)[0];
+ const $=id=>doc.getElementById(id);
+ enhanceHelpTips(doc);enhanceKnobs(doc);enhanceRail(doc);
+ const panel=$('rhythmPanel');
+ for(const [toggleId,{body,status}] of Object.entries(LAYERS)){
+  const toggle=$(toggleId),wrap=$(body).parentElement.parentElement,section=toggle.closest('section'),small=toggle.closest('label').querySelector('small');
+  assert.ok(wrap.classList.contains('layer-body'),`${body} opens with its switch`);assert.equal(toggle.getAttribute('aria-controls'),wrap.id);
+  assert.equal(wrap.inert,true,`${toggleId} starts closed`);
+  toggle.checked=true;assert.ok(wrap.classList.contains('is-open')&&section.classList.contains('is-on'),'programmatic checked (session restore) opens the layer');
+  toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));assert.ok(!wrap.classList.contains('is-open'),'switching off hides the controls');
+  assert.ok($(status).classList.contains('sr-only'),`${status} stays as a hidden live region`);assert.equal(small.textContent,$(status).textContent,`the ${toggleId} description shows ${status}`);
+  $(status).textContent='Ready · press Play';await flush();assert.equal(small.textContent,'Ready · press Play','live status follows into the description');
+ }
+ const glideSmall=$('arpGlideEnabled').closest('label').querySelector('small');
+ assert.equal(glideSmall.textContent,'Off · notes begin at their own pitch');assert.ok($('arpGlideSummary').classList.contains('sr-only'));
+ $('arpGlideSummary').textContent='180 ms glide · 100% of the interval';await flush();assert.equal(glideSmall.textContent,'180 ms glide · 100% of the interval');
+ const visible=n=>{for(;n&&n!==doc.body;n=n.parentElement)if(n.hidden||n.classList.contains('sr-only')||n.classList.contains('help-tip'))return false;return true;};
+ assert.deepEqual(panel.querySelectorAll('p.helper').filter(visible).map(p=>p.id||p.textContent),[],'no helper or status paragraph stays visible');
+ assert.equal(panel.querySelectorAll('details').length,1);
+ const shapeTip=$('arpShape').querySelector('summary').querySelector('.help-tip');
+ assert.ok(shapeTip.textContent.includes('Length follows the note rate')&&shapeTip.textContent.includes('Slides from the previous note'),'the Note shape fold carries the envelope and glide help');
+ for(const id of ['arpSourceHelp','arpProbabilityHelp','grooveDescription','environmentDescription','environmentActivityHelp'])assert.ok($(id).closest('.help-tip'),`${id} moves into its layer's HelpTip`);
+ const rate=$('arpRate'),rateGroup=rate.nextElementSibling;
+ assert.deepEqual(rateGroup.children.map(b=>b.textContent),['1','½','¼','1/8','1/16','1/32','⅛T']);assert.equal(rateGroup.children[6].title,'⅛ triplet');
+ assert.ok(rateGroup.classList.contains('segmented-sm'));assert.equal(rateGroup.children[3].getAttribute('aria-checked'),'true','⅛ is the default');
+ const seen=log(rate);rateGroup.children[4].click();assert.equal(rate.value,'0.25');assert.deepEqual(seen,['input:0.25','change:0.25'],'segments drive arpRate');
+ assert.deepEqual($('rhythmRate').nextElementSibling.children.map(b=>b.textContent),['½×','1×','2×']);
+ assert.equal($('rhythmRateLabel').tagName,'OUTPUT','the beats-per-loop readout keeps its id');assert.ok(doc.querySelector('label[for="rhythmRate"]').textContent.startsWith('Rhythm speed'),'the Segmented label id never collides with an app id');
+ const knobOf=id=>$(id).closest('.knob-cell')?.querySelector('.knob');
+ for(const id of ['arpProbability','arpCount','rhythmSwing','rhythmHumanize','environmentActivity','environmentTone'])assert.ok(knobOf(id)&&!knobOf(id).classList.contains('knob-sm'),`${id} is a knob`);
+ for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.ok(knobOf(id).classList.contains('knob-sm'),`${id} is a small knob`);
+ assert.equal($('arpLength').closest('.knob-row'),$('arpSustain').closest('.knob-row'),'the four shape knobs share a row');
+ assert.ok($('arpGlideTime').closest('.glide-row')&&$('arpGlideTime').closest('.knob-row')===$('arpGlideAmount').closest('.knob-row'),'the glide knobs share the Glide row');
+ const graph=$('arpEnvelope').querySelector('svg.envelope-graph'),line=()=>graph.querySelector('polyline.envelope-line').getAttribute('points');
+ assert.ok(graph,'the EnvelopeGraph replaces the static SVG');const before=line();
+ $('arpAttack').value='800';assert.notEqual(line(),before,'the graph tracks the attack range');
+ knobOf('arpSustain').focus();assert.equal(graph.dataset.active,'s');key(knobOf('arpSustain'),'ArrowDown');assert.notEqual($('arpSustain').value,'65','the sustain knob drives its range');
+ const count=panel.querySelectorAll('svg.envelope-graph').length;enhanceRail(doc);assert.equal(panel.querySelectorAll('svg.envelope-graph').length,count,'enhanceRail stays idempotent');
+}
+console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines.');

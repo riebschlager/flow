@@ -5,15 +5,16 @@
 // Static helper copy moves into a "?" tip beside its section title.
 // Segmented, swatch grid, Stepper, Layer and EnvelopeGraph live in controls-kit.js
 // and are applied per element by enhanceRail() below.
-import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid} from './controls-kit.js?rev=controls-2';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-2';
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph} from './controls-kit.js?rev=controls-3';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-3';
 
 export const KNOBS={
  reverb:{},delay:{},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
  swirl:{},persistence:{},dropSize:{},chordAtmosphere:{},
  waterSwell:{sm:true},waterSpeed:{sm:true},waterRefraction:{sm:true},waterCaustics:{sm:true},waterReflection:{sm:true},
- arpLength:{skew:2},arpAttack:{skew:3},arpDecay:{skew:3},arpSustain:{},
- arpGlideTime:{skew:3},arpGlideAmount:{},
+ arpProbability:{},arpCount:{},
+ arpLength:{skew:2,sm:true},arpAttack:{skew:3,sm:true},arpDecay:{skew:3,sm:true},arpSustain:{sm:true},
+ arpGlideTime:{skew:3,sm:true},arpGlideAmount:{sm:true},
  environmentActivity:{},environmentTone:{bipolar:true},
  rhythmSwing:{},rhythmHumanize:{},gestureAmount:{}
 };
@@ -161,7 +162,7 @@ export function enhanceSliders(root=document){
 
 function helpAnchor(container){
  if(container.matches('.fold-content'))return container.parentElement.querySelector(':scope>summary>span');
- const label=container.querySelector(':scope>.section-label,:scope>.split-row.option-row>span,:scope>.option-row>span,:scope>.rhythm-enable>span,:scope>.performance-enable>span');
+ const label=container.querySelector(':scope>.section-label,:scope>.split-row.option-row>span,:scope>.option-row>span,:scope>.performance-enable>span');
  return label;
 }
 let tipCount=0;
@@ -170,7 +171,7 @@ export function enhanceHelpTips(root=document){
  for(const helper of root.querySelectorAll('.panel-content .helper')){
   // Helpers with an id are usually live status; a live description opts in with data-help-tip.
   if((helper.id||helper.getAttribute('role'))&&!helper.hasAttribute('data-help-tip')||helper.closest('.help-tip,.select-detail'))continue;
-  const container=helper.closest('.fold-content,.control-section,.layer-card');
+  const container=helper.closest('.fold-content,.control-section');
   if(!container||!container.querySelector('input,select,textarea'))continue;
   const anchor=helpAnchor(container);
   if(!anchor)continue;
@@ -196,14 +197,22 @@ export function enhanceHelpTips(root=document){
 }
 
 // Design-system components per rail control. The native select stays the state.
-export const SEGMENTED={chordLength:{full:true},waterPreset:{size:'sm',full:true},rhythmVisualMode:{size:'sm',full:true}};
+export const SEGMENTED={chordLength:{full:true},waterPreset:{size:'sm',full:true},rhythmVisualMode:{size:'sm',full:true},arpRate:{size:'sm',full:true},rhythmRate:{full:true}};
 export const SWATCH_GRIDS=['colorPalette'];
 // Sections that dim, without disabling, while their layer's switch is off.
 export const DIM_WHEN_OFF={rhythmVisualControls:'rhythmEnabled'};
+// Each layer's switch reveals its controls, and its description shows the live status.
+export const LAYERS={arpEnabled:{body:'arpControls',status:'arpStatus'},rhythmEnabled:{body:'rhythmControls',status:'rhythmStatus'},environmentEnabled:{body:'environmentControls',status:'environmentStatus'}};
+// Other switches whose description shows a live status.
+export const SWITCH_STATUS={arpGlideEnabled:'arpGlideSummary'};
+export const ENVELOPE_GRAPHS=['arpEnvelope'];
 export function enhanceRail(root=document){
  const byId=id=>root.getElementById?.(id)||null;
  for(const [id,opts] of Object.entries(SEGMENTED)){const select=byId(id);if(select)enhanceSegmented(select,opts);}
  for(const id of SWATCH_GRIDS){const select=byId(id);if(select)enhanceSwatchGrid(select);}
+ for(const [id,{body,status}] of Object.entries(LAYERS)){const toggle=byId(id);if(toggle&&byId(body))enhanceLayer(toggle,byId(body),{status:byId(status)});}
+ for(const [id,status] of Object.entries(SWITCH_STATUS)){const toggle=byId(id);if(toggle&&byId(status))mirrorStatus(toggle,byId(status));}
+ for(const id of ENVELOPE_GRAPHS){const host=byId(id);if(host)enhanceEnvelopeGraph(host);}
  for(const [id,toggleId] of Object.entries(DIM_WHEN_OFF)){
   const section=byId(id),toggle=byId(toggleId);
   if(!section||!toggle||section.dataset.dimWhenOff)continue;
