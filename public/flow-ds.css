@@ -156,7 +156,6 @@ progress::-moz-progress-bar{background:var(--accent)}
 .panel .option-row,.performance-enable{font:500 13px/1.3 var(--font-sans);color:var(--text-1)}
 .panel .option-row small,.panel .performance-enable small{font-size:12px;line-height:1.35;color:var(--text-3);font-weight:400}
 .panel .panel-bottom{font-size:12px;color:var(--text-3);border-top:1px solid var(--line)}
-.panel .mix-state{font:400 11px/1 var(--font-sans);letter-spacing:0;color:var(--text-3)}
 .panel .section-link{font-size:12px;color:var(--text-2)}
 .panel .section-link:hover{color:var(--text-1)}
 .panel .autopour{background:var(--bg-raised);border:1px solid var(--line);border-radius:var(--r-3)}
@@ -215,6 +214,14 @@ input[type=range]:disabled{opacity:.4;cursor:default}
 /* Vertical fader: <input type=range data-orientation=vertical> */
 input[type=range][data-orientation=vertical],.panel input[type=range][data-orientation=vertical]{writing-mode:vertical-lr;direction:rtl;width:20px;height:var(--fader-length,150px);background:linear-gradient(to top,var(--control-fill) var(--pct,50%),var(--control-track) var(--pct,50%)) center / 2px 100% no-repeat}
 @media(pointer:coarse){.panel input[type=range][data-orientation=vertical],dialog input[type=range][data-orientation=vertical]{width:44px;height:var(--fader-length,150px)}}
+/* Mix layer levels: value above, fader, name below. The label's text and output join the cell's grid. */
+.fader-row{display:flex;justify-content:space-between;padding:4px 8px 0}
+.fader{display:grid;grid-template-areas:'value' 'fader' 'name';justify-items:center;gap:8px;min-width:0;transition:opacity var(--dur-2)}
+.fader>.slider-label,.panel .fader>.slider-label{display:contents}
+.fader output{grid-area:value}
+.fader>.slider-label>span{grid-area:name;font:500 12px/1.2 var(--font-sans);color:var(--text-2);white-space:nowrap}
+.fader>input{grid-area:fader}
+.fader.is-dimmed{opacity:.45}
 
 /* Segmented and swatch grid (controls-kit.js over a native select) */
 select[data-enhanced],input[data-enhanced]{display:none!important}
@@ -355,6 +362,8 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .knob-chip,.range-chip{position:absolute;bottom:100%;left:50%;transform:translate(-50%,-4px);padding:4px 7px;border-radius:var(--r-1);background:var(--n-900);color:var(--n-50);font:500 11px/1 var(--font-mono);white-space:nowrap;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.4);opacity:0;transition:opacity var(--dur-1)}
 .knob.is-dragging .knob-chip{opacity:1}
 .knob-sm{--size:32px}
+.knob-lg{--size:64px}
+#mixPanel .knob-row{grid-template-columns:repeat(3,minmax(0,1fr))}
 
 /* HelpTip */
 .help-tip{position:relative;display:inline-flex;vertical-align:middle;margin-left:auto}

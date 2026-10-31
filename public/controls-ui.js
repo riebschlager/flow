@@ -9,7 +9,7 @@ import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,e
 export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-4';
 
 export const KNOBS={
- reverb:{},delay:{},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
+ reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
  swirl:{},persistence:{},dropSize:{},chordAtmosphere:{},
  waterSwell:{sm:true},waterSpeed:{sm:true},waterRefraction:{sm:true},waterCaustics:{sm:true},waterReflection:{sm:true},
  arpProbability:{},arpCount:{},
@@ -18,7 +18,7 @@ export const KNOBS={
  environmentActivity:{},environmentTone:{bipolar:true},
  rhythmSwing:{},rhythmHumanize:{},gestureAmount:{},driftPace:{}
 };
-const SWEEP=270,START=-135,DRAG_PX=200,FINE=.1;
+const SWEEP=270,START=-135,DRAG_PX=200,FINE=.1,SIZES={sm:32,md:44,lg:64};
 const valueProp=typeof HTMLInputElement==='undefined'?null:Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
 
 function polar(c,r,deg){const a=(deg-90)*Math.PI/180;return [c+r*Math.cos(a),c+r*Math.sin(a)];}
@@ -42,10 +42,11 @@ const watchValue=(input,render)=>watchControl(input,render);
 function buildKnob(input,opts){
  const skew=opts.skew||1,label=document.querySelector(`label[for="${input.id}"]`),output=label?.querySelector('output');
  const knob=document.createElement('div');
- knob.className=opts.sm?'knob knob-sm':'knob';knob.tabIndex=0;knob.setAttribute('role','slider');
+ const sizeName=opts.lg?'lg':opts.sm?'sm':'md';
+ knob.className=sizeName==='md'?'knob':'knob knob-'+sizeName;knob.tabIndex=0;knob.setAttribute('role','slider');
  const name=label?[...label.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():input.id;
  knob.setAttribute('aria-label',input.getAttribute('aria-label')||name);
- const size=44,W=size+14,c=W/2,r=size/2+4;
+ const size=SIZES[sizeName],W=size+14,c=W/2,r=size/2+4;
  knob.innerHTML=`<svg viewBox="0 0 ${W} ${W}" aria-hidden="true"><path class="knob-track" d="${arc(c,r,START,START+SWEEP)}"/><path class="knob-fill"/><circle class="knob-default" r="1.25"/></svg><div class="knob-body"></div><div class="knob-chip" aria-hidden="true"></div>`;
  const fill=knob.querySelector('.knob-fill'),dot=knob.querySelector('.knob-default'),chip=knob.querySelector('.knob-chip');
  const [dx,dy]=polar(c,r+3.5,START+toNorm(input,+input.defaultValue,skew)*SWEEP);dot.setAttribute('cx',dx);dot.setAttribute('cy',dy);
@@ -200,8 +201,9 @@ export function enhanceHelpTips(root=document){
 export const SEGMENTED={chordLength:{full:true},waterPreset:{size:'sm',full:true},rhythmVisualMode:{size:'sm',full:true},arpRate:{size:'sm',full:true},rhythmRate:{full:true},
  gestureTool:{full:true},quantizeBeats:{size:'sm',full:true},octavesDown:{size:'sm',full:true},octavesUp:{size:'sm',full:true}};
 export const SWATCH_GRIDS=['colorPalette'];
-// Sections that dim, without disabling, while their layer's switch is off.
-export const DIM_WHEN_OFF={rhythmVisualControls:'rhythmEnabled'};
+// Sections, and Mix level faders, that dim without disabling while their layer's switch is off.
+// Droplets has no switch, so its fader never dims.
+export const DIM_WHEN_OFF={rhythmVisualControls:'rhythmEnabled',arpVolume:'arpEnabled',rhythmVolume:'rhythmEnabled',environmentVolume:'environmentEnabled'};
 // Each layer's switch reveals its controls, and its description shows the live status.
 export const LAYERS={arpEnabled:{body:'arpControls',status:'arpStatus'},rhythmEnabled:{body:'rhythmControls',status:'rhythmStatus'},environmentEnabled:{body:'environmentControls',status:'environmentStatus'},
  quantizeEnabled:{body:'quantizeControls',status:'quantizeStatus'}};
@@ -216,7 +218,7 @@ export function enhanceRail(root=document){
  for(const [id,status] of Object.entries(SWITCH_STATUS)){const toggle=byId(id);if(toggle&&byId(status))mirrorStatus(toggle,byId(status));}
  for(const id of ENVELOPE_GRAPHS){const host=byId(id);if(host)enhanceEnvelopeGraph(host);}
  for(const [id,toggleId] of Object.entries(DIM_WHEN_OFF)){
-  const section=byId(id),toggle=byId(toggleId);
+  const el=byId(id),section=el?.closest?.('.fader')||el,toggle=byId(toggleId);
   if(!section||!toggle||section.dataset.dimWhenOff)continue;
   section.dataset.dimWhenOff=toggleId;
   const render=()=>section.classList.toggle('is-dimmed',!toggle.checked);

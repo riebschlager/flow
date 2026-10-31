@@ -78,7 +78,7 @@ const pointer=(el,type,extra)=>{const e=new Event(type,{bubbles:true,cancelable:
 function log(el){const seen=[];el.addEventListener('input',()=>seen.push('input:'+el.value));el.addEventListener('change',()=>seen.push('change:'+el.value));return seen;}
 function select(id,values,label){const wrap=new Node('div');doc.body.append(wrap);if(label){const l=new Node('label');l.attrs.for=id;l.textContent=label;wrap.append(l);}const s=new Select();s.id=id;for(const [v,t] of values)s.append(new Option(v,t));wrap.append(s);return s;}
 
-const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
+const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
 const html=fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');
 for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}">`),`${id} has a slider label`);}
 for(const level of ['volume','dropletsVolume','arpVolume','rhythmVolume','environmentVolume','rain','energy'])assert.ok(!(level in KNOBS),`${level} stays a slider`);
@@ -90,7 +90,9 @@ assert.equal(fromNorm(ms,.5,3)%5,0,'values snap to the input step');
 assert.equal(fromNorm(pct,1.4),100);assert.equal(fromNorm(pct,-1),0);
 
 // Primitives are applied at startup by enhanceRail(), never written into the markup.
-for(const marker of ['class="segmented','class="swatch-grid','class="stepper','class="layer-body','envelope-graph','data-orientation="vertical"'])assert.ok(!html.includes(marker),`${marker} is built at runtime, not in the markup`);
+for(const marker of ['class="segmented','class="swatch-grid','class="stepper','class="layer-body','envelope-graph'])assert.ok(!html.includes(marker),`${marker} is built at runtime, not in the markup`);
+// A vertical fader is a native range with an attribute; only the four Mix layer levels use it.
+assert.deepEqual([...html.matchAll(/<input id="(\w+)"[^>]*data-orientation="vertical"/g)].map(m=>m[1]),['dropletsVolume','arpVolume','rhythmVolume','environmentVolume']);
 
 // Phase 2: the Sound and Scene tabs match their target tables.
 {
@@ -331,7 +333,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-4"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-4/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-5"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-5/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -441,4 +443,49 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.ok(gestureTip.textContent.includes('Temporary reverb')&&gestureTip.textContent.includes('Keyboard: focus the canvas'),'the gesture help moves into the Gestures HelpTip');
  assert.ok($('fluidListensHelp').closest('.help-tip'),'fluidListens help is a HelpTip in Scene');assert.ok($('fluidListens').closest('div[id=fluidPanel]'));
 }
-console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene.');
+// Phase 5: Mix is five unfolded sections; layer levels are vertical faders that dim with their layer.
+{
+ const mix=html.match(/<div id="mixPanel"[^>]*>([\s\S]*?)\n<\/div>/)[1];
+ assert.ok(!mix.includes('<details'),'Mix has no folds');
+ for(const gone of ['layersFromMix','studioDelayBeats','MixStatus','mix-state','studio-echo-spacing'])assert.ok(!html.includes(gone),`${gone} is gone`);
+ const titles=['>MASTER<','>LAYER LEVELS<','>MELODIC SPACE<','>PERCUSSION SPACE<','>ECHO SPACING<'].map(t=>{const i=mix.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
+ assert.deepEqual([...titles].sort((a,b)=>a-b),titles,'the five sections follow the target order');
+ const section=title=>{const i=mix.indexOf(title);return mix.slice(mix.lastIndexOf('<section',i),mix.indexOf('</section>',i));};
+ assert.deepEqual([...section('LAYER LEVELS').matchAll(/<span>([^<]+)<\/span>/g)].map(m=>m[1]),['Droplets','Arpeggio','Percussion','Atmos']);
+ assert.match(section('ECHO SPACING'),/<select id="voiceDelayBeats">[\s\S]*<\/select><output id="echoSyncLabel" class="range-readout"/,'the echo readout sits under the spacing menu');
+ for(const id of ['volume','volumeValue','dropletsVolume','dropletsVolumeValue','dropletsMixHelp','arpVolume','arpVolumeValue','rhythmVolume','rhythmVolumeValue','environmentVolume','environmentVolumeValue','voiceEffects','reverb','reverbValue','delay','delayValue','drumEffects','rhythmReverb','rhythmReverbValue','rhythmDelay','rhythmDelayValue','voiceDelayBeats','echoSyncLabel'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ for(const id of ['studioReverb','studioDelay'])assert.ok(html.includes(`id="${id}"`),`${id} stays as beat studio's mirror`);
+ assert.equal(KNOBS.reverb.lg,true);assert.equal(KNOBS.delay.lg,true);assert.ok(!KNOBS.rhythmReverb.lg&&!KNOBS.rhythmReverb.sm&&!KNOBS.rhythmDelay.lg,'drum space uses regular knobs');
+ assert.ok(!('dropletsVolume' in DIM_WHEN_OFF),'droplets has no layer switch to follow');
+ const css=fs.readFileSync(new URL('../public/flow-ds.css',import.meta.url),'utf8');assert.match(css,/\.knob-lg\{--size:64px\}/);
+
+ // The real Mix markup with the Layers switches, enhanced the way startup does it.
+ doc.body.replaceChildren();
+ const content=new Node('div');content.className='panel-content';doc.body.append(content);
+ content.innerHTML=html.match(/<div id="rhythmPanel"[^>]*>[\s\S]*?\n<\/div>/)[0]+html.match(/<div id="mixPanel"[^>]*>[\s\S]*?\n<\/div>/)[0];
+ const $=id=>doc.getElementById(id);
+ enhanceHelpTips(doc);enhanceKnobs(doc);enhanceRail(doc);
+ const panel=$('mixPanel'),knobOf=id=>$(id).closest('.knob-cell')?.querySelector('.knob');
+ for(const id of ['reverb','delay'])assert.ok(knobOf(id).classList.contains('knob-lg'),`${id} is a large knob`);
+ for(const id of ['rhythmReverb','rhythmDelay'])assert.ok(knobOf(id)&&!knobOf(id).classList.contains('knob-lg')&&!knobOf(id).classList.contains('knob-sm'),`${id} is a regular knob`);
+ assert.equal(knobOf('reverb').querySelector('svg').getAttribute('viewBox'),'0 0 78 78','the large knob draws at its own size');
+ const reverbs=log($('reverb'));key(knobOf('reverb'),'ArrowUp');assert.equal($('reverb').value,'66');assert.deepEqual(reverbs,['input:66','change:66'],'the large knob drives reverb');
+ for(const id of ['dropletsVolume','arpVolume','rhythmVolume','environmentVolume'])assert.ok(!$(id).dataset.knob&&$(id).closest('.fader-row'),`${id} is a fader in the Layer levels row`);
+ const fader=id=>$(id).closest('.fader');
+ for(const [id,toggleId] of Object.entries(DIM_WHEN_OFF).filter(([id])=>$(id)&&$(id).closest('div[id=mixPanel]'))){
+  const toggle=$(toggleId);
+  assert.ok(fader(id).classList.contains('is-dimmed'),`${id} starts dimmed with ${toggleId} off`);
+  toggle.checked=true;assert.ok(!fader(id).classList.contains('is-dimmed'),`${id} lifts when ${toggleId} is set (session restore)`);
+  toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));assert.ok(fader(id).classList.contains('is-dimmed'),`${id} dims when ${toggleId} switches off`);
+  assert.equal($(id).disabled,false,'dimming never disables a fader');
+ }
+ assert.deepEqual(Object.keys(DIM_WHEN_OFF).filter(id=>$(id)&&fader(id)),['arpVolume','rhythmVolume','environmentVolume']);
+ assert.ok(!fader('dropletsVolume').classList.contains('is-dimmed'),'the droplets fader never dims');
+ assert.ok($('dropletsMixHelp').closest('.help-tip'),'the droplets helper moves into the Layer levels HelpTip');assert.equal($('dropletsVolume').getAttribute('aria-describedby'),'dropletsMixHelp');
+ const visible=n=>{for(;n&&n!==doc.body;n=n.parentElement)if(n.hidden||n.classList.contains('sr-only')||n.classList.contains('help-tip'))return false;return true;};
+ assert.deepEqual(panel.querySelectorAll('p.helper').filter(visible).map(p=>p.id||p.textContent),[],'no helper or status paragraph stays visible in Mix');
+ assert.equal(panel.querySelectorAll('details').length,0);
+ for(const [title,text] of [['voiceEffects','Reverb & delay for color voices'],['drumEffects','Independent drum reverb'],['volume','A balanced output']]){const tip=($(title).closest('section')).querySelector('.help-tip');assert.ok(tip?.textContent.includes(text),`${title}'s section carries its help`);}
+ assert.equal($('echoSyncLabel').tagName,'OUTPUT');assert.ok($('echoSyncLabel').closest('section').querySelector('.help-tip').textContent.includes('Shared by voices, drums'));
+}
+console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.');

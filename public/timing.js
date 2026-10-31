@@ -26,4 +26,5 @@ export const maxDelaySeconds=32; // 8 beats at 30 BPM and half speed.
 export const delayGlide=.04;
 export function normalizeEchoBeats(beats){const value=Number(beats);return echoDivisions.some(option=>option.beats===value)?value:.75;}
 export function delaySeconds(bpm=56,rate=1,beats=.75){const tempo=Number.isFinite(Number(bpm))&&Number(bpm)>0?Number(bpm):56;const speed=[.5,1,2].includes(Number(rate))?Number(rate):1;return 60/Math.max(30,Math.min(300,tempo))/speed*normalizeEchoBeats(beats);}
-export function echoLabel(bpm,rate,beats){const division=echoDivisions.find(option=>option.beats===normalizeEchoBeats(beats));const seconds=delaySeconds(bpm,rate,beats);return `${division.label} · ${seconds>=1?`${Number(seconds.toFixed(2))} s`:`${Math.round(seconds*1000)} ms`} · shared by voices & drums`;}
+// The Mix readout beside the spacing menu, which already names the division: "804 ms at 56 BPM".
+export function echoReadout(bpm,rate,beats){const seconds=delaySeconds(bpm,rate,beats),speed={.5:' · ½×',2:' · 2×'}[Number(rate)]||'';return `${seconds>=1?`${Number(seconds.toFixed(2))} s`:`${Math.round(seconds*1000)} ms`} at ${Math.round(bpm)} BPM${speed}`;}
