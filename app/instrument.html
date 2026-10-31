@@ -4,9 +4,9 @@
 <base href="/">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="author" content="Chris Riebschlager">
-<meta name="theme-color" content="#101316"><meta name="description" content="Infinite ambient music in your browser. Authored by humans. Shape an evolving live scene or listen to community recordings. Free, ad-free, no sign-up to listen.">
+<meta name="theme-color" content="#0e1013"><meta name="description" content="Infinite ambient music in your browser. Authored by humans. Shape an evolving live scene or listen to community recordings. Free, ad-free, no sign-up to listen.">
 <title>Flow — Infinite ambient music in your browser</title>
-<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?rev=session-entry-90">
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?rev=design-system-1">
 <link rel="canonical" href="https://flow.the816.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Flow">
@@ -25,7 +25,8 @@
 <meta name="twitter:description" content="Infinite ambient music in your browser. Authored by humans. Shape an evolving live scene or listen to community recordings. Free, ad-free, no sign-up to listen.">
 <meta name="twitter:image" content="https://flow.the816.com/social/flow-ambient.jpg">
 <meta name="twitter:image:alt" content="Flow — infinite ambient music in your browser. authored by humans. Colorful ribbons on a dark canvas.">
-<link rel="stylesheet" href="/presentation.css?rev=zen-controls-88">
+<link rel="stylesheet" href="/presentation.css?rev=design-system-1">
+<link rel="stylesheet" href="/flow-ds.css?rev=design-system-1">
 <script>if(/^\/recordings\//.test(location.pathname)&&["portrait","landscape"].includes(new URLSearchParams(location.search).get("present")))document.documentElement.classList.add("presentation-pending");</script>
 </head>
 <body class="session-loading">
@@ -125,4 +126,5 @@
 <div id="presentationGate" class="presentation-gate" hidden><p id="presentationStatus" role="status" aria-live="polite">Preparing your moment…</p><button id="presentationBegin" hidden>Tap to begin</button></div></div>
 <script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=session-entry-90"></script>
 <script type="module" src="select-ui.js?rev=selects-45"></script>
+<script type="module" src="controls-ui.js?rev=design-system-1"></script>
 </body></html>
