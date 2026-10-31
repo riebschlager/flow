@@ -77,7 +77,8 @@ export function enhanceSegmented(select,{size,full}={}){
  if(select.dataset.enhanced)return null;
  // An option's data-label gives a shorter segment; the full text becomes its title.
  const group=choiceGroup(select,'segmented',(b,option)=>{
-  const text=option.label||option.textContent,short=option.dataset?.label;
+  // select-ui.js may shorten option.label ("Paint"), so the title reads the full text.
+  const text=option.textContent||option.label,short=option.dataset?.label;
   b.textContent=short||text;
   if(short&&short!==text)b.title=text;
  });

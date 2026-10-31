@@ -106,8 +106,8 @@ for(const marker of ['class="segmented','class="swatch-grid','class="stepper','c
  assert.ok(!/COLOR BEHAVIOR/i.test(html),'the Color behavior section is gone');
  const fluid=scene.match(/<div class="section-label">The fluid<\/div>[\s\S]*?<\/section>/)[0];
  for(const id of ['swirl','persistence','dropSize','chordAtmosphere'])assert.ok(fluid.includes(`<input id="${id}" type="range"`),`${id} sits in The fluid`);
- assert.ok(!scene.includes('fluidListens'),'fluidListens waits for Phase 4');
- for(const id of ['soundscape','progression','chordInput','applyChords','chordLength','voices','voiceControls','energy','energyValue','colorPalette','palettePreview','paletteDescription','swirl','persistence','dropSize','chordAtmosphere','waterEnabled','waterPreset','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection','rhythmVisualControls','rhythmVisualMode','rhythmVisual'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ assert.ok(fluid.includes('<input id="fluidListens" type="checkbox" role="switch"'),'fluidListens is a switch in The fluid (decision 3)');assert.match(fluid,/id="fluidListensHelp"[^>]*data-help-tip/,'its helper moves into the HelpTip');
+ for(const id of ['fluidListens','fluidListensHelp','soundscape','progression','chordInput','applyChords','chordLength','voices','voiceControls','energy','energyValue','colorPalette','palettePreview','paletteDescription','swirl','persistence','dropSize','chordAtmosphere','waterEnabled','waterPreset','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection','rhythmVisualControls','rhythmVisualMode','rhythmVisual'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
  assert.deepEqual(Object.keys(SEGMENTED).slice(0,3),['chordLength','waterPreset','rhythmVisualMode']);assert.deepEqual(SWATCH_GRIDS,['colorPalette']);
  for(const id of ['waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
 }
@@ -330,8 +330,8 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpProbability','arpCount','environmentActivity','rhythmSwing','rhythmHumanize'])assert.ok(KNOBS[id]&&!KNOBS[id].sm,`${id} is a knob`);
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
- assert.deepEqual(Object.keys(LAYERS),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.deepEqual(SWITCH_STATUS,{arpGlideEnabled:'arpGlideSummary'});
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-3"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-3/);
+ assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-4"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-4/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -340,7 +340,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const $=id=>doc.getElementById(id);
  enhanceHelpTips(doc);enhanceKnobs(doc);enhanceRail(doc);
  const panel=$('rhythmPanel');
- for(const [toggleId,{body,status}] of Object.entries(LAYERS)){
+ for(const [toggleId,{body,status}] of Object.entries(LAYERS).filter(([id])=>$(id))){
   const toggle=$(toggleId),wrap=$(body).parentElement.parentElement,section=toggle.closest('section'),small=toggle.closest('label').querySelector('small');
   assert.ok(wrap.classList.contains('layer-body'),`${body} opens with its switch`);assert.equal(toggle.getAttribute('aria-controls'),wrap.id);
   assert.equal(wrap.inert,true,`${toggleId} starts closed`);
@@ -375,4 +375,70 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  knobOf('arpSustain').focus();assert.equal(graph.dataset.active,'s');key(knobOf('arpSustain'),'ArrowDown');assert.notEqual($('arpSustain').value,'65','the sustain knob drives its range');
  const count=panel.querySelectorAll('svg.envelope-graph').length;enhanceRail(doc);assert.equal(panel.querySelectorAll('svg.envelope-graph').length,count,'enhanceRail stays idempotent');
 }
-console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines.');
+
+// Phase 4: Play is six sections with no folds and no visible status lines.
+{
+ const play=html.match(/<div id="performPanel"[^>]*>([\s\S]*?)\n<\/div>/)[1];
+ assert.ok(!play.includes('<details'),'Play has no folds');
+ for(const gone of ['pitchControls','expressionControls','fluidListens','performance-enable','Gesture guide<'])assert.ok(!play.includes(gone),`${gone} is gone from Play`);
+ const order=['for="gestureTool">Canvas tool<','<div class="section-label">Automatic droplets</div>','<div class="section-label">Quantize</div>','<div class="section-label">Pitch range</div>','<div class="section-label">Drift</div>','<div class="section-label">Gestures</div>'].map(t=>{const i=play.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
+ assert.deepEqual([...order].sort((a,b)=>a-b),order,'the six sections follow the target order');
+ const section=title=>{const i=play.indexOf(title);return play.slice(play.lastIndexOf('<section',i),play.indexOf('</section>',i));};
+ const has=(markup,ids,where)=>{for(const id of ids)assert.ok(markup.includes(`id="${id}"`),`${id} sits in ${where}`);};
+ has(section('Canvas tool<'),['expressionEnabled','gestureTool','gestureToolHelp','gestureAmount'],'Canvas tool');
+ assert.match(section('Canvas tool<'),/<div class="section-head"><label class="section-label" for="gestureTool">Canvas tool<\/label><input id="expressionEnabled"/,'the expression switch is the section action');
+ has(section('Automatic droplets'),['autoPour','rain','rainValue'],'Automatic droplets');assert.ok(section('Automatic droplets').startsWith('<section class="control-section autopour"'),'app.js still finds .autopour');
+ has(section('>Quantize<'),['quantizeEnabled','quantizeStatus','quantizeControls','quantizeBeats'],'Quantize');
+ has(section('Pitch range'),['octavesDown','octavesUp','pitchRangeValue','expressionDot'],'Pitch range');
+ assert.match(section('Pitch range'),/<output id="pitchRangeValue" class="range-readout"/,'the pitch range is a mono readout, not a status paragraph');
+ has(section('>Drift<'),['driftEnabled','driftWander','driftStyle','sleepTimer','driftPace','driftStatus'],'Drift');
+ has(section('>Gestures<'),['gestureGuide','bloom','conductScene','resetPerformance'],'Gestures');
+ assert.match(section('>Gestures<'),/<div class="section-head"><div class="section-label">Gestures<\/div><button id="bloom" class="ghost-button">/,'Release a bloom is the section action');
+ assert.match(section('>Gestures<'),/<button id="resetPerformance" class="ghost-button">Let the scene settle<\/button>$/,'Let the scene settle closes the section as a ghost button');
+ assert.equal(section('>Gestures<').match(/<article>/g).length,6,'all six gestures stay, unfolded');
+ for(const id of ['expressionEnabled','gestureTool','gestureToolHelp','gestureAmount','gestureAmountValue','autoPour','rain','rainValue','quantizeEnabled','quantizeStatus','quantizeBeats','octavesDown','octavesUp','pitchRangeValue','expressionDot','driftEnabled','driftWander','driftStyle','driftPace','driftPaceValue','sleepTimer','driftStatus','bloom','gestureGuide','conductScene','resetPerformance'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ assert.ok(html.includes('id="zenSleepTimer"'),'Zen keeps its sleep mirror');
+ assert.deepEqual([...section('>Quantize<').matchAll(/<option value="([^"]*)"/g)].map(m=>Number(m[1])),[1,.5,.25,.125,1/3]);
+ for(const [,value] of section('>Quantize<').matchAll(/<option value="([^"]*)"/g))assert.equal(value,String(Number(value)),'grid values round-trip through a saved number');
+ for(const id of ['gestureTool','quantizeBeats','octavesDown','octavesUp'])assert.ok(id in SEGMENTED,`${id} is Segmented`);
+ assert.ok(KNOBS.driftPace&&!KNOBS.driftPace.sm&&KNOBS.gestureAmount,'driftPace and gestureAmount are knobs');
+ assert.deepEqual(LAYERS.quantizeEnabled,{body:'quantizeControls',status:'quantizeStatus'});assert.equal(SWITCH_STATUS.driftEnabled,'driftStatus');
+
+ // The real Play and Scene markup, enhanced the way startup does it.
+ doc.body.replaceChildren();
+ const content=new Node('div');content.className='panel-content';doc.body.append(content);
+ content.innerHTML=html.match(/<div id="performPanel"[^>]*>[\s\S]*?\n<\/div>/)[0]+html.match(/<div id="fluidPanel"[^>]*>[\s\S]*?\n<\/div>/)[0];
+ const $=id=>doc.getElementById(id);
+ enhanceHelpTips(doc);enhanceKnobs(doc);enhanceRail(doc);
+ const panel=$('performPanel');
+ const tool=$('gestureTool').nextElementSibling;
+ assert.deepEqual(tool.children.map(b=>b.textContent),['Paint','Conduct','Space','Orbit']);assert.equal(tool.children[0].title,'Paint · notes & gestures','the full tool name stays as a title');
+ assert.ok(tool.classList.contains('segmented-full'));
+ const seen=log($('gestureTool'));tool.children[3].click();assert.equal($('gestureTool').value,'orbit');assert.deepEqual(seen,['input:orbit','change:orbit'],'segments drive gestureTool');
+ $('gestureTool').disabled=true;await flush();assert.ok(tool.classList.contains('is-disabled'),'expression off disables the tool segments');$('gestureTool').disabled=false;await flush();
+ assert.ok($('gestureToolHelp').closest('.help-tip'),'the tool help moves into the Canvas tool HelpTip');
+ assert.ok($('gestureToolHelp').closest('.section-label'),'anchored on the section title beside the switch');
+ const quantize=$('quantizeEnabled'),wrap=$('quantizeControls').parentElement.parentElement,qSmall=quantize.closest('label').querySelector('small');
+ assert.ok(wrap.classList.contains('layer-body')&&wrap.inert,'the landing grid is hidden while quantize is off');
+ assert.ok($('quantizeStatus').classList.contains('sr-only'));assert.equal(qSmall.textContent,'Off · droplets land freely');
+ quantize.checked=true;$('quantizeStatus').textContent='Land on the next grid line · follows tempo & rhythm speed';await flush();
+ assert.ok(wrap.classList.contains('is-open'),'quantize on shows the grid');assert.equal(qSmall.textContent,'Land on the next grid line · follows tempo & rhythm speed','the description follows quantizeStatus');
+ const grid=$('quantizeBeats').nextElementSibling;assert.deepEqual(grid.children.map(b=>b.textContent),['¼','1/8','1/16','1/32','⅛T']);assert.equal(grid.children[1].getAttribute('aria-checked'),'true');
+ for(const id of ['octavesDown','octavesUp'])assert.deepEqual($(id).nextElementSibling.children.map(b=>b.textContent),['0','1','2','3'],`${id} has four segments`);
+ const octaves=log($('octavesUp'));$('octavesUp').nextElementSibling.children[3].click();assert.equal($('octavesUp').value,'3');assert.deepEqual(octaves,['input:3','change:3']);
+ assert.equal($('octavesUpLabel').tagName,'LABEL');
+ const knobOf=id=>$(id).closest('.knob-cell')?.querySelector('.knob');
+ assert.ok(knobOf('gestureAmount')&&knobOf('driftPace'),'gestureAmount and driftPace are knobs');
+ assert.ok($('driftPace').closest('.drift-grid'),'the interval knob sits beside the drift selects');
+ const paces=log($('driftPace'));key(knobOf('driftPace'),'ArrowUp');assert.equal($('driftPace').value,'4');assert.deepEqual(paces,['input:4','change:4'],'the knob drives driftPace');
+ $('driftPace').disabled=true;await flush();assert.ok(knobOf('driftPace').classList.contains('is-disabled'),'drift off disables the knob');
+ const dSmall=$('driftEnabled').closest('label').querySelector('small');assert.equal(dSmall.textContent,'Drift gently plays when you leave the canvas alone.');
+ $('driftStatus').textContent='Fading to sleep in 30 minutes';await flush();assert.equal(dSmall.textContent,'Fading to sleep in 30 minutes','the drift description shows the sleep status');
+ const visible=n=>{for(;n&&n!==doc.body;n=n.parentElement)if(n.hidden||n.classList.contains('sr-only')||n.classList.contains('help-tip'))return false;return true;};
+ assert.deepEqual(panel.querySelectorAll('p.helper').filter(visible).map(p=>p.id||p.textContent),[],'no helper or status paragraph stays visible in Play');
+ assert.equal(panel.querySelectorAll('details').length,0);
+ const gestureTip=$('gestureGuide').querySelector('.section-label').querySelector('.help-tip');
+ assert.ok(gestureTip.textContent.includes('Temporary reverb')&&gestureTip.textContent.includes('Keyboard: focus the canvas'),'the gesture help moves into the Gestures HelpTip');
+ assert.ok($('fluidListensHelp').closest('.help-tip'),'fluidListens help is a HelpTip in Scene');assert.ok($('fluidListens').closest('div[id=fluidPanel]'));
+}
+console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene.');

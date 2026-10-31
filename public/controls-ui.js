@@ -5,8 +5,8 @@
 // Static helper copy moves into a "?" tip beside its section title.
 // Segmented, swatch grid, Stepper, Layer and EnvelopeGraph live in controls-kit.js
 // and are applied per element by enhanceRail() below.
-import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph} from './controls-kit.js?rev=controls-3';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-3';
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph} from './controls-kit.js?rev=controls-4';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-4';
 
 export const KNOBS={
  reverb:{},delay:{},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
@@ -16,7 +16,7 @@ export const KNOBS={
  arpLength:{skew:2,sm:true},arpAttack:{skew:3,sm:true},arpDecay:{skew:3,sm:true},arpSustain:{sm:true},
  arpGlideTime:{skew:3,sm:true},arpGlideAmount:{sm:true},
  environmentActivity:{},environmentTone:{bipolar:true},
- rhythmSwing:{},rhythmHumanize:{},gestureAmount:{}
+ rhythmSwing:{},rhythmHumanize:{},gestureAmount:{},driftPace:{}
 };
 const SWEEP=270,START=-135,DRAG_PX=200,FINE=.1;
 const valueProp=typeof HTMLInputElement==='undefined'?null:Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
@@ -162,7 +162,7 @@ export function enhanceSliders(root=document){
 
 function helpAnchor(container){
  if(container.matches('.fold-content'))return container.parentElement.querySelector(':scope>summary>span');
- const label=container.querySelector(':scope>.section-label,:scope>.split-row.option-row>span,:scope>.option-row>span,:scope>.performance-enable>span');
+ const label=container.querySelector(':scope>.section-label,:scope>.section-head>.section-label,:scope>.split-row.option-row>span,:scope>.option-row>span');
  return label;
 }
 let tipCount=0;
@@ -197,14 +197,16 @@ export function enhanceHelpTips(root=document){
 }
 
 // Design-system components per rail control. The native select stays the state.
-export const SEGMENTED={chordLength:{full:true},waterPreset:{size:'sm',full:true},rhythmVisualMode:{size:'sm',full:true},arpRate:{size:'sm',full:true},rhythmRate:{full:true}};
+export const SEGMENTED={chordLength:{full:true},waterPreset:{size:'sm',full:true},rhythmVisualMode:{size:'sm',full:true},arpRate:{size:'sm',full:true},rhythmRate:{full:true},
+ gestureTool:{full:true},quantizeBeats:{size:'sm',full:true},octavesDown:{size:'sm',full:true},octavesUp:{size:'sm',full:true}};
 export const SWATCH_GRIDS=['colorPalette'];
 // Sections that dim, without disabling, while their layer's switch is off.
 export const DIM_WHEN_OFF={rhythmVisualControls:'rhythmEnabled'};
 // Each layer's switch reveals its controls, and its description shows the live status.
-export const LAYERS={arpEnabled:{body:'arpControls',status:'arpStatus'},rhythmEnabled:{body:'rhythmControls',status:'rhythmStatus'},environmentEnabled:{body:'environmentControls',status:'environmentStatus'}};
+export const LAYERS={arpEnabled:{body:'arpControls',status:'arpStatus'},rhythmEnabled:{body:'rhythmControls',status:'rhythmStatus'},environmentEnabled:{body:'environmentControls',status:'environmentStatus'},
+ quantizeEnabled:{body:'quantizeControls',status:'quantizeStatus'}};
 // Other switches whose description shows a live status.
-export const SWITCH_STATUS={arpGlideEnabled:'arpGlideSummary'};
+export const SWITCH_STATUS={arpGlideEnabled:'arpGlideSummary',driftEnabled:'driftStatus'};
 export const ENVELOPE_GRAPHS=['arpEnvelope'];
 export function enhanceRail(root=document){
  const byId=id=>root.getElementById?.(id)||null;
@@ -220,6 +222,8 @@ export function enhanceRail(root=document){
   const render=()=>section.classList.toggle('is-dimmed',!toggle.checked);
   watchControl(toggle,render,['checked']);render();
  }
+ // select-ui.js drops the detail line under a select that is now a Segmented.
+ document.dispatchEvent?.(new Event('flow:selects'));
 }
 
 if(typeof document!=='undefined'){

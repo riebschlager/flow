@@ -13,7 +13,8 @@ export function enhanceSelects(root=document){
   if(!entry){entry={details:new Map(),node:null};entries.set(select,entry);}
   entry.details.clear();
   for(const option of select.options){const view=optionPresentation(option.textContent);if(option.label!==view.label)option.label=view.label;entry.details.set(option,view.detail);}
-  const detail=entry.details.get(select.selectedOptions[0])||'';
+  // A Segmented over this select already names each option in full.
+  const detail=select.dataset.enhanced?'':entry.details.get(select.selectedOptions[0])||'';
   if(!detail&&!entry.node)return;
   if(!entry.node){
    const node=document.createElement('p');node.className='select-detail helper';

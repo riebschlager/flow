@@ -292,6 +292,35 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .glide-row{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 .note-shape .knob-row{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 4px}
 
+/* Rail · Play (Phase 4) */
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.panel .section-head>.section-label{flex:1;margin:0}
+.ghost-button{display:inline-flex;align-items:center;gap:6px;width:auto;height:28px;min-height:0;margin:0;padding:0 10px;border:0;border-radius:var(--r-2);background:transparent;color:var(--text-2);font:500 12px/1 var(--font-sans);white-space:nowrap;cursor:pointer;transition:background var(--dur-1),color var(--dur-1)}
+.ghost-button:hover{background:var(--bg-hover);color:var(--text-1)}
+.ghost-button:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.ghost-button svg{width:13px;height:13px}
+.panel .section-head>#bloom{margin:0 -10px 0 0}
+.panel #resetPerformance{margin:14px 0 0 -10px}
+#gestureGuide:focus{outline:none}
+#canvasTool>.segmented{margin-top:0}
+.panel-content .control-section.autopour{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:18px 0;margin:0}
+.panel .autopour .rain-rate{margin-top:10px;border-top:0;padding-top:0}
+.panel .autopour .rain-rate label{font:500 12px/1.2 var(--font-sans);color:var(--text-2)}
+.panel .autopour .rain-rate input{margin-top:8px}
+.panel .expression-map{height:112px;border-color:var(--line);border-radius:var(--r-2);background:var(--bg-well)}
+.panel .range-readout{display:block;margin-top:12px;font:400 11px/1.2 var(--font-mono);color:var(--text-3)}
+.panel .drift-controls .option-row{margin-bottom:6px}
+.drift-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:end;margin-top:12px}
+.drift-selects>.field:first-child{margin-top:0}
+.panel .drift-controls select{margin:0;width:100%}
+.drift-grid>.knob-row{margin:0;grid-template-columns:auto}
+.panel .gesture-guide{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.panel .gesture-guide article{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:0;border:0}
+.panel .gesture-guide article>span{font:400 11px/1.5 var(--font-mono);color:var(--text-3);padding:0}
+.panel .gesture-guide h3{font:500 12px/1.4 var(--font-sans);color:var(--text-1);margin:0}
+.panel .gesture-guide p{font:400 12px/1.45 var(--font-sans);color:var(--text-3);margin:0}
+#fluidPanel .option-row[for=fluidListens]{margin-top:16px}
+
 /* EnvelopeGraph (controls-kit.js) */
 .envelope-graph{display:block;width:100%;height:72px;overflow:visible}
 .envelope-graph line{stroke:var(--line);vector-effect:non-scaling-stroke}
