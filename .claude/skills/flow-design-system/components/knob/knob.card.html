@@ -1,0 +1,14 @@
+<!-- @dsCard group="Components" viewport="700x250" name="Knob" subtitle="Vertical drag · Shift fine · wheel · double-click resets" -->
+<!doctype html><html><head><meta charset="utf-8"><title>Knob</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script src="../../components/_loader.js"></script>
+<style>body{margin:0;padding:24px;background:var(--bg-app)}</style></head><body><div id="root"></div>
+<script>
+loadFlowComponents(FLOW_COMPONENTS('../')).then(()=>{
+const src="\nconst fmtPct=v=>Math.round(v*100)+'%';\nfunction Demo(){\n return <div style={{display:'flex',alignItems:'flex-end',gap:36,flexWrap:'wrap'}}>\n  <Knob size=\"lg\" label=\"Reverb\" defaultValue={0.65} />\n  <Knob label=\"Swirl\" defaultValue={0.6} />\n  <Knob label=\"Attack\" min={0} max={2000} skew={2.5} defaultValue={20} format={v=>Math.round(v)+' ms'} />\n  <Knob label=\"Pan\" min={-1} max={1} defaultValue={0} bipolar format={v=>Math.abs(v)<0.01?'C':(v<0?'L':'R')+Math.round(Math.abs(v)*100)} />\n  <Knob label=\"Lilac\" color=\"var(--voice-1)\" defaultValue={0.8} />\n  <Knob size=\"sm\" label=\"Glide\" defaultValue={0.3} />\n  <Knob size=\"sm\" label=\"Off\" defaultValue={0.4} disabled />\n </div>;\n}\nReactDOM.createRoot(document.getElementById('root')).render(<div style={{paddingTop:28}}><Demo/></div>);";
+const out=Babel.transform(src,{presets:['react']}).code; new Function(out)();
+});
+</script></body></html>

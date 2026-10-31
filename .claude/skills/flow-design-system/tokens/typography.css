@@ -1,0 +1,35 @@
+:root{
+  --font-sans:  'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-mono:  'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --fs-11: 11px;  /* micro: extents, units, eyebrow */
+  --fs-12: 12px;  /* control labels, values */
+  --fs-13: 13px;  /* body UI default */
+  --fs-15: 15px;  /* section titles, list primary */
+  --fs-18: 18px;  /* panel titles */
+  --fs-24: 24px;  /* dialog titles */
+  --fs-32: 32px;
+  --fs-48: 48px;  /* hero */
+  --fs-72: 72px;  /* display / zen title */
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.3;
+  --lh-body: 1.5;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+
+  --tracking-tight: -0.02em;
+  --tracking-display: -0.03em;
+  --tracking-eyebrow: 0.08em;
+
+  /* Semantic */
+  --type-eyebrow: 500 var(--fs-11)/1 var(--font-sans);
+  --type-label:   500 var(--fs-12)/1.2 var(--font-sans);
+  --type-body:    400 var(--fs-13)/var(--lh-body) var(--font-sans);
+  --type-value:   400 var(--fs-12)/1 var(--font-mono);
+  --type-title:   500 var(--fs-18)/var(--lh-snug) var(--font-sans);
+  --type-display: 400 var(--fs-48)/var(--lh-tight) var(--font-sans);
+}

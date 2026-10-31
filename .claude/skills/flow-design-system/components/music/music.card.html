@@ -1,0 +1,14 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Music" subtitle="Swatch, ChordStrip, StepGrid, EnvelopeGraph, TrackRow" -->
+<!doctype html><html><head><meta charset="utf-8"><title>Music</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script src="../../components/_loader.js"></script>
+<style>body{margin:0;padding:24px;background:var(--bg-app)}</style></head><body><div id="root"></div>
+<script>
+loadFlowComponents(FLOW_COMPONENTS('../')).then(()=>{
+const src="\nconst V=['var(--voice-1)','var(--voice-2)','var(--voice-3)','var(--voice-4)'];\nfunction Demo(){\n const [sel,setSel]=React.useState(0);\n const [vo,setVo]=React.useState([\n  {name:'Soft kick',color:V[0],steps:[3,0,0,0,0,0,1,0,2,0,0,0,0,0,0,0]},\n  {name:'Brush',color:V[1],steps:[0,0,2,0,0,1,2,0,0,0,2,0,0,1,2,0]},\n  {name:'Glass bell',color:V[2],steps:[0,0,0,0,3,0,0,0,0,0,0,1,0,0,0,0]},\n  {name:'Shaker',color:V[3],muted:true,steps:[1,1,2,1,1,1,2,1,1,1,2,1,1,1,2,1]}]);\n return <div style={{display:'flex',flexDirection:'column',gap:22}}>\n  <div style={{display:'grid',gridTemplateColumns:'auto 1fr 200px',gap:32,alignItems:'center'}}>\n   <div style={{display:'flex',gap:2}}>{V.map((c,i)=><Swatch key={i} color={c} name={'Voice '+(i+1)} selected={sel===i} onClick={()=>setSel(i)} />)}</div>\n   <ChordStrip chords={['Cmaj7','Am7','Fmaj7','G']} current={1} progress={0.45} />\n   <EnvelopeGraph active=\"d\" height={48} />\n  </div>\n  <StepGrid voices={vo} playhead={6} onStep={(v,i,s)=>setVo(o=>o.map((x,j)=>j!==v?x:{...x,steps:x.steps.map((y,k)=>k===i?s:y)}))} onMute={v=>setVo(o=>o.map((x,j)=>j!==v?x:{...x,muted:!x.muted}))} />\n  <div>\n   <TrackRow title=\"Low tide at the glass house\" author=\"mara\" meta=\"Glass house\" duration=\"3:12\" likes={48} liked colors={V} playing />\n   <TrackRow title=\"Untitled session\" author=\"you\" duration=\"1:04\" likes={3} colors={['var(--ember-1)','var(--ember-2)','var(--ember-3)','var(--ember-4)']} />\n  </div>\n </div>;\n}\nReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);";
+const out=Babel.transform(src,{presets:['react']}).code; new Function(out)();
+});
+</script></body></html>

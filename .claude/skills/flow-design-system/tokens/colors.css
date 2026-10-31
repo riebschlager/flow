@@ -1,0 +1,64 @@
+:root{
+  color-scheme: dark;
+  /* Neutral ramp: cool graphite, hue 255. Chrome is built only from these. */
+  --n-0:   #08090b;   /* void, behind canvas */
+  --n-50:  #0e1013;   /* app background */
+  --n-100: #13161a;   /* panel */
+  --n-150: #181b20;   /* raised: knob body, cards */
+  --n-200: #1e2227;   /* well: slider track, inputs */
+  --n-250: #252a30;   /* hover well */
+  --n-300: #2d3239;   /* hairline strong, arc track */
+  --n-400: #3c424a;
+  --n-500: #59606a;   /* disabled ink */
+  --n-600: #7c838d;   /* tertiary ink */
+  --n-700: #a2a8b1;   /* secondary ink */
+  --n-800: #cdd1d7;
+  --n-900: #eef0f2;   /* primary ink */
+
+  /* The one quiet accent: focus, active, live value while touched. */
+  --accent:        #c9bcf5;
+  --accent-strong: #ddd4fb;
+  --accent-dim:    rgba(201,188,245,.16);
+  --accent-ring:   rgba(201,188,245,.55);
+
+  /* Status */
+  --rec:      #ef7a74;
+  --rec-dim:  rgba(239,122,116,.16);
+  --live:     #8fd9bd;
+
+  /* Voice palettes (from public/palettes.js). Voice colors live on the canvas and in voice-specific UI only. */
+  --voice-1: #b7a0ff; --voice-2: #73e2d0; --voice-3: #ff9e9e; --voice-4: #edca82; /* Original glow */
+  --aurora-1:#c89bff; --aurora-2:#70e8ff; --aurora-3:#ff87c8; --aurora-4:#81f4bd;
+  --desert-1:#a69bd8; --desert-2:#a6c7b0; --desert-3:#f18f76; --desert-4:#efd4a2;
+  --tide-1:#879fe8;   --tide-2:#62d9dc;   --tide-3:#5b92d5;   --tide-4:#c1ebd8;
+  --ember-1:#c27699;  --ember-2:#d1a263;  --ember-3:#ff8763;  --ember-4:#ffd18b;
+  --garden-1:#ae9bd5; --garden-2:#7fd0aa; --garden-3:#e4a7ae; --garden-4:#c4d685;
+  --afterglow-1:#b187ff; --afterglow-2:#5cddff; --afterglow-3:#ff6bad; --afterglow-4:#edee85;
+  --porcelain-1:#c5bedc; --porcelain-2:#b8d8d3; --porcelain-3:#e4c5c5; --porcelain-4:#e9dbbc;
+
+  /* Semantic aliases */
+  --bg-void:    var(--n-0);
+  --bg-app:     var(--n-50);
+  --bg-panel:   var(--n-100);
+  --bg-raised:  var(--n-150);
+  --bg-well:    var(--n-200);
+  --bg-hover:   var(--n-250);
+  --bg-scrim:   rgba(4,5,7,.62);
+  --bg-glass:   rgba(14,16,19,.72);
+
+  --line:        rgba(255,255,255,.06);
+  --line-strong: rgba(255,255,255,.11);
+  --line-focus:  var(--accent-ring);
+
+  --text-1: var(--n-900);
+  --text-2: var(--n-700);
+  --text-3: var(--n-600);
+  --text-off: var(--n-500);
+  --text-on-light: var(--n-50);
+
+  --control-track: var(--n-400);
+  --control-track-hover: var(--n-500);
+  --control-fill:  var(--n-800);
+  --control-fill-active: var(--accent);
+  --control-thumb: var(--n-900);
+}

@@ -1,0 +1,14 @@
+:root{
+  --ease-out: cubic-bezier(.2,.7,.2,1);
+  --ease-in-out: cubic-bezier(.6,0,.3,1);
+  --ease-settle: cubic-bezier(.3,1.3,.5,1); /* gentle overshoot for thumbs/knob return */
+  --dur-1: 90ms;   /* hover, press */
+  --dur-2: 180ms;  /* state change */
+  --dur-3: 320ms;  /* panels, folds */
+  --dur-4: 700ms;  /* scene fades */
+
+  /* Control feel (documented for implementers) */
+  --knob-drag-px: 200;      /* px of vertical travel for full range */
+  --knob-fine-factor: 0.1;  /* Shift held */
+  --wheel-step: 0.01;       /* fraction of range per wheel notch */
+}

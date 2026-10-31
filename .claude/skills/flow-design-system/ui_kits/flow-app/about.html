@@ -1,0 +1,22 @@
+<!-- @dsCard group="Flow app" viewport="1440x900" name="About" subtitle="Maker's note, numbered tabs, verbatim copy from public/about.html" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>About Flow — UI kit</title>
+<link rel="icon" href="../../assets/flow-mark.svg">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script src="../../components/_loader.js"></script>
+<style>html,body{margin:0}@keyframes flowFadeIn{from{opacity:0;transform:translateY(4px)}}</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+loadFlowComponents([...FLOW_COMPONENTS('../../components/'), 'AboutPage.jsx'])
+  .then(() => ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(AboutPage)));
+</script>
+</body>
+</html>

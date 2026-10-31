@@ -1,0 +1,14 @@
+<!-- @dsCard group="Components" viewport="700x230" name="Buttons & icons" subtitle="Button, IconButton, Icon glyph set" -->
+<!doctype html><html><head><meta charset="utf-8"><title>Actions</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script src="../../components/_loader.js"></script>
+<style>body{margin:0;padding:24px;background:var(--bg-app)}</style></head><body><div id="root"></div>
+<script>
+loadFlowComponents(FLOW_COMPONENTS('../')).then(()=>{
+const src="\nfunction Demo(){\n return <div style={{display:'flex',flexDirection:'column',gap:22}}>\n  <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>\n   <Button variant=\"primary\" icon={<Icon name=\"play\" size={12}/>}>Play</Button>\n   <Button>Export WAV</Button>\n   <Button variant=\"ghost\" iconRight={<Icon name=\"arrow-up-right\" size={14}/>}>Library</Button>\n   <Button variant=\"record\" icon={<Icon name=\"record\" size={12}/>}>Record</Button>\n   <Button active icon={<Icon name=\"spark\" size={14}/>}>New variation</Button>\n   <Button size=\"sm\">Small</Button>\n   <Button disabled>Disabled</Button>\n  </div>\n  <div style={{display:'flex',gap:10,alignItems:'center'}}>\n   <IconButton size=\"lg\" variant=\"primary\" round label=\"Play\"><Icon name=\"play\" size={18}/></IconButton>\n   <IconButton size=\"lg\" variant=\"secondary\" round label=\"Stop\"><Icon name=\"stop\" size={16}/></IconButton>\n   <IconButton label=\"Controls\" active><Icon name=\"sliders\" size={18}/></IconButton>\n   <IconButton label=\"Fullscreen\"><Icon name=\"expand\" size={18}/></IconButton>\n   <IconButton label=\"Help\" variant=\"secondary\"><Icon name=\"help\" size={16}/></IconButton>\n  </div>\n  <div style={{display:'flex',gap:14,flexWrap:'wrap',color:'var(--text-2)'}}>\n   {Icon.names.map(n=><span key={n} title={n}><Icon name={n} size={18}/></span>)}\n  </div>\n </div>;\n}\nReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);";
+const out=Babel.transform(src,{presets:['react']}).code; new Function(out)();
+});
+</script></body></html>

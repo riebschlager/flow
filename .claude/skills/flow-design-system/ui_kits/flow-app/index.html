@@ -1,0 +1,28 @@
+<!-- @dsCard group="Flow app" viewport="1440x900" name="Flow — live session" subtitle="Canvas, transport and control rail. Click Play, open Library, Community, Beat studio, Zen." -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flow — UI kit</title>
+<link rel="icon" href="../../assets/flow-mark.svg">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script src="../../components/_loader.js"></script>
+<style>
+html,body{margin:0;height:100%;overflow:hidden}
+@keyframes flowFadeIn{from{opacity:0;transform:translateY(4px)}}
+@keyframes flowDrift{from{transform:translate(-2%,1%) scale(1)}to{transform:translate(2%,-1%) scale(1.06)}}
+@keyframes flowDrop{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.6);opacity:0}}
+@keyframes flowPulse{50%{opacity:.35}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+loadFlowComponents([...FLOW_COMPONENTS('../../components/'), 'TopBar.jsx', 'Canvas.jsx', 'Transport.jsx', 'ControlRail.jsx', 'Dialogs.jsx', 'App.jsx'])
+  .then(() => ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App)));
+</script>
+</body>
+</html>

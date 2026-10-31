@@ -1,0 +1,29 @@
+:root{
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 8px;
+  --sp-4: 12px;
+  --sp-5: 16px;
+  --sp-6: 20px;
+  --sp-7: 24px;
+  --sp-8: 32px;
+  --sp-9: 40px;
+  --sp-10: 56px;
+  --sp-11: 80px;
+
+  --r-1: 4px;    /* steps, small chips */
+  --r-2: 6px;    /* inputs, buttons */
+  --r-3: 10px;   /* cards, popovers */
+  --r-4: 16px;   /* dialogs, panels */
+  --r-full: 999px;
+
+  /* Control sizes */
+  --knob-sm: 32px;
+  --knob-md: 44px;
+  --knob-lg: 64px;
+  --hit-min: 32px;      /* desktop pointer target */
+  --hit-touch: 44px;    /* touch target */
+  --rail-w: 380px;      /* control rail */
+  --topbar-h: 52px;
+  --transport-h: 64px;
+}

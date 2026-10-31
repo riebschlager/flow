@@ -1,0 +1,7 @@
+html,body{background:var(--bg-app);color:var(--text-1);font:var(--type-body);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+a{color:var(--text-1);text-decoration-color:var(--line-strong);text-underline-offset:3px}
+a:hover{color:var(--accent-strong);text-decoration-color:var(--accent-ring)}
+::selection{background:var(--accent-dim)}
+:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+*{scrollbar-width:thin;scrollbar-color:var(--n-300) transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--n-300);border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-track{background:transparent}
