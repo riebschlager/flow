@@ -74,7 +74,12 @@ function choiceGroup(select,className,renderOption){
 
 export function enhanceSegmented(select,{size,full}={}){
  if(select.dataset.enhanced)return null;
- const group=choiceGroup(select,'segmented',(b,option)=>{b.textContent=option.label||option.textContent;});
+ // An option's data-label gives a shorter segment; the full text becomes its title.
+ const group=choiceGroup(select,'segmented',(b,option)=>{
+  const text=option.label||option.textContent,short=option.dataset?.label;
+  b.textContent=short||text;
+  if(short&&short!==text)b.title=text;
+ });
  if(size==='sm')group.classList.add('segmented-sm');
  if(full)group.classList.add('segmented-full');
  return group;

@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';import fs from 'node:fs';
 // MutationObserver. Enough to drive the enhancers the way a browser would.
 const observers=new Set();
 function notify(target,record){for(const o of observers)for(const {node,opts} of o.targets){const inside=node===target||(opts.subtree&&node.contains(target));if(!inside)continue;if(record.type==='attributes'&&(!opts.attributes||opts.attributeFilter&&!opts.attributeFilter.includes(record.attributeName)))continue;if(record.type==='childList'&&!opts.childList)continue;if(record.type==='characterData'&&!opts.characterData)continue;o.queue.push({...record,target});if(!o.pending){o.pending=true;queueMicrotask(()=>{o.pending=false;const q=o.queue.splice(0);if(q.length)o.fn(q,o);});}}}
+// Selectors: compound tag.class.class[attr=value], descendant and child combinators, and :scope.
+const simple=(n,s)=>{const m=s.match(/^([a-z]+)?((?:\.[\w-]+)*)(?:\[([\w-]+)(?:="?([^"\]]*)"?)?\])?$/i);if(!m)return false;const [,tag,cls,attr,val]=m;return (!tag||n.tagName===tag.toUpperCase())&&cls.split('.').filter(Boolean).every(c=>n.classList.contains(c))&&(!attr||(val===undefined?attr in n.attrs:n.getAttribute(attr)===val));};
+function matchTokens(n,tokens,scope){
+ const last=tokens.at(-1);if(!(last===':scope'?n===scope:simple(n,last)))return false;
+ if(tokens.length===1)return true;
+ if(tokens.at(-2)==='>')return !!n.parentElement&&matchTokens(n.parentElement,tokens.slice(0,-2),scope);
+ for(let p=n.parentElement;p;p=p.parentElement)if(matchTokens(p,tokens.slice(0,-1),scope))return true;
+ return false;
+}
 globalThis.MutationObserver=class{constructor(fn){this.fn=fn;this.targets=[];this.queue=[];}observe(node,opts){this.targets.push({node,opts});observers.add(this);}disconnect(){observers.delete(this);}};
 class Node{
  constructor(tag){this.tagName=tag.toUpperCase();this.children=[];this.parentElement=null;this.attrs={};this.listeners={};this.dataset={};this.style={props:{},setProperty(k,v){this.props[k]=v;}};this.text='';const cls=new Set(),sync=()=>{this.attrs.class=[...cls].join(' ');};this.classList={add:(...c)=>{c.forEach(x=>cls.add(x));sync();},remove:(...c)=>{c.forEach(x=>cls.delete(x));sync();},contains:c=>cls.has(c),toggle:(c,on)=>{if(on??!cls.has(c))cls.add(c);else cls.delete(c);sync();return cls.has(c);}};}
@@ -23,9 +32,10 @@ class Node{
  get childNodes(){return [...(this.text?[{nodeType:3,textContent:this.text}]:[]),...this.children];}
  get nextElementSibling(){const p=this.parentElement;return p?p.children[p.children.indexOf(this)+1]||null:null;}
  contains(n){for(;n;n=n.parentElement)if(n===this)return true;return false;}
- matches(sel){return sel.split(',').some(s=>{s=s.trim();const m=s.match(/^([a-z]+)?(?:\.([\w-]+))?(?:\[([\w-]+)(?:="([^"]*)")?\])?$/i);if(!m)return false;const [,tag,cls,attr,val]=m;return (!tag||this.tagName===tag.toUpperCase())&&(!cls||this.classList.contains(cls))&&(!attr||(val===undefined?attr in this.attrs:this.getAttribute(attr)===val));});}
+ matches(sel,scope){return sel.split(',').some(s=>matchTokens(this,s.trim().replace(/\s*>\s*/g,' > ').split(/\s+/),scope));}
  closest(sel){if(this.matches(sel))return this;return this.parentElement?.closest(sel)||null;}
- querySelectorAll(sel){const out=[];const walk=n=>{for(const c of n.children){if(c.matches(sel))out.push(c);walk(c);}};walk(this);return out;}
+ querySelectorAll(sel){const out=[];const walk=n=>{for(const c of n.children){if(c.matches(sel,this))out.push(c);walk(c);}};walk(this);return out;}
+ get firstChild(){return this.children[0]||null;}get lastChild(){return this.children.at(-1)||null;}
  querySelector(sel){return this.querySelectorAll(sel)[0]||null;}
  addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);}
  dispatchEvent(e){Object.defineProperty(e,'target',{value:this,configurable:true});const path=[];for(let n=this.parentElement;n;n=n.parentElement)path.push(n);for(const n of [this,...path]){for(const fn of n.listeners[e.type]||[])fn(e);if(!e.bubbles)return !e.defaultPrevented;}if(this===doc.body||doc.body.contains(this))doc.dispatchEvent(e);return !e.defaultPrevented;}
@@ -66,7 +76,7 @@ const pointer=(el,type,extra)=>{const e=new Event(type,{bubbles:true,cancelable:
 function log(el){const seen=[];el.addEventListener('input',()=>seen.push('input:'+el.value));el.addEventListener('change',()=>seen.push('change:'+el.value));return seen;}
 function select(id,values,label){const wrap=new Node('div');doc.body.append(wrap);if(label){const l=new Node('label');l.attrs.for=id;l.textContent=label;wrap.append(l);}const s=new Select();s.id=id;for(const [v,t] of values)s.append(new Option(v,t));wrap.append(s);return s;}
 
-const {KNOBS,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs}=await import('../public/controls-ui.js');
+const {KNOBS,SEGMENTED,SWATCH_GRIDS,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
 const html=fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');
 for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}">`),`${id} has a slider label`);}
 for(const level of ['volume','dropletsVolume','arpVolume','rhythmVolume','environmentVolume','rain','energy'])assert.ok(!(level in KNOBS),`${level} stays a slider`);
@@ -77,8 +87,29 @@ assert.ok(toNorm(ms,200,3)>.45,'skewed taper gives the musical range most of the
 assert.equal(fromNorm(ms,.5,3)%5,0,'values snap to the input step');
 assert.equal(fromNorm(pct,1.4),100);assert.equal(fromNorm(pct,-1),0);
 
-// Phase 1 primitives are applied per element, never on import.
-for(const marker of ['class="segmented','class="swatch-grid','class="stepper','class="layer-body','envelope-graph','data-orientation="vertical"'])assert.ok(!html.includes(marker),`${marker} is not applied in the markup yet`);
+// Primitives are applied at startup by enhanceRail(), never written into the markup.
+for(const marker of ['class="segmented','class="swatch-grid','class="stepper','class="layer-body','envelope-graph','data-orientation="vertical"'])assert.ok(!html.includes(marker),`${marker} is built at runtime, not in the markup`);
+
+// Phase 2: the Sound and Scene tabs match their target tables.
+{
+ const panel=id=>html.match(new RegExp(`<div id="${id}"[^>]*>([\\s\\S]*?)\\n</div>`))[1];
+ const sound=panel('soundPanel'),scene=panel('fluidPanel');
+ for(const [name,markup] of [['Sound',sound],['Scene',scene]])assert.ok(!markup.includes('<details'),`${name} has no folds`);
+ const order=(markup,titles)=>titles.map(t=>{const i=markup.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;}).forEach((i,k,all)=>assert.ok(!k||i>all[k-1],`${titles[k]} follows ${titles[k-1]}`));
+ order(sound,['for="soundscape">Vibe<','for="progression">Chord progression<','<label for="chordLength">Chord length</label>','<div class="section-label">Color voices</div><div id="voices"></div>']);
+ order(scene,['for="energy">Energy<','for="colorPalette">Color palette<','<div class="section-label">The fluid</div>','<span>Living water<','<div class="section-label">Percussion response</div>']);
+ for(const id of ['scapeDescription','progressionDescription'])assert.match(sound,new RegExp(`id="${id}"[^>]*data-help-tip`),`${id} moves into its section's HelpTip`);
+ const paletteSection=scene.match(/<section class="control-section"><label class="section-label" for="colorPalette">[\s\S]*?<\/section>/)[0];
+ assert.ok(paletteSection.includes('<p class="helper color-guide">Choose a swatch on the canvas to use only that color and voice. Turn on <strong>Cycle colors</strong> beside the palette to randomly use each color once before repeating, for painting, rain, and blooms.</p>'),'Color behavior copy moves verbatim into the palette section');
+ assert.ok(!/COLOR BEHAVIOR/i.test(html),'the Color behavior section is gone');
+ const fluid=scene.match(/<div class="section-label">The fluid<\/div>[\s\S]*?<\/section>/)[0];
+ for(const id of ['swirl','persistence','dropSize','chordAtmosphere'])assert.ok(fluid.includes(`<input id="${id}" type="range"`),`${id} sits in The fluid`);
+ assert.ok(!scene.includes('fluidListens'),'fluidListens waits for Phase 4');
+ for(const id of ['soundscape','progression','chordInput','applyChords','chordLength','voices','voiceControls','energy','energyValue','colorPalette','palettePreview','paletteDescription','swirl','persistence','dropSize','chordAtmosphere','waterEnabled','waterPreset','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection','rhythmVisualControls','rhythmVisualMode','rhythmVisual'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ assert.deepEqual(Object.keys(SEGMENTED),['chordLength','waterPreset','rhythmVisualMode']);assert.deepEqual(SWATCH_GRIDS,['colorPalette']);
+ for(const id of ['waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-2"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-2/);
+}
 assert.match(html,/<input id="bpm" type="number" min="30" max="100" step="2" value="56" aria-label="Tempo" hidden>/,'tempo state has a hidden number input for the Stepper');
 const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 assert.match(app,/function showBpm\(\)\{\$\('bpmLabel'\)\.textContent=state\.bpm;\$\('bpm'\)\.value=state\.bpm;\}/,'every tempo change writes the hidden input');
@@ -125,6 +156,10 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.equal(b().length,4,'added options rebuild the group');assert.equal(b()[1].getAttribute('aria-checked'),'true','and keep the selection');
  const label=doc.querySelector('label[for="chordLength"]');label.dispatchEvent(new Event('click',{bubbles:true,cancelable:true}));
  assert.equal(doc.activeElement,b()[1],'the label focuses the checked segment');
+ const mode=select('beatMotion',[['both','Ripples + stir the fluid'],['ripples','Ripples only']]);mode.options[0].dataset.label='Ripples + stir';
+ const modes=enhanceSegmented(mode).children;
+ assert.deepEqual(modes.map(x=>x.textContent),['Ripples + stir','Ripples only'],'data-label gives a shorter segment');
+ assert.equal(modes[0].title,'Ripples + stir the fluid','and the full option text stays as its title');assert.equal(modes[1].title,undefined);
 }
 
 // Swatch grid: palette buttons over the colorPalette select.
@@ -233,4 +268,49 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const src=fs.readFileSync(new URL('../public/controls-ui.js',import.meta.url),'utf8');
  assert.match(src,/if\(input\.dataset\.orientation==='vertical'\)input\.setAttribute\('aria-orientation','vertical'\)/);
 }
-console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; nothing is applied yet.');
+// HelpTips: static helpers move into a "?" tip; a live description opts in with data-help-tip.
+{
+ const content=new Node('div');content.className='panel-content';doc.body.append(content);
+ const section=new Node('section');section.className='control-section';content.append(section);
+ const label=new Node('label');label.className='section-label';label.attrs.for='soundscapeTip';label.text='Vibe';
+ const s=new Select();s.id='soundscapeTip';s.append(new Option('stillwater','Still water'));
+ const live=new Node('p');live.className='helper';live.id='scapeDescriptionTip';live.setAttribute('data-help-tip','');live.text='Soft keys, warm strings, and a little shimmer.';
+ const status=new Node('p');status.className='helper';status.id='scapeStatusTip';status.text='Loading…';
+ const plain=new Node('p');plain.className='helper';plain.text='Static copy';
+ section.append(label,s,live,status,plain);
+ enhanceHelpTips(doc);
+ const tip=label.querySelector('.help-tip'),pop=tip?.querySelector('span[role="tooltip"]');
+ assert.ok(tip&&label.classList.contains('has-help'),'the section title gets a tip');
+ assert.deepEqual(pop.children,[live,plain],'the opted-in description and static copy move into the tip, in order');
+ assert.equal(doc.getElementById('scapeDescriptionTip'),live,'the moved description keeps its id for live writes');
+ assert.equal(status.parentElement,section,'other helpers with an id stay in place');
+}
+
+// enhanceRail applies Phase 2's components by id and dims Percussion response with its layer.
+{
+ doc.body.replaceChildren();
+ const ids={chordLength:[['4','4 beats'],['8','8 beats'],['16','16 beats']],waterPreset:[['sea','Gentle sea'],['glass','Glassy water'],['lagoon','Sunlit lagoon'],['custom','Your own water']],colorPalette:[['classic','Original glow'],['ember','Ember']]};
+ const selects=Object.fromEntries(Object.entries(ids).map(([id,values])=>[id,select(id,values)]));
+ const section=new Node('section');section.id='rhythmVisualControls';section.className='control-section';doc.body.append(section);
+ const title=new Node('div');title.className='section-label';section.append(title);
+ const mode=new Select();mode.id='rhythmVisualMode';for(const [v,t] of [['both','Ripples + stir the fluid'],['ripples','Ripples only'],['fluid','Stir the fluid only']])mode.append(new Option(v,t));section.append(mode);
+ const toggle=new Input();toggle.id='rhythmEnabled';toggle.type='checkbox';doc.body.append(toggle);
+ enhanceRail(doc);
+ for(const id of ['chordLength','waterPreset','rhythmVisualMode'])assert.equal(doc.getElementById(id).dataset.enhanced,'segmented',`${id} is Segmented`);
+ assert.ok(selects.chordLength.nextElementSibling.classList.contains('segmented-full'));
+ assert.ok(selects.waterPreset.nextElementSibling.classList.contains('segmented-sm'),'water character uses the small size');
+ assert.equal(selects.colorPalette.dataset.enhanced,'swatch-grid');
+ const seen=log(selects.waterPreset);selects.waterPreset.nextElementSibling.children[2].click();
+ assert.equal(selects.waterPreset.value,'lagoon');assert.deepEqual(seen,['input:lagoon','change:lagoon'],'segments drive the native select');
+ selects.waterPreset.value='custom';assert.equal(selects.waterPreset.nextElementSibling.children[3].getAttribute('aria-checked'),'true','app writes (preset → custom) show in the segments');
+ assert.ok(section.classList.contains('is-dimmed'),'Percussion response dims while percussion is off');
+ toggle.checked=true;assert.ok(!section.classList.contains('is-dimmed'),'programmatic checked lifts the dim');
+ toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));assert.ok(section.classList.contains('is-dimmed'));
+ assert.equal(mode.disabled,false,'dimming never disables');
+ const before=doc.body.children.length;enhanceRail(doc);assert.equal(doc.body.children.length,before,'enhanceRail is idempotent');
+ assert.equal(selects.chordLength.parentElement.querySelectorAll('div.segmented').length,1);
+ const src=fs.readFileSync(new URL('../public/controls-ui.js',import.meta.url),'utf8');
+ assert.match(src,/enhanceHelpTips\(\);enhanceKnobs\(\);enhanceSliders\(\);enhanceRail\(\);/,'the rail is enhanced at startup from controls-ui.js');
+ assert.ok(!fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8').includes('enhanceRail'),'app.js does not apply components');
+}
+console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup.');

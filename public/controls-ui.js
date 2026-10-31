@@ -4,14 +4,14 @@
 // unchanged: the knob writes .value and dispatches the same input/change events.
 // Static helper copy moves into a "?" tip beside its section title.
 // Segmented, swatch grid, Stepper, Layer and EnvelopeGraph live in controls-kit.js
-// and are applied per element; importing them changes nothing on the page.
-import {clamp,recentlyScrolled,watchControl} from './controls-kit.js?rev=controls-1';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-1';
+// and are applied per element by enhanceRail() below.
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid} from './controls-kit.js?rev=controls-2';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-2';
 
 export const KNOBS={
  reverb:{},delay:{},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
- swirl:{},persistence:{},dropSize:{},
- waterSwell:{},waterSpeed:{},waterRefraction:{},waterCaustics:{},waterReflection:{},
+ swirl:{},persistence:{},dropSize:{},chordAtmosphere:{},
+ waterSwell:{sm:true},waterSpeed:{sm:true},waterRefraction:{sm:true},waterCaustics:{sm:true},waterReflection:{sm:true},
  arpLength:{skew:2},arpAttack:{skew:3},arpDecay:{skew:3},arpSustain:{},
  arpGlideTime:{skew:3},arpGlideAmount:{},
  environmentActivity:{},environmentTone:{bipolar:true},
@@ -41,7 +41,7 @@ const watchValue=(input,render)=>watchControl(input,render);
 function buildKnob(input,opts){
  const skew=opts.skew||1,label=document.querySelector(`label[for="${input.id}"]`),output=label?.querySelector('output');
  const knob=document.createElement('div');
- knob.className='knob';knob.tabIndex=0;knob.setAttribute('role','slider');
+ knob.className=opts.sm?'knob knob-sm':'knob';knob.tabIndex=0;knob.setAttribute('role','slider');
  const name=label?[...label.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():input.id;
  knob.setAttribute('aria-label',input.getAttribute('aria-label')||name);
  const size=44,W=size+14,c=W/2,r=size/2+4;
@@ -168,7 +168,8 @@ let tipCount=0;
 export function enhanceHelpTips(root=document){
  const groups=new Map();
  for(const helper of root.querySelectorAll('.panel-content .helper')){
-  if(helper.id||helper.getAttribute('role')||helper.closest('.help-tip,.select-detail'))continue;
+  // Helpers with an id are usually live status; a live description opts in with data-help-tip.
+  if((helper.id||helper.getAttribute('role'))&&!helper.hasAttribute('data-help-tip')||helper.closest('.help-tip,.select-detail'))continue;
   const container=helper.closest('.fold-content,.control-section,.layer-card');
   if(!container||!container.querySelector('input,select,textarea'))continue;
   const anchor=helpAnchor(container);
@@ -194,6 +195,24 @@ export function enhanceHelpTips(root=document){
  }
 }
 
+// Design-system components per rail control. The native select stays the state.
+export const SEGMENTED={chordLength:{full:true},waterPreset:{size:'sm',full:true},rhythmVisualMode:{size:'sm',full:true}};
+export const SWATCH_GRIDS=['colorPalette'];
+// Sections that dim, without disabling, while their layer's switch is off.
+export const DIM_WHEN_OFF={rhythmVisualControls:'rhythmEnabled'};
+export function enhanceRail(root=document){
+ const byId=id=>root.getElementById?.(id)||null;
+ for(const [id,opts] of Object.entries(SEGMENTED)){const select=byId(id);if(select)enhanceSegmented(select,opts);}
+ for(const id of SWATCH_GRIDS){const select=byId(id);if(select)enhanceSwatchGrid(select);}
+ for(const [id,toggleId] of Object.entries(DIM_WHEN_OFF)){
+  const section=byId(id),toggle=byId(toggleId);
+  if(!section||!toggle||section.dataset.dimWhenOff)continue;
+  section.dataset.dimWhenOff=toggleId;
+  const render=()=>section.classList.toggle('is-dimmed',!toggle.checked);
+  watchControl(toggle,render,['checked']);render();
+ }
+}
+
 if(typeof document!=='undefined'){
- enhanceHelpTips();enhanceKnobs();enhanceSliders();
+ enhanceHelpTips();enhanceKnobs();enhanceSliders();enhanceRail();
 }

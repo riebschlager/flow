@@ -243,6 +243,18 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .swatch-dots>i{width:12px;height:12px;margin-left:-3px;border-radius:50%;background:var(--swatch);box-shadow:0 0 0 1.5px var(--bg-panel)}
 .swatch-dots>i:first-child{margin-left:0}
 .swatch-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* The grid shows every palette's colors, so the single preview strip steps aside. */
+.swatch-grid~.palette-preview{display:none}
+.swatch-grid~#paletteDescription{margin-top:10px}
+
+/* Rail fields and sections (Phase 2) */
+.field{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.field>label{font:500 12px/1.2 var(--font-sans);color:var(--text-2)}
+.section-label>output{margin-left:auto;font:500 11px/1 var(--font-mono);letter-spacing:0;color:var(--text-2)}
+.section-label>output+.help-tip{margin-left:8px}
+.control-section>.segmented{margin-top:12px}
+#fluidPanel .knob-row:has(#chordAtmosphere){grid-template-columns:repeat(2,minmax(0,1fr))}
+.control-section.is-dimmed>:not(.section-label){opacity:.45;transition:opacity var(--dur-2)}
 
 /* Stepper (controls-kit.js over a native number input) */
 .stepper{display:inline-flex;flex-direction:column;align-items:center;gap:4px;user-select:none}
