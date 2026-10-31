@@ -26,7 +26,7 @@
 <meta name="twitter:image" content="https://flow.the816.com/social/flow-ambient.jpg">
 <meta name="twitter:image:alt" content="Flow — infinite ambient music in your browser. authored by humans. Colorful ribbons on a dark canvas.">
 <link rel="stylesheet" href="/presentation.css?rev=design-system-1">
-<link rel="stylesheet" href="/flow-ds.css?rev=design-system-1">
+<link rel="stylesheet" href="/flow-ds.css?rev=controls-1">
 <script>if(/^\/recordings\//.test(location.pathname)&&["portrait","landscape"].includes(new URLSearchParams(location.search).get("present")))document.documentElement.classList.add("presentation-pending");</script>
 </head>
 <body class="session-loading">
@@ -68,7 +68,7 @@
 <div class="chord-sequence" id="chords" aria-label="Chord progression"></div>
 <div class="current-note"><div class="note-toast" id="noteToast" role="img" aria-label="Latest note"><span class="note-pitch" aria-hidden="true"><span id="notePitchA"></span><span id="notePitchB"></span></span><span class="note-voice" aria-hidden="true"><span id="noteVoiceA"></span><span id="noteVoiceB"></span></span></div></div>
 </div>
-<div class="tempo"><span>TEMPO</span><div><button id="slower" aria-label="Decrease tempo">−</button><strong id="bpmLabel">56</strong><button id="faster" aria-label="Increase tempo">+</button></div><small>BPM</small></div>
+<div class="tempo"><span>TEMPO</span><div><button id="slower" aria-label="Decrease tempo">−</button><strong id="bpmLabel">56</strong><button id="faster" aria-label="Increase tempo">+</button></div><small>BPM</small><input id="bpm" type="number" min="30" max="100" step="2" value="56" aria-label="Tempo" hidden></div>
 </div>
 <details class="take-tray" aria-label="Session takes"><summary>Your takes <span>Browse &amp; export</span></summary><div class="take-tray-heading"><div><button id="quickExport">Export WAV</button><button id="quickShare">Share</button><button id="quickLibrary">Library ↗</button></div></div><div id="sessionTakes"></div></details>
 <div id="recordBar" class="record-bar" hidden><span class="record-dot"></span><div><strong id="recordBarStatus">Ready to record</strong><span id="recordBarTime">0:00</span><progress id="recordProgress" max="1" value="0" aria-label="Performance progress"></progress></div><button id="recordBarFork" hidden title="Copy this track’s opening setup without its timed performance">Use this setup</button><button id="recordBarStop">Finish at next bar</button></div><footer class="art-footer"><span><i class="status-dot"></i><span id="engineStatus">Free · no ads, ever</span></span><span>RELAX <b>·</b> MEDITATE <b>·</b> STUDY <b>·</b> SLEEP</span><div class="footer-credits"><a class="creator-credit" href="https://the816.com" target="_blank" rel="noopener noreferrer">Created by Chris Riebschlager ↗</a><a href="about.html" target="_blank" rel="noopener">Why I made Flow ↗</a></div></footer>
@@ -124,7 +124,7 @@
 <div id="presentationControls" class="presentation-controls" role="region" aria-label="Presentation controls" hidden><button id="presentationNext" disabled>Next track →</button><button id="presentationFullscreen">Enter fullscreen</button><a id="presentationExit" href="/community">Exit presentation</a><label class="presentation-sleep" for="presentationSleepTimer">Sleep <select id="presentationSleepTimer" aria-label="Presentation sleep timer"><option value="0">Off</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option><option value="90">90 minutes</option></select></label><div class="presentation-auto"><label class="presentation-auto-toggle"><input id="presentationAutoAdvance" type="checkbox"> Auto-advance</label><label id="presentationAutoDurationLabel" hidden>Every <input id="presentationAutoDuration" type="number" min="0.25" max="60" step="0.25" value="3" inputmode="decimal" aria-label="Minutes per track" disabled> min</label></div></div>
 <p id="presentationNextStatus" class="presentation-next-status" role="status" aria-live="polite"></p>
 <div id="presentationGate" class="presentation-gate" hidden><p id="presentationStatus" role="status" aria-live="polite">Preparing your moment…</p><button id="presentationBegin" hidden>Tap to begin</button></div></div>
-<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=session-entry-90"></script>
+<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=controls-1"></script>
 <script type="module" src="select-ui.js?rev=selects-45"></script>
-<script type="module" src="controls-ui.js?rev=design-system-1"></script>
+<script type="module" src="controls-ui.js?rev=controls-1"></script>
 </body></html>

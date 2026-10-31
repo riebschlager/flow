@@ -107,6 +107,8 @@ Add these enhancers to `controls-ui.js`, or to a new `controls-kit.js` that it i
 
 Add tests to `checks/controls-ui.test.mjs`. Each enhancer must keep `.value`, events and `disabled` in sync both ways. **Done when:** no visible change unless a component is applied to an element. All checks pass.
 
+*Status: done (`rev=controls-1`).* The primitives live in `public/controls-kit.js` and are re-exported from `controls-ui.js`: `enhanceSegmented(select,{size,full})`, `enhanceSwatchGrid(select)`, `enhanceStepper(input,{label,unit})`, `enhanceLayer(switch,body,{status})` and `enhanceEnvelopeGraph(host)`. For a vertical fader, set `data-orientation="vertical"` on a range and use `--fader-length` to size it. Tempo now has a hidden `#bpm` number input (30–100, step 2) that mirrors `state.bpm` both ways through `showBpm()`/`setBpm()` in `app.js`. Property watchers chain, so a knob and the EnvelopeGraph can watch the same range.
+
 ### Phase 2 · Sound and Scene tabs
 These two have the least coupling to other code. Apply Segmented to `chordLength`, `waterPreset` and `rhythmVisualMode`. Add the swatch grid, unfold Color voices, remove the Color behavior section, flatten the water and percussion-response folds, and group the fluid knobs. **Done when:** each tab matches its target table and neither tab has a nested fold.
 

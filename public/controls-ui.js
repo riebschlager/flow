@@ -3,6 +3,10 @@
 // remains the source of truth, so existing listeners, storage and sessions are
 // unchanged: the knob writes .value and dispatches the same input/change events.
 // Static helper copy moves into a "?" tip beside its section title.
+// Segmented, swatch grid, Stepper, Layer and EnvelopeGraph live in controls-kit.js
+// and are applied per element; importing them changes nothing on the page.
+import {clamp,recentlyScrolled,watchControl} from './controls-kit.js?rev=controls-1';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-1';
 
 export const KNOBS={
  reverb:{},delay:{},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
@@ -14,9 +18,7 @@ export const KNOBS={
  rhythmSwing:{},rhythmHumanize:{},gestureAmount:{}
 };
 const SWEEP=270,START=-135,DRAG_PX=200,FINE=.1;
-const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const valueProp=typeof HTMLInputElement==='undefined'?null:Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
-let lastScroll=0;
 
 function polar(c,r,deg){const a=(deg-90)*Math.PI/180;return [c+r*Math.cos(a),c+r*Math.sin(a)];}
 function arc(c,r,a0,a1){
@@ -33,12 +35,8 @@ function commit(input,x,type='input'){
  if(+valueProp.get.call(input)!==x)valueProp.set.call(input,String(x));
  input.dispatchEvent(new Event(type,{bubbles:true}));
 }
-function watchValue(input,render){
- // Programmatic updates (settings, sessions, presets) keep visuals in step.
- Object.defineProperty(input,'value',{configurable:true,get(){return valueProp.get.call(this);},set(v){valueProp.set.call(this,v);render();}});
- input.addEventListener('input',render);input.addEventListener('change',render);
- new MutationObserver(render).observe(input,{attributes:true,attributeFilter:['disabled']});
-}
+// Programmatic updates (settings, sessions, presets) keep visuals in step.
+const watchValue=(input,render)=>watchControl(input,render);
 
 function buildKnob(input,opts){
  const skew=opts.skew||1,label=document.querySelector(`label[for="${input.id}"]`),output=label?.querySelector('output');
@@ -94,7 +92,7 @@ function buildKnob(input,opts){
   input.dispatchEvent(new Event('change',{bubbles:true}));
  });
  knob.addEventListener('wheel',e=>{
-  if(input.disabled||Date.now()-lastScroll<400)return;
+  if(input.disabled||recentlyScrolled())return;
   e.preventDefault();state.norm=toNorm(input,input.valueAsNumber,skew);
   nudge((e.deltaY<0?1:-1)*(e.shiftKey?.002:.01),'key');
  },{passive:false});
@@ -142,6 +140,7 @@ export function enhanceSliders(root=document){
  for(const input of root.querySelectorAll('input[type=range]')){
   if(input.dataset.knob||input.dataset.slider)continue;
   input.dataset.slider='1';
+  if(input.dataset.orientation==='vertical')input.setAttribute('aria-orientation','vertical');
   watchValue(input,()=>setPct(input));setPct(input);
  }
  if(root.flowSliderEvents)return;root.flowSliderEvents=true;
@@ -152,7 +151,7 @@ export function enhanceSliders(root=document){
  root.addEventListener('dblclick',e=>{if(isSlider(e.target)&&!e.target.disabled){commit(e.target,+e.target.defaultValue);commit(e.target,+e.target.defaultValue,'change');}});
  root.addEventListener('wheel',e=>{
   const input=e.target;
-  if(!isSlider(input)||input.disabled||Date.now()-lastScroll<400)return;
+  if(!isSlider(input)||input.disabled||recentlyScrolled())return;
   e.preventDefault();
   const {min,max,step}=range(input),delta=(e.deltaY<0?1:-1)*Math.max(step,(max-min)*(e.shiftKey?.002:.01));
   const x=clamp(+(input.valueAsNumber+delta).toFixed(6),min,max);
@@ -196,6 +195,5 @@ export function enhanceHelpTips(root=document){
 }
 
 if(typeof document!=='undefined'){
- document.addEventListener('scroll',()=>{lastScroll=Date.now();},{capture:true,passive:true});
  enhanceHelpTips();enhanceKnobs();enhanceSliders();
 }

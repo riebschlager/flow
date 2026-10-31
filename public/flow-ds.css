@@ -219,6 +219,60 @@ input[type=range]:disabled{opacity:.4;cursor:default}
  .panel input[type=range]::-webkit-slider-thumb,dialog input[type=range]::-webkit-slider-thumb{width:22px;height:22px}
 }
 
+/* Vertical fader: <input type=range data-orientation=vertical> */
+input[type=range][data-orientation=vertical],.panel input[type=range][data-orientation=vertical]{writing-mode:vertical-lr;direction:rtl;width:20px;height:var(--fader-length,150px);background:linear-gradient(to top,var(--control-fill) var(--pct,50%),var(--control-track) var(--pct,50%)) center / 2px 100% no-repeat}
+@media(pointer:coarse){.panel input[type=range][data-orientation=vertical],dialog input[type=range][data-orientation=vertical]{width:44px;height:var(--fader-length,150px)}}
+
+/* Segmented and swatch grid (controls-kit.js over a native select) */
+select[data-enhanced],input[data-enhanced]{display:none!important}
+.segmented{display:inline-flex;gap:2px;padding:2px;max-width:100%;background:var(--bg-well);border:1px solid var(--line);border-radius:var(--r-2)}
+.segmented-full{display:flex}
+.segmented>button{flex:none;height:28px;padding:0 10px;border:0;border-radius:4px;background:transparent;color:var(--text-3);font:500 12px/1 var(--font-sans);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer;transition:background var(--dur-2) var(--ease-out),color var(--dur-1)}
+.segmented-full>button{flex:1}
+.segmented-sm>button{height:24px;font-size:11px}
+.segmented>button:hover{color:var(--text-1)}
+.segmented>button[aria-checked=true]{background:var(--n-300);color:var(--text-1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.segmented>button:focus-visible,.swatch-grid>button:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.segmented>button:disabled,.swatch-grid>button:disabled{cursor:default;opacity:1}
+.segmented.is-disabled,.swatch-grid.is-disabled{opacity:.4}
+.swatch-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.swatch-grid>button{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:transparent;color:var(--text-2);font:500 12px/1.2 var(--font-sans);text-align:left;cursor:pointer;transition:background var(--dur-1),border-color var(--dur-2),color var(--dur-1)}
+.swatch-grid>button:hover{background:var(--bg-hover);color:var(--text-1)}
+.swatch-grid>button[aria-checked=true]{border-color:var(--accent-ring);background:var(--accent-dim);color:var(--text-1)}
+.swatch-dots{display:flex;flex:none}
+.swatch-dots>i{width:12px;height:12px;margin-left:-3px;border-radius:50%;background:var(--swatch);box-shadow:0 0 0 1.5px var(--bg-panel)}
+.swatch-dots>i:first-child{margin-left:0}
+.swatch-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Stepper (controls-kit.js over a native number input) */
+.stepper{display:inline-flex;flex-direction:column;align-items:center;gap:4px;user-select:none}
+.stepper-label{font:500 11px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.stepper-row{display:flex;align-items:center;gap:2px}
+.stepper-button{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:var(--r-2);background:transparent;color:var(--text-2);font:400 16px/1 var(--font-sans);transition:background var(--dur-1),color var(--dur-1)}
+.stepper-button:hover:not(:disabled){background:var(--bg-hover);color:var(--text-1)}
+.stepper-button:disabled{cursor:default;opacity:.35}
+.stepper-value{min-width:38px;text-align:center;font:400 20px/1 var(--font-mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text-1);cursor:ns-resize;touch-action:none;border-radius:4px;outline:none;transition:color var(--dur-2)}
+.stepper-value:focus-visible{box-shadow:var(--focus-ring)}
+.stepper.is-live .stepper-value{color:var(--accent-strong)}
+.stepper-unit{font:400 11px/1 var(--font-mono);color:var(--text-3)}
+.stepper.is-disabled{opacity:.4}
+.stepper.is-disabled .stepper-value{cursor:default}
+
+/* Layer: the switch reveals its body (controls-kit.js) */
+.layer-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-3) var(--ease-out)}
+.layer-body.is-open{grid-template-rows:1fr}
+.layer-body-inner{overflow:hidden;min-height:0}
+
+/* EnvelopeGraph (controls-kit.js) */
+.envelope-graph{display:block;width:100%;height:72px;overflow:visible}
+.envelope-graph line{stroke:var(--line);vector-effect:non-scaling-stroke}
+.envelope-graph .envelope-base{stroke:var(--line-strong)}
+.envelope-area{fill:rgba(255,255,255,.035)}
+.envelope-line,.envelope-active{fill:none;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.envelope-line{stroke:var(--text-2);stroke-width:1.5}
+.envelope-active{stroke:var(--accent);stroke-width:2}
+.envelope-graph.is-disabled{opacity:.4}
+
 /* Knob (built by controls-ui.js over a native range) */
 .knob-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:18px 8px;margin:14px 0 4px}
 .knob-cell{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;text-align:center}
@@ -299,7 +353,7 @@ dialog label{font-size:12px;color:var(--text-2)}
 .mobile-play{background:var(--n-900);color:var(--n-50)}
 
 @media(prefers-reduced-motion:reduce){
- .knob-body,.help-tip>[role=tooltip],input[type=checkbox]:after,.panel .tabs button{transition:none}
+ .knob-body,.help-tip>[role=tooltip],input[type=checkbox]:after,.panel .tabs button,.layer-body,.segmented>button,.swatch-grid>button,.stepper-value{transition:none}
 }
 
 /* Wider rail on roomy desktops */
