@@ -4,7 +4,7 @@
 
 **Why:** The first ten seconds decide whether someone stays. A five-tab control panel on first load reads as "complicated tool," and that is where the concept gets diluted. The controls are still valuable; they just shouldn't be the first impression.
 
-**Depends on:** explicit breathing/sleep controls and [03](03-visible-sound.md) (energy dial).
+**Depends on:** sleep controls and [03](03-visible-sound.md) (energy dial).
 
 **Historical plan:** intent presets have been retired. The automatic performer was also removed on November 1, 2026.
 

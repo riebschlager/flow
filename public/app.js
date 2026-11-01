@@ -1,9 +1,9 @@
 import {FluidListen,shimmerNote} from './fluid-listen.js?rev=fluid-feedback-82';
 import {writeInDye,normalizeDyeTitle} from './dye-text.js?rev=clip-framing-89';
-import {migrateListeningPreferences,normalizeLayout,PerformerTrail,createPresentControls} from './first-run.js?rev=feature-prune-98';
+import {migrateListeningPreferences,normalizeLayout,PerformerTrail,createPresentControls} from './first-run.js?rev=remove-breathing-99';
 import {VisibleSound,normalizeEnergy} from './visible-sound.js?rev=fluid-feedback-82';
 import {delaySeconds} from './timing.js?rev=gestures-32-echo52';
-import {createListeningController} from './listening-ui.js?rev=feature-prune-98';
+import {createListeningController} from './listening-ui.js?rev=remove-breathing-99';
 import {RainClock,schedulingLookahead,createBackgroundContinuity} from './background-continuity.js?rev=continuity-76';
 import {createSessionWorkspace} from './session-workspace.js?rev=fun-names-97';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
@@ -12,8 +12,8 @@ import {GPUFluidRenderer} from './gpu-fluid-renderer.js?rev=remove-water-93';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=home-captions-96';
-import {createPresentationController} from './presentation.js?rev=feature-prune-98';
-import {createRecorderController} from './recorder-ui.js?rev=feature-prune-98';
+import {createPresentationController} from './presentation.js?rev=remove-breathing-99';
+import {createRecorderController} from './recorder-ui.js?rev=remove-breathing-99';
 import {isSetupDraft} from './recorder-core.js?rev=titles-81';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=remove-water-93';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=fluid-feedback-82';
@@ -243,7 +243,7 @@ function serviceDrops(){
 }
 function syncDropScheduler(){
  if(dropTimer!==null)globalThis.clearInterval(dropTimer);dropTimer=null;
- if(!state.playing)listeningUI?.stop();if(!state.playing)for(const d of drops)d.cancel?.abort();
+ if(!state.playing)for(const d of drops)d.cancel?.abort();
  serviceMusic();if(state.playing)dropTimer=globalThis.setInterval(serviceMusic,25);
 }
 function drop(x,y,color=state.selected,impulse=null,expression=null,when=null,fixedColor=false){
@@ -295,7 +295,7 @@ const performanceUI=createPerformanceController({canvas,stage,audio,sim,drop,nex
 const rhythmUI=createRhythmController({audio,togglePlay,onFlare:hit=>visibleSound.flare(hit),onChange:()=>recorder?.stateChanged(),getChordAt:when=>activeChords()[Math.floor(Math.max(0,when-clockOrigin)/(Number($('chordLength').value)*60/state.bpm))%4],getPosition:()=>Math.max(0,state.playing?audio.ctx.currentTime-clockOrigin:state.elapsed)*state.bpm/60,onHit:hit=>{recorder?.capture('percussion',hit,hit.time);stirPercussion(sim,hit);}});
 const arpUI=createArpeggiatorController({audio,getFluid:index=>$('fluidListens').checked&&!recorder?.replaying?fluidListen.arp(index,$('quantizeEnabled').checked):null,onImpact:event=>visualImpact({...event,color:(event.index||0)%4},'arp'),getColors:()=>colors.map(c=>c.hex),onNote:event=>{recorder?.capture('arpeggio',event,event.time);},onChange:()=>recorder?.stateChanged(),getClock:()=>({origin:rhythmUI.timingOrigin??clockOrigin,chordOrigin:clockOrigin,bpm:state.bpm,rate:audio.rhythmRate,chordBeats:Number($('chordLength').value),chords:activeChords()}),getChord:()=>activeChords()[state.playing?chordAt(audio.ctx.currentTime):state.chordIndex]});
 const environmentUI=createEnvironmentController({audio,getOrigin:()=>clockOrigin,onChange:()=>recorder?.stateChanged(),readOnly:()=>!!recorder?.blocked});
-listeningUI=createListeningController({audio,performanceUI,energy:()=>visibleSound.energy,playing:()=>state.playing,blocked:()=>!!recorder?.blocked||!!recorder?.arming,pause:togglePlay});
+listeningUI=createListeningController({audio,playing:()=>state.playing,blocked:()=>!!recorder?.blocked||!!recorder?.arming,pause:togglePlay});
 continuity=createBackgroundContinuity({playing:()=>state.playing||!!recorder?.replaying,zen:()=>document.body.classList.contains('zen'),title:()=>$('soundscape').selectedOptions[0].textContent,togglePlay,visibility:()=>{lastFrame=performance.now();if(document.hidden){visibleSound.clear();ripples=[];glows=[];}serviceMusic();rhythmUI.backgroundChanged();arpUI.backgroundChanged();}});
 sliders();syncAudio();showBpm();$('customChords').hidden=state.progression!=='custom';$('scapeDescription').textContent=soundscapes[$('soundscape').value]?.text||'Four colors. Four voices. Entirely your own.';document.querySelector('.autopour').classList.toggle('off',!$('autoPour').checked);sim.swirl=Number($('swirl').value)/100;sim.persistence=Number($('persistence').value)/100;renderChords();updateTransport();applyPalette();syncColorMode();resize();seed();requestAnimationFrame(tick);
 

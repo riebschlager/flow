@@ -330,7 +330,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=feature-prune-98"><\/script>/);assert.match(html,/flow-ds\.css\?rev=feature-prune-98/);assert.match(html,/style\.css\?rev=feature-prune-98/);assert.match(html,/presentation\.css\?rev=controls-8a/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=remove-breathing-99"><\/script>/);assert.match(html,/flow-ds\.css\?rev=remove-breathing-99/);assert.match(html,/style\.css\?rev=remove-breathing-99/);assert.match(html,/presentation\.css\?rev=controls-8a/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -382,7 +382,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const play=html.match(/<div id="performPanel"[^>]*>([\s\S]*?)\n<\/div>/)[1];
  assert.ok(!play.includes('<details'),'Play has no folds');
  for(const gone of ['pitchControls','expressionControls','fluidListens','performance-enable','Gesture guide<'])assert.ok(!play.includes(gone),`${gone} is gone from Play`);
- const order=['for="gestureTool">Canvas tool<','<div class="section-label">Automatic droplets</div>','<div class="section-label">Quantize</div>','<div class="section-label">Pitch range</div>','<div class="section-label">Breathing &amp; sleep</div>','<h2 class="section-label">Gestures</h2>'].map(t=>{const i=play.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
+ const order=['for="gestureTool">Canvas tool<','<div class="section-label">Automatic droplets</div>','<div class="section-label">Quantize</div>','<div class="section-label">Pitch range</div>','<div class="section-label">Sleep timer</div>','<h2 class="section-label">Gestures</h2>'].map(t=>{const i=play.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
  assert.deepEqual([...order].sort((a,b)=>a-b),order,'the six sections follow the target order');
  const section=title=>{const i=play.indexOf(title);return play.slice(play.lastIndexOf('<section',i),play.indexOf('</section>',i));};
  const has=(markup,ids,where)=>{for(const id of ids)assert.ok(markup.includes(`id="${id}"`),`${id} sits in ${where}`);};
@@ -392,12 +392,12 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  has(section('>Quantize<'),['quantizeEnabled','quantizeStatus','quantizeControls','quantizeBeats'],'Quantize');
  has(section('Pitch range'),['octavesDown','octavesUp','pitchRangeValue','expressionDot'],'Pitch range');
  assert.match(section('Pitch range'),/<output id="pitchRangeValue" class="range-readout"/,'the pitch range is a mono readout, not a status paragraph');
- has(section('>Breathing &amp; sleep<'),['breathStyle','sleepTimer','sleepStatus'],'Breathing & sleep');
+ has(section('>Sleep timer<'),['sleepTimer','sleepStatus'],'Sleep timer');
  has(section('>Gestures<'),['gestureGuide','bloom','conductScene','resetPerformance'],'Gestures');
  assert.match(section('>Gestures<'),/<div class="section-head"><h2 class="section-label">Gestures<\/h2><button id="bloom" class="ghost-button">/,'Release a bloom is the section action');
  assert.match(section('>Gestures<'),/<button id="resetPerformance" class="ghost-button">Let the scene settle<\/button>$/,'Let the scene settle closes the section as a ghost button');
  assert.equal(section('>Gestures<').match(/<article>/g).length,6,'all six gestures stay, unfolded');
- for(const id of ['expressionEnabled','gestureTool','gestureToolHelp','gestureAmount','gestureAmountValue','autoPour','rain','rainValue','quantizeEnabled','quantizeStatus','quantizeBeats','octavesDown','octavesUp','pitchRangeValue','expressionDot','breathStyle','sleepTimer','sleepStatus','bloom','gestureGuide','conductScene','resetPerformance'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ for(const id of ['expressionEnabled','gestureTool','gestureToolHelp','gestureAmount','gestureAmountValue','autoPour','rain','rainValue','quantizeEnabled','quantizeStatus','quantizeBeats','octavesDown','octavesUp','pitchRangeValue','expressionDot','sleepTimer','sleepStatus','bloom','gestureGuide','conductScene','resetPerformance'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
  assert.ok(html.includes('id="zenSleepTimer"'),'Zen keeps its sleep mirror');
  assert.deepEqual([...section('>Quantize<').matchAll(/<option value="([^"]*)"/g)].map(m=>Number(m[1])),[1,.5,.25,.125,1/3]);
  for(const [,value] of section('>Quantize<').matchAll(/<option value="([^"]*)"/g))assert.equal(value,String(Number(value)),'grid values round-trip through a saved number');
@@ -431,7 +431,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const knobOf=id=>$(id).closest('.knob-cell')?.querySelector('.knob');
  assert.ok(knobOf('gestureAmount'));
  assert.equal($('driftEnabled'),null);assert.equal($('driftWander'),null);assert.equal($('driftPace'),null);
- assert.ok($('breathStyle')&&$('sleepTimer'));
+ assert.equal($('breathStyle'),null);assert.ok($('sleepTimer'));
  const visible=n=>{for(;n&&n!==doc.body;n=n.parentElement)if(n.hidden||n.classList.contains('sr-only')||n.classList.contains('help-tip'))return false;return true;};
  assert.deepEqual(panel.querySelectorAll('p.helper').filter(visible).map(p=>p.id||p.textContent),[],'no helper or status paragraph stays visible in Play');
  assert.equal(panel.querySelectorAll('details').length,0);
@@ -790,4 +790,4 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
 }
 console.log('PASS: Zen and presentation are one glass strip: the row toggles are gone, Zen Play is a round icon, Enter writes the title, auto-advance is a Switch with a minutes Stepper, and the strips hold 4 and 3 buttons.');
 console.log('PASS: Community has chart Tabs with roving focus and a sliding bar, a ⋯ menu for Refresh and the browser library, and TrackRows with a like and a per-row menu whose Remove keeps it open to confirm.');
-console.log('PASS: beat studio is a StepGrid with per-voice tools, mirrored knobs and HelpTips; the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer with breathing and sleep controls, a knob for intensity, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');
+console.log('PASS: beat studio is a StepGrid with per-voice tools, mirrored knobs and HelpTips; the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer with a sleep timer, a knob for intensity, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');

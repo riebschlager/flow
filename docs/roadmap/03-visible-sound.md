@@ -51,7 +51,7 @@
 
 1. Faint vertical bands at the canvas x-positions that map to the current chord's tones (use `pitchesForRange` and `pitchForPosition` in `music.js`), drawn very subtly near the bottom edge.
 2. On a chord change the bands slide to their new positions over the chord atmosphere's crossfade time.
-3. Off below energy 30. Hidden during Drift's Breathe style.
+3. Off below energy 30.
 
 ## Non-goals
 

@@ -27,7 +27,7 @@ if(process.env.FLOW_FIRST_RUN){
  const voices=[0,1,2,3].map(i=>$('voice'+i).value),progression=$('progression').value;
  $('voice0').value='rhodes';for(const fn of $('voice0').listeners.change)await fn();
  assert(!ids.has('driftEnabled')&&!ids.has('driftWander')&&!ids.has('driftPace')&&!ids.has('renderSource'));
- assert.equal($('breathStyle').value,'off');
+ assert(!ids.has('breathStyle'));
  $('sleepTimer').value='45';for(const fn of $('sleepTimer').listeners.change)fn();
  assert.equal($('voice0').value,'rhodes');assert.equal($('progression').value,progression);assert.equal($('zenSleepTimer').value,'45');
 

@@ -305,9 +305,9 @@ Rain and its chord pitches follow the audio clock, including while the tab is hi
 
 The baseline fake-browser check produced zero rain notes during ten minutes with no animation frames and one-second timers. `checks/background-app.test.mjs` covers that scenario after the fix. Browsers and operating systems may still suspend audio or throttle timers beyond this horizon. Locked-screen playback has **not been verified on real iPhone or Android hardware**; Flow keeps its existing direct audio output. No experimental MediaStream-to-`<audio>` route is enabled without that device validation.
 
-### Breathing and sleep
+### Sleep timer
 
-Play → Breathing & sleep offers explicit 4–4, 4–7–8 or box breathing, off by default. Gather follows the inhale, stillness the holds, and a soft chord Bloom the exhale, independently of tempo. Touching the canvas yields control immediately; the cue resumes after two quiet seconds. The preference uses `chromaflow-breath-v1`. Sleep timer remains available in Play, Zen and Present mode, with a four-minute listening fade, darkening canvas, touch cancellation and Wake Lock release at the end.
+Play → Sleep timer remains available in Play, Zen and Present mode, with a four-minute listening fade, darkening canvas, touch cancellation and Wake Lock release at the end. Breathing guidance and its automatic gestures have been removed; retired `chromaflow-breath-v1` preferences are ignored. Recorded gestures remain replayable.
 
 The idle automatic performer, related-progression wandering and live-generative long WAV source have been removed. Retired `chromaflow-drift-v1` preferences are ignored. Existing recordings retain their resolved notes, gestures and progression snapshots; replay, Community, forks, clips and loop WAV exports continue using that data. Long WAV renders repeat the selected recording for 5/15/30/60 minutes. Automatic droplets, the arpeggiator, percussion, manually chosen progressions and manual gestures remain independent.
 

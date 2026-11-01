@@ -1,10 +1,17 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {BreathEngine,breathPhase,SleepTimer} from '../public/listening.js';
-let now=0,events=[];const breath=new BreathEngine({clock:()=>now,emit:e=>events.push(e)});
-for(let i=0;i<36000;i++){now=i/10;breath.service();}assert.equal(events.length,0,'idle playback never starts an automatic performer');
-for(const style of ['calm','478','box']){now=0;events=[];breath.configure(style);for(let i=0;i<6000;i++){now=i/10;breath.service();}const blooms=events.filter(e=>e.kind==='bloom');assert(blooms.length>0);assert(blooms.every(e=>breathPhase(style,e.time-2).kind==='exhale'));assert(!events.some(e=>['tap','silk','orbit','conduct'].includes(e.kind)));breath.input();const count=events.length;now+=1;breath.service();assert.equal(events.length,count);breath.service({blocked:true});assert.equal(breath.started,null);}
-breath.configure('drift');assert.equal(breath.style,'off');
+import {SleepTimer} from '../public/listening.js';
+let now=0;
 let values=[],finished=0;const sleep=new SleepTimer({clock:()=>now,change:v=>values.push(v),finish:()=>finished++});sleep.set(15);now+=780;sleep.service();assert(sleep.fading);assert(Math.abs(values.at(-1).gain-.01)<1e-8);assert(sleep.input());assert.equal(values.at(-1).gain,1);sleep.set(15);now+=900;sleep.service();assert.equal(finished,1);
-const html=readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');assert(!/id="(?:driftEnabled|driftWander|driftStyle|driftPace|renderSource)"/.test(html));
-console.log('PASS: idle playback stays manual, all explicit breathing patterns yield and block, sleep fade/cancel/finish, and retired controls are absent.');
+const html=readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');assert(!/id="(?:driftEnabled|driftWander|driftStyle|driftPace|renderSource|breathStyle)"/.test(html));
+console.log('PASS: sleep fade/cancel/finish, and retired performer, harmony and breathing controls are absent.');
+// The timer controller must initialize without reading retired preferences or producing gestures.
+const nodes=new Map(['sleepTimer','zenSleepTimer','sleepStatus','sleepNotice','fluid'].map(id=>[id,{value:'0',textContent:'',listeners:{},addEventListener(type,fn){this.listeners[type]=fn;}}]));
+globalThis.document={getElementById:id=>{assert(nodes.has(id));return nodes.get(id);},body:{style:{setProperty(){}}}};
+globalThis.localStorage={getItem(){throw new Error('Sleep timer must not read performer preferences');}};
+let audioNow=0,pauses=0,playing=true;const gains=[];const audio={ctx:{get currentTime(){return audioNow;},destination:{},createGain:()=>({gain:{value:1,setTargetAtTime:v=>gains.push(v)},connect(){}})},master:{disconnect(){},connect(){}},update(){}};
+const {createListeningController}=await import('../public/listening-ui.js');
+const controller=createListeningController({audio,playing:()=>playing,blocked:()=>false,pause:()=>{playing=false;pauses++;}});
+nodes.get('sleepTimer').value='15';nodes.get('sleepTimer').listeners.change();assert.equal(nodes.get('zenSleepTimer').value,'15');audioNow=780;controller.service();assert(Math.abs(gains.at(-1)-.01)<1e-8);nodes.get('fluid').listeners.pointerdown();assert.equal(nodes.get('sleepTimer').value,'0');assert.equal(gains.at(-1),1);
+nodes.get('zenSleepTimer').value='15';nodes.get('zenSleepTimer').listeners.change();audioNow+=900;controller.service();assert.equal(pauses,1);assert.equal(nodes.get('sleepStatus').textContent,'Sleep timer finished');
+console.log('PASS: sleep controls mirror, touch cancels the fade, completion pauses, and the controller needs no breathing controls or preferences.');
