@@ -79,7 +79,7 @@ const pointer=(el,type,extra)=>{const e=new Event(type,{bubbles:true,cancelable:
 function log(el){const seen=[];el.addEventListener('input',()=>seen.push('input:'+el.value));el.addEventListener('change',()=>seen.push('change:'+el.value));return seen;}
 function select(id,values,label){const wrap=new Node('div');doc.body.append(wrap);if(label){const l=new Node('label');l.attrs.for=id;l.textContent=label;wrap.append(l);}const s=new Select();s.id=id;for(const [v,t] of values)s.append(new Option(v,t));wrap.append(s);return s;}
 
-const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,POPOVERS,enhanceChrome,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
+const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,POPOVERS,STEPPERS,CAPTURE_SEGMENTED,CHORD_STRIPS,TOASTS,enhanceChrome,enhanceChordStrip,enhanceToast,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
 const html=fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');
 for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}">`),`${id} has a slider label`);}
 for(const level of ['volume','dropletsVolume','arpVolume','rhythmVolume','environmentVolume','rain','energy'])assert.ok(!(level in KNOBS),`${level} stays a slider`);
@@ -116,8 +116,9 @@ assert.deepEqual([...html.matchAll(/<input id="(\w+)"[^>]*data-orientation="vert
 }
 assert.match(html,/<input id="bpm" type="number" min="30" max="100" step="2" value="56" aria-label="Tempo" hidden>/,'tempo state has a hidden number input for the Stepper');
 const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
-assert.match(app,/function showBpm\(\)\{\$\('bpmLabel'\)\.textContent=state\.bpm;\$\('bpm'\)\.value=state\.bpm;\}/,'every tempo change writes the hidden input');
-assert.ok(!/\$\('bpmLabel'\)\.textContent=state\.bpm;(?!\$\('bpm'\))/.test(app.replace(/function showBpm[^\n]*/,'')),'no tempo write bypasses showBpm');
+assert.match(app,/function showBpm\(\)\{\$\('bpm'\)\.value=state\.bpm;\}/,'every tempo change writes the hidden input');
+assert.ok(!/\$\('bpm'\)\.value=state\.bpm/.test(app.replace(/function showBpm[^\n]*/,'')),'no tempo write bypasses showBpm');
+assert.ok(!/bpmLabel|'slower'|'faster'/.test(app+html),'the Stepper replaces the −/+ buttons and label');
 assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Number\(\$\('bpm'\)\.value\);if\(Number\.isFinite\(value\)&&value!==state\.bpm\)setBpm\(value\);\}\);/,'the hidden input drives tempo');
 
 // Segmented: a radio group over the native select.
@@ -334,7 +335,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-6"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-6/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-6b"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-6b/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -532,4 +533,60 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  button.click();button.click();assert.equal(panel.hidden,true,'the trigger toggles');
  $('allSessions').disabled=false;
 }
-console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon');
+// Phase 6b: one-row transport with one Play, the ChordStrip and take chip, the tempo Stepper, and one Record with a capture popover.
+{
+ const row=html.match(/<div id="zenHarmonyRow" class="transport"[\s\S]*?id="recordBarStatus"[^\n]*\n<\/div>\n/)[0];
+ const at=id=>row.indexOf(`id="${id}"`);
+ for(const id of ['start','playLabel','audioState','listeningHint','chords','takeChip','takeChipName','takeChipClear','recordBarFork','noteToast','bpm','recordGroup','recordStart','retryTakeSave','captureMenuButton','capturePanel','recordName','recordMode','recordCycles','recordAutoLoop','recordBarTime','recordCancel','quickLoop','recordProgress','recordBarStatus'])assert.ok(at(id)>0,`${id} lives in the transport`);
+ const order=['start','chords','takeChip','noteToast','bpm','recordStart','captureMenuButton','recordBarTime','quickLoop'].map(at);
+ assert.deepEqual(order,[...order].sort((a,b)=>a-b),'Play · ChordStrip · take chip · note · tempo · Record · capture · timer · Loop');
+ const panel=row.slice(at('capturePanel'),row.indexOf('</div></div>',at('capturePanel')));
+ for(const id of ['recordName','recordMode','recordCycles','recordAutoLoop'])assert.ok(panel.includes(`id="${id}"`),`${id} is in the capture popover`);
+ for(const id of ['quickPlay','quickLive','quickStop','quickRecord','quickUseSetup','quickExport','quickShare','quickLibrary','sessionTakes','quickStatus','quickTime','quickProgress','captureLengthLabel','recordFinish','recordBarStop','recordBar','zenTransportRow','slower','faster','bpmLabel'])assert.ok(!html.includes(`id="${id}"`),`${id} is gone`);
+ for(const marker of ['class="take-tray','class="session-capture','class="record-bar'])assert.ok(!html.includes(marker),`${marker} is gone`);
+ assert.equal(html.match(/class="play-button"/g).length,1,'one transport Play button');
+ assert.match(html,/<button id="zenTransportToggle"[^>]*hidden>/,'the second Zen row toggle is hidden until Phase 7');
+ assert.match(html,/<div id="toast" class="toast" role="status" aria-live="polite" hidden>/);
+ assert.deepEqual(POPOVERS.captureMenuButton,{panel:'capturePanel'});assert.deepEqual(Object.keys(STEPPERS),['bpm','recordCycles']);assert.deepEqual(CAPTURE_SEGMENTED,{recordMode:{size:'sm',full:true}});assert.deepEqual(CHORD_STRIPS,['chords']);assert.deepEqual(TOASTS,['toast']);
+ assert.ok(!/enhanceStepper|enhanceChordStrip|enhanceToast/.test(app),'app.js does not apply components');
+
+ doc.body.replaceChildren();
+ const wrap=new Node('div');doc.body.append(wrap);wrap.innerHTML=row+html.match(/<div id="toast"[^\n]*?<\/div>/)[0];
+ const $=id=>doc.getElementById(id);
+ enhanceChrome(doc);await flush();
+ // Tempo: the Stepper mirrors the hidden #bpm both ways.
+ const bpm=$('bpm'),tempo=bpm.nextElementSibling,seen=log(bpm);
+ assert.ok(tempo.classList.contains('stepper'));assert.equal(tempo.querySelector('.stepper-unit').textContent,'BPM');
+ tempo.querySelectorAll('button')[1].click();assert.equal(bpm.value,'58');assert.deepEqual(seen,['input:58','change:58']);
+ bpm.value='30';assert.equal(tempo.querySelector('.stepper-value').textContent,'30','a tempo write reaches the Stepper');assert.equal(tempo.querySelectorAll('button')[0].disabled,true);
+ // ChordStrip over the chips app.js renders.
+ const chords=$('chords');
+ const render=current=>{chords.innerHTML=['Cmaj7','Am7','Fmaj7','G'].map((c,i)=>`${i?'<span class="chord-arrow" aria-hidden="true">→</span>':''}<button class="chord-chip ${i===current?'active':''}" data-chord="${i}">${c}<span class="progress"></span></button>`).join('');};
+ render(2);await flush();
+ const chips=()=>chords.querySelectorAll('button');
+ assert.ok(chords.classList.contains('chord-strip'));assert.equal(chords.style.props['--chords'],'4');
+ assert.deepEqual(chips().map(b=>b.dataset.state),['past','past','current','next']);assert.deepEqual(chips().map(b=>b.tabIndex),[-1,-1,0,-1],'one tab stop, on the current chord');
+ chips()[2].focus();key(doc.activeElement,'ArrowRight');assert.equal(doc.activeElement,chips()[3]);key(doc.activeElement,'ArrowRight');assert.equal(doc.activeElement,chips()[0],'arrows wrap');key(doc.activeElement,'End');assert.equal(doc.activeElement,chips()[3]);
+ render(0);await flush();assert.deepEqual(chips().map(b=>b.dataset.state),['current','next','next','next'],'a re-render is decorated again');
+ // Capture popover: a dialog, not a menu; its settings keep their ids and enhancements.
+ const trigger=$('captureMenuButton'),capture=$('capturePanel');
+ assert.equal(capture.hidden,true);assert.equal(trigger.getAttribute('aria-haspopup'),'dialog');
+ trigger.click();assert.equal(capture.hidden,false);assert.equal(doc.activeElement,$('recordName'),'opening focuses the name');
+ const mode=$('recordMode').nextElementSibling;assert.ok(mode.classList.contains('segmented'));assert.deepEqual(mode.querySelectorAll('button').map(b=>b.textContent),['Cycles','Manual']);
+ mode.querySelectorAll('button')[1].click();assert.equal($('recordMode').value,'manual');
+ const cycles=$('recordCycles').nextElementSibling;assert.ok(cycles.classList.contains('stepper'));cycles.querySelectorAll('button')[1].click();assert.equal($('recordCycles').value,'3');
+ $('recordCycles').disabled=true;await flush();assert.equal(cycles.querySelectorAll('button')[1].disabled,true,'manual mode disables the cycles Stepper');
+ assert.equal(capture.hidden,false,'choosing inside keeps it open');
+ key($('recordName'),'Escape');assert.equal(capture.hidden,true);assert.equal(doc.activeElement,trigger);
+ // Toast: `hidden` is the state; it dismisses itself, from its action, or from ×.
+ const toast=$('toast');assert.ok(toast.querySelector('.toast-close'));
+ let acted=0;$('toastAction').hidden=false;$('toastAction').addEventListener('click',()=>{acted++;assert.equal(toast.hidden,false,'the action runs before the toast closes');});
+ toast.dataset.timeout='20';toast.hidden=false;await flush();assert.ok(toast.classList.contains('is-visible'));
+ $('toastAction').click();assert.equal(acted,1);assert.equal(toast.hidden,true);
+ toast.hidden=false;await flush();await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,true,'it hides after data-timeout');
+ toast.dataset.timeout='0';toast.hidden=false;await flush();await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,false,'0 keeps it');
+ toast.querySelector('.toast-close').click();assert.equal(toast.hidden,true);
+ toast.dataset.timeout='20';toast.hidden=false;await flush();toast.dispatchEvent(new Event('pointerenter'));await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,false,'hover pauses it');
+ toast.dispatchEvent(new Event('pointerleave'));await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,true);
+}
+console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');

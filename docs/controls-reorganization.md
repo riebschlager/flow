@@ -140,6 +140,43 @@ Settled before starting (decisions 2 and 5, plus scope):
 
 *Status: 6a done (`rev=controls-6`).* The session header is gone. `#sessionHeader` is now the top bar's title slot (`div.topbar-session`, same id, still toggled by `shell()`): the inline `sessionTitle`, then the session menu chevron, then `sessionSave` in mono. The chevron sits before the saved state on purpose. Blurring the title fires `change`, which flips the status from "Saved on this device" to "Saving…", and a chevron placed after the status jumped 86px mid-click, so the click landed on the slot instead. `sharedPreview` moved into the same slot (← Community · title · status). In Zen, the top bar stays visible with only that slot while a shared recording is open, which keeps the old "visible in Zen too" behavior. The session menu is a new kit primitive, `enhancePopover(trigger,panel,{menu})`: Escape, a click outside, or focus leaving closes it. As a menu, arrow keys, Home and End move between items, disabled items are skipped, and choosing an item runs its handler before the menu closes. `controls-ui.js` applies it from a new `POPOVERS` table in `enhanceChrome()`, which runs at startup after `enhanceRail()`. 6b's capture popover will reuse it. `allSessions`, `backupSession` and `newSession` are its `role=menuitem` buttons, with the same ids and handlers. `sessionOrigin` became the menu's eyebrow (`p.menu-note`) and the title's `aria-describedby`. The top bar reads brand · title slot · Community · Library · ? · Zen · Controls. On home, the edition tagline shows and the title slot and Zen are hidden. `#zen` is an expand icon button, and `toggleZen()` now sets its `aria-label`/`title` instead of rewriting its text. `#fullscreen` is a text button in the Zen strip before Exit Zen, labeled by `syncFullscreen()`, and hidden where the Fullscreen API is missing (the old fallback toggled Zen, which made no sense inside Zen). Leaving fullscreen still leaves Zen (`createPresentControls`). The canvas edge keeps the glass palette pill (swatches · Cycle colors) and `#clear` as a round glass icon button. `paletteHint` stays as an `sr-only` live region. Two `style.css` selectors used `.session-header~.workspace` to hide the legacy transport play group and `#recordBar`. They are re-anchored to `.topbar~.workspace`, because they would otherwise have reappeared, and 6b removes both. On mobile, the title slot is the top bar's third grid row, with the menu opening leftward. The Stepper, ChordStrip, the transport and the mirrors are untouched until 6b.
 
+Settled before 6b:
+- **Play keeps `#start`.** `quickPlay`, `quickLive` and `quickStop` are removed. `togglePlay()` in `app.js` is the one dispatcher for `start`, `mobilePlay`, `presentPlay` and `studioPlay`. It stops whatever is sounding, then plays a shared recording, else the selected take (looping per `quickLoop`), else the live scene.
+- **Orphans.** `retryTakeSave` takes Record's slot while a take is unsaved, and an unsaved toast offers Retry. "Use this setup" is `recordBarFork` inside the take chip while a take or shared track plays. `quickUseSetup` is removed.
+- **Placement.** The transport is one row under the canvas in every posture. `syncTransportLayout()` and `#zenTransportRow` are gone.
+- **Zen toggles.** The row keeps the id `zenHarmonyRow`, and `zenHarmonyToggle` (now "Hide transport") collapses it. `zenTransportToggle` stays in the markup, hidden, for Phase 7 to delete.
+
+*Status: 6b done (`rev=controls-6b`).*
+
+**Transport row.** `#zenHarmonyRow` reads Play + status (`playLabel`, `audioState`, with `listeningHint` beside Play again) · ChordStrip + take chip · note readout · Stepper BPM · Record cluster. The cluster is `recordStart`, the capture chevron, the `recordBarTime` clock, `recordCancel` and the `quickLoop` icon toggle. On phones the dock owns Play, so the row is chords, then tempo and Record. The capture section, take tray and record bar are removed along with every `quick*` id except `quickLoop`.
+- Also removed: `sessionTakes`, `captureLengthLabel`, `recordFinish`, `recordBarStop`, `recordBar`, `slower`, `faster` and `bpmLabel`.
+- `recordProgress` is a 2px line under the cluster, and `recordBarStatus` stays as an sr-only live region.
+- Both legacy hide rules (`.topbar~.workspace …`) are gone, and `.performance-playback #start` no longer dims, because Play now stops playback.
+
+**New kit primitives** in `controls-kit.js`:
+- `enhanceChordStrip(host)` decorates the chips `app.js` renders into `#chords`. Each chip is a grid column with `data-state` past/current/next and a 2px line, and there is one tab stop with arrow, Home and End navigation. It re-decorates on every re-render.
+- `enhanceToast(host,{timeout})` treats `hidden` as the state. The toast hides after `data-timeout` (default 6000 ms, `0` keeps it). Hover or focus pauses it, and the action, × or Escape dismisses it.
+
+**Wiring in `controls-ui.js`.** `enhanceChrome()` applies the new tables: `STEPPERS` (`bpm` with unit BPM, `recordCycles`), `CAPTURE_SEGMENTED` (`recordMode`), `CHORD_STRIPS`, `TOASTS`, and `POPOVERS.captureMenuButton` (a non-menu popover). `showBpm()` writes only `#bpm`.
+
+**One Record control.** `recordStart` is the only Record control, and `recorder-ui.js` owns it. A press stops playback if needed, asks `workspace.beforeRecord()` and records. While recording, a press finishes on the next bar ("Finish at bar", then "Finishing…").
+- The `r` key clicks it.
+- `recordCancel` shows while a take is preparing, recording or saving, or during an export ("Cancel export").
+- `beforeRecord()` names an unnamed take "<session> · Take n", and the name field's placeholder shows that default. A typed name wins and is cleared after the take saves. Without a session (a shared track), `kept()` still makes one from the take.
+
+**Capture settings.** These sit in the popover with their ids unchanged. `recordMode`, `recordCycles` and `recordAutoLoop` now persist on this device under a new key, `flow-capture-v1`, because they had no persistence before.
+
+**Toast and take chip.** After a take, `complete()` calls `workspace.takeFinished(take,saved)`. A saved take shows "Saved · Open in library", whose action clicks `recordLauncher`. An unsaved take shows a sticky "Take not saved · Retry".
+- The take chip (`takeChip`, `takeChipName`, `takeChipClear`) names the playing track, else the session's selected take. A local selection is never shown while a shared track is open.
+- On desktop the chip hangs under the ChordStrip, so the chords keep their width.
+- × stops playback, clears the selection and drops `?take=`. Choosing a take in Library now also selects it for the session.
+- "Play take" in the status follows the chip, so the label never promises a take you can't see.
+- `recorder.playingTake` is new.
+
+**Test updates.** `app-smoke` drives tempo through `#bpm` and checks that all four Play postures play a selected take. `recorder-ui` covers the retry slot and the hook. `session-workspace` covers the chip, ×, naming, toasts and capture persistence. `controls-ui` enhances the real transport markup.
+
+**Left for Phase 8.** `.session-capture`, `.take-tray`, `.capture-options` and `.record-bar` rules remain in `style.css` as orphans.
+
 ### Phase 7 · Dialogs and Zen
 Rebuild the Library as list + detail, port beat studio to StepGrid, switch Community to Tabs and TrackRows, and turn Zen and presentation into one glass strip. Update `recorder-ui`, `community-ui`, `presentation-*` and `rhythm-ui`. **Done when:** no dialog has more than 4 visible buttons before the overflow menu.
 

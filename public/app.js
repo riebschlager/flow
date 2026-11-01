@@ -5,16 +5,17 @@ import {VisibleSound,normalizeEnergy} from './visible-sound.js?rev=fluid-feedbac
 import {delaySeconds} from './timing.js?rev=gestures-32-echo52';
 import {createDriftController} from './drift-ui.js?rev=session-entry-90';
 import {RainClock,schedulingLookahead,createBackgroundContinuity} from './background-continuity.js?rev=continuity-76';
-import {createSessionWorkspace} from './session-workspace.js?rev=session-entry-90';
+import {createSessionWorkspace} from './session-workspace.js?rev=controls-6b';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createEnvironmentController} from './environment-ui.js?rev=session-entry-90';
 import {GPUFluidRenderer} from './gpu-fluid-renderer.js?rev=gpu-84';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
-import {createCommunityController} from './community-ui.js?rev=titles-81';
+import {createCommunityController} from './community-ui.js?rev=controls-6b';
 import {createPresentationController} from './presentation.js?rev=zen-controls-88';
-import {createRecorderController} from './recorder-ui.js?rev=clip-framing-89';
+import {createRecorderController} from './recorder-ui.js?rev=controls-6b';
+import {isSetupDraft} from './recorder-core.js?rev=titles-81';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=chaos-86';
 import {ChordAtmosphere} from './chord-atmosphere.js?rev=fluid-feedback-82';
 import {createArpeggiatorController} from './arpeggiator-ui.js?rev=controls-3';
@@ -72,8 +73,11 @@ $('colorPalette').addEventListener('change',()=>{applyPalette();save();});
 function selectColor(i){state.selected=i;colorBag=[];$('cycleColors').checked=false;syncColorMode();save();}
 document.querySelectorAll('.color').forEach(el=>el.addEventListener('click',()=>selectColor(Number(el.dataset.color))));
 function loadFail(e){$('audioState').textContent=e.message||'Sound could not load. Try again.';$('audioState').style.color='#e5a0ac';}
-async function togglePlay({canvasStart=false}={}){if(recorder?.phase!=='idle'&&recorder){if(recorder.recording)recorder.finish();else if(recorder.replaying)recorder.stopPlayback();return;}if(busy)return;if(sessionWorkspace?.previewing){await community.playPreview();return;}if(document.body.classList.contains('session-home'))return;if(state.playing){state.elapsed=Math.max(0,audio.ctx.currentTime-clockOrigin);state.playing=false;rhythmUI.stop();arpUI.stop();environmentUI.stop();audio.setPlaying(false);syncDropScheduler();updateTransport();return;}busy=true;startingFromCanvas=canvasStart;hideListeningHint();$('start').disabled=true;$('audioState').style.color='';$('audioState').textContent='Getting your scene ready…';try{await audio.initialize();driftUI?.resume();await Promise.all([...effectiveVoices(),...(arpUI.requiredVoice?[arpUI.requiredVoice]:[])].map(v=>audio.load(v)));environmentUI.prepare();clockOrigin=audio.ctx.currentTime-state.elapsed;state.playing=true;audio.setPlaying(true);rhythmUI.start();arpUI.start();environmentUI.start();rainTimer=0;rainClock.reset();syncDropScheduler();updateTransport();$('intro').classList.add('faded');const touches=pendingTouches;pendingTouches=[];for(const args of touches)drop(...args);if(!canvasStart&&!touches.length)drop(.4+Math.random()*.2,.5+Math.random()*.12,0);}catch(e){pendingTouches=[];loadFail(e);}finally{busy=false;startingFromCanvas=false;$('start').disabled=false;syncMobilePlay();}}
-function updateTransport(){$('presentPlay').textContent=recorder?.replaying?'Stop':state.playing?'Pause':'Play';$('presentPlay').setAttribute('aria-label',$('presentPlay').textContent);continuity?.sync();syncListeningHint();const replay=!!recorder?.replaying;$('start').querySelector('use').setAttribute('href',state.playing?'#pause':'#play');$('start').setAttribute('aria-label',state.playing?'Pause':'Play');$('playLabel').textContent=replay?'Recorded moment':state.playing?'In the flow':'Play';$('audioState').textContent=replay?'A favorite moment, on repeat':state.playing?`${activeChords()[state.chordIndex]} · ${$('soundscape').selectedOptions[0].textContent}`:'Play your session when you’re ready';$('sessionState').textContent=replay?'A FAVORITE MOMENT, RETURNING':state.playing?'LET THE MUSIC KEEP YOU COMPANY':'TAKE YOUR TIME';document.querySelector('.transport').classList.toggle('paused',!state.playing&&!replay);rhythmUI.transportChanged();arpUI.transportChanged();environmentUI.transportChanged();syncMobilePlay();}
+function selectedTake(){const take=recorder?.selectedTake;return take&&!isSetupDraft(take)?take:null;}
+// The one Play dispatcher: start, mobilePlay, presentPlay and studioPlay all call it. It acts on a
+// shared recording, else the selected take, else the live scene; whatever is sounding stops first.
+async function togglePlay({canvasStart=false}={}){if(recorder?.phase!=='idle'&&recorder){if(recorder.recording)recorder.finish();else if(recorder.replaying)recorder.stopPlayback();return;}if(busy)return;if(sessionWorkspace?.previewing){await community.playPreview();return;}if(document.body.classList.contains('session-home'))return;if(!state.playing&&!canvasStart&&selectedTake()){await recorder.play($('quickLoop').checked);return;}if(state.playing){state.elapsed=Math.max(0,audio.ctx.currentTime-clockOrigin);state.playing=false;rhythmUI.stop();arpUI.stop();environmentUI.stop();audio.setPlaying(false);syncDropScheduler();updateTransport();return;}busy=true;startingFromCanvas=canvasStart;hideListeningHint();$('start').disabled=true;$('audioState').style.color='';$('audioState').textContent='Getting your scene ready…';try{await audio.initialize();driftUI?.resume();await Promise.all([...effectiveVoices(),...(arpUI.requiredVoice?[arpUI.requiredVoice]:[])].map(v=>audio.load(v)));environmentUI.prepare();clockOrigin=audio.ctx.currentTime-state.elapsed;state.playing=true;audio.setPlaying(true);rhythmUI.start();arpUI.start();environmentUI.start();rainTimer=0;rainClock.reset();syncDropScheduler();updateTransport();$('intro').classList.add('faded');const touches=pendingTouches;pendingTouches=[];for(const args of touches)drop(...args);if(!canvasStart&&!touches.length)drop(.4+Math.random()*.2,.5+Math.random()*.12,0);}catch(e){pendingTouches=[];loadFail(e);}finally{busy=false;startingFromCanvas=false;$('start').disabled=false;syncMobilePlay();}}
+function updateTransport(){$('presentPlay').textContent=recorder?.replaying?'Stop':state.playing?'Pause':'Play';$('presentPlay').setAttribute('aria-label',$('presentPlay').textContent);continuity?.sync();syncListeningHint();const replay=!!recorder?.replaying;const take=!replay&&!state.playing&&!$('takeChip').hidden?selectedTake():null;$('start').querySelector('use').setAttribute('href',state.playing||replay?'#pause':'#play');$('start').setAttribute('aria-label',replay?'Stop':state.playing?'Pause':take?'Play take':'Play');$('playLabel').textContent=replay?'Recorded moment':state.playing?'In the flow':take?'Play take':'Play';$('audioState').textContent=replay?'A favorite moment, on repeat':state.playing?`${activeChords()[state.chordIndex]} · ${$('soundscape').selectedOptions[0].textContent}`:take?'Listen back to your take':'Play your session when you’re ready';$('sessionState').textContent=replay?'A FAVORITE MOMENT, RETURNING':state.playing?'LET THE MUSIC KEEP YOU COMPANY':'TAKE YOUR TIME';document.querySelector('.transport').classList.toggle('paused',!state.playing&&!replay);rhythmUI.transportChanged();arpUI.transportChanged();environmentUI.transportChanged();syncMobilePlay();}
 // Offer one quiet invitation after a visitor starts painting in silence.
 let listeningHintShown=false,listeningHintUntil=0,listeningDiscovered=false;
 try{listeningDiscovered=localStorage.getItem('flow-listening-discovered')==='1';}catch{}
@@ -97,10 +101,9 @@ $('progression').addEventListener('change',()=>{driftUI?.harmonyInput();state.pr
 $('applyChords').addEventListener('click',()=>{try{const c=$('chordInput').value.split(',').map(x=>x.trim());if(c.length!==4)throw new Error('Enter exactly four chords, separated by commas.');c.forEach(parseChord);state.custom=c;state.elapsed=0;state.chordIndex=0;if(state.playing)clockOrigin=audio.ctx.currentTime;rhythmUI.resync();$('chordError').textContent='Your progression is ready.';$('chordError').style.color='#b6e1c9';renderChords();updateTransport();save();}catch(e){$('chordError').textContent=e.message;$('chordError').style.color='#ffa6ab';}});
 $('chords').addEventListener('click',e=>{const el=e.target.closest('[data-chord]');if(!el)return;state.chordIndex=Number(el.dataset.chord);state.elapsed=state.chordIndex*Number($('chordLength').value)*60/state.bpm;if(state.playing)clockOrigin=audio.ctx.currentTime-state.elapsed;rhythmUI.resync();renderChords();updateTransport();if(state.playing)drop(.48,.55,state.selected);});
 $('chordLength').addEventListener('change',()=>{state.elapsed=state.chordIndex*Number($('chordLength').value)*60/state.bpm;if(state.playing)clockOrigin=audio.ctx.currentTime-state.elapsed;rhythmUI.resync();save();});
-function showBpm(){$('bpmLabel').textContent=state.bpm;$('bpm').value=state.bpm;}
+function showBpm(){$('bpm').value=state.bpm;}
 function setBpm(value){if(state.playing)state.elapsed=Math.max(0,audio.ctx.currentTime-clockOrigin);const previous=state.bpm;state.bpm=Math.max(30,Math.min(100,value));state.elapsed*=previous/state.bpm;showBpm();syncAudio();if(state.playing)clockOrigin=audio.ctx.currentTime-state.elapsed;rhythmUI.resync();save();}
-$('slower').onclick=()=>setBpm(state.bpm-2);$('faster').onclick=()=>setBpm(state.bpm+2);
-// The hidden #bpm input mirrors state.bpm so a Stepper can drive tempo like any other control.
+// The hidden #bpm input mirrors state.bpm; the transport Stepper drives tempo through it.
 $('bpm').addEventListener('input',()=>{const value=Number($('bpm').value);if(Number.isFinite(value)&&value!==state.bpm)setBpm(value);});
 for(const id of ['reverb','delay','volume','dropletsVolume','swirl','persistence','dropSize','rain'])$(id).addEventListener('input',()=>{sliders();syncAudio();sim.swirl=Number($('swirl').value)/100;sim.persistence=Number($('persistence').value)/100;save();});
 const waterSurface=new WaterSurface(),waterKeys=['waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'];
@@ -154,25 +157,17 @@ document.addEventListener('keydown',e=>{
  }
 });
 setMobileControls(mobileLayout.matches&&layout.mobileOpen,false);
-// Move the same transport node: playback state and listeners survive layout changes.
-function syncTransportLayout(){
- const inRail=!mobileLayout.matches&&!document.body.classList.contains('zen')&&!document.body.classList.contains('panel-hidden');
- const parent=inRail?$('controlRail'):document.querySelector('.artwork');
- parent.prepend($('zenTransportRow'));
-}
-mobileLayout.addEventListener('change',syncTransportLayout);
-syncTransportLayout();
-function togglePanel(){if(mobileLayout.matches){setMobileControls(!document.body.classList.contains('mobile-controls-open'));return;}document.body.classList.toggle('panel-hidden');document.body.classList.toggle('canvas-first',document.body.classList.contains('panel-hidden'));saveLayout();syncTransportLayout();$('togglePanel').setAttribute('aria-expanded',!document.body.classList.contains('panel-hidden'));} $('togglePanel').onclick=togglePanel;
+function togglePanel(){if(mobileLayout.matches){setMobileControls(!document.body.classList.contains('mobile-controls-open'));return;}document.body.classList.toggle('panel-hidden');document.body.classList.toggle('canvas-first',document.body.classList.contains('panel-hidden'));saveLayout();$('togglePanel').setAttribute('aria-expanded',!document.body.classList.contains('panel-hidden'));} $('togglePanel').onclick=togglePanel;
 // Fullscreen lives in the Zen strip. Leaving fullscreen also leaves Zen (see createPresentControls).
 function syncFullscreen(){const on=!!document.fullscreenElement,label=on?'Exit fullscreen':'Fullscreen';$('fullscreen').textContent=label;$('fullscreen').setAttribute('aria-label',label);$('fullscreen').hidden=!document.documentElement?.requestFullscreen;}
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen?.();}catch{}syncFullscreen();};
 document.addEventListener('fullscreenchange',syncFullscreen);syncFullscreen();
-function toggleZen(force){if(typeof force==='boolean')document.body.classList.toggle('zen',force);else document.body.classList.toggle('zen');syncTransportLayout();continuity?.sync();const entered=document.body.classList.contains('zen');if(entered){driftUI?.zen();presentControls.start();presentControls.syncWake();try{Promise.resolve(document.documentElement?.requestFullscreen?.()).catch(()=>{});}catch{}}else{presentControls.stop();presentControls.syncWake();try{if(document.fullscreenElement)Promise.resolve(document.exitFullscreen()).catch(()=>{});}catch{}}const zenLabel=entered?'Exit Zen':'Zen view';$('zen').setAttribute('aria-pressed',String(entered));$('zen').setAttribute('aria-label',zenLabel);$('zen').title=zenLabel;}
+function toggleZen(force){if(typeof force==='boolean')document.body.classList.toggle('zen',force);else document.body.classList.toggle('zen');continuity?.sync();const entered=document.body.classList.contains('zen');if(entered){driftUI?.zen();presentControls.start();presentControls.syncWake();try{Promise.resolve(document.documentElement?.requestFullscreen?.()).catch(()=>{});}catch{}}else{presentControls.stop();presentControls.syncWake();try{if(document.fullscreenElement)Promise.resolve(document.exitFullscreen()).catch(()=>{});}catch{}}const zenLabel=entered?'Exit Zen':'Zen view';$('zen').setAttribute('aria-pressed',String(entered));$('zen').setAttribute('aria-label',zenLabel);$('zen').title=zenLabel;}
 $('zen').onclick=()=>toggleZen();
 // Each zen edge folds independently; the handles stay on the growing canvas.
 for(const [id,collapsedClass,label,collapseArrow,expandArrow] of [
  ['zenTransportToggle','zen-transport-collapsed','transport','⌃','⌄'],
- ['zenHarmonyToggle','zen-harmony-collapsed','chords & notes','⌄','⌃']
+ ['zenHarmonyToggle','zen-harmony-collapsed','transport','⌄','⌃']
 ]){
  const button=$(id);
  button.onclick=()=>{
@@ -349,6 +344,6 @@ for(const type of ['input','change'])document.addEventListener(type,e=>{if(e.tar
 audio.onSessionEvent=(...args)=>recorder.captureSound(...args);
 const presentation=createPresentationController(recorder);
 const community=createCommunityController(recorder,{presentation});
-sessionWorkspace=createSessionWorkspace({recorder,community,bridge:{snapshot:snapshotPerformance,scene:snapshotScene,applySnapshot,restoreScene,stopLive,togglePlay,validateTake:sanitizeTake,validateScene(scene){if(!scene||!Number.isInteger(scene.w)||!Number.isInteger(scene.h)||scene.w<1||scene.h<1||scene.w*scene.h>1000000||['u','v','r','g','b'].some(k=>!Array.isArray(scene[k])||scene[k].length!==scene.w*scene.h||scene[k].some(v=>!Number.isFinite(v))))throw new Error('Invalid session canvas.');}}});
+sessionWorkspace=createSessionWorkspace({recorder,community,bridge:{snapshot:snapshotPerformance,scene:snapshotScene,applySnapshot,restoreScene,stopLive,togglePlay,transportChanged:()=>updateTransport(),validateTake:sanitizeTake,validateScene(scene){if(!scene||!Number.isInteger(scene.w)||!Number.isInteger(scene.h)||scene.w<1||scene.h<1||scene.w*scene.h>1000000||['u','v','r','g','b'].some(k=>!Array.isArray(scene[k])||scene[k].length!==scene.w*scene.h||scene[k].some(v=>!Number.isFinite(v))))throw new Error('Invalid session canvas.');}}});
 community.setWorkspace(sessionWorkspace);
 sessionWorkspace.init();

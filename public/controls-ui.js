@@ -3,10 +3,10 @@
 // remains the source of truth, so existing listeners, storage and sessions are
 // unchanged: the knob writes .value and dispatches the same input/change events.
 // Static helper copy moves into a "?" tip beside its section title.
-// Segmented, swatch grid, Stepper, Layer, EnvelopeGraph and Popover live in
-// controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
-import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover} from './controls-kit.js?rev=controls-6';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover} from './controls-kit.js?rev=controls-6';
+// Segmented, swatch grid, Stepper, Layer, EnvelopeGraph, Popover, ChordStrip and
+// Toast live in controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover,enhanceChordStrip,enhanceToast} from './controls-kit.js?rev=controls-6b';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover,enhanceChordStrip,enhanceToast} from './controls-kit.js?rev=controls-6b';
 
 export const KNOBS={
  reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
@@ -229,9 +229,18 @@ export function enhanceRail(root=document){
 }
 
 // Top bar and transport components outside the rail.
-export const POPOVERS={sessionMenuButton:{panel:'sessionMenu',menu:true}};
+// The capture popover opens from the chevron beside Record; its settings keep their ids.
+export const POPOVERS={sessionMenuButton:{panel:'sessionMenu',menu:true},captureMenuButton:{panel:'capturePanel'}};
+export const STEPPERS={bpm:{unit:'BPM'},recordCycles:{unit:'cycles'}};
+export const CAPTURE_SEGMENTED={recordMode:{size:'sm',full:true}};
+export const CHORD_STRIPS=['chords'];
+export const TOASTS=['toast'];
 export function enhanceChrome(root=document){
  const byId=id=>root.getElementById?.(id)||null;
+ for(const [id,opts] of Object.entries(STEPPERS)){const input=byId(id);if(input)enhanceStepper(input,opts);}
+ for(const [id,opts] of Object.entries(CAPTURE_SEGMENTED)){const select=byId(id);if(select)enhanceSegmented(select,opts);}
+ for(const id of CHORD_STRIPS){const host=byId(id);if(host)enhanceChordStrip(host);}
+ for(const id of TOASTS){const host=byId(id);if(host)enhanceToast(host);}
  for(const [id,{panel,...opts}] of Object.entries(POPOVERS)){const trigger=byId(id);if(trigger&&byId(panel))enhancePopover(trigger,byId(panel),opts);}
 }
 

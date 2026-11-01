@@ -80,10 +80,10 @@ export function createCommunityController(recorder,{request=fetch,upload=uploadF
  $('communityTracks').addEventListener('click',e=>{const button=e.target.closest?.('button[data-action]');if(button)action(button.dataset.action,button.dataset.id,button);});
  async function playPreview({autoplay=false}={}){
   if(!previewTake||previewBusy||recorder.phase!=='idle')return;
-  previewBusy=true;$('quickPlay').disabled=true;$('previewStatus').textContent='Preparing playback…';
+  previewBusy=true;$('start').disabled=true;$('previewStatus').textContent='Preparing playback…';
   try{await recorder.prepareExternal({autoplay});await recorder.playExternal(previewTake);$('previewStatus').textContent='';}
   catch(e){$('previewStatus').textContent=e.name==='NotAllowedError'?'Press Play to listen.':e.message;}
-  finally{previewBusy=false;$('quickPlay').disabled=recorder.phase!=='idle';}
+  finally{previewBusy=false;$('start').disabled=recorder.phase!=='idle';}
  }
  async function openRoute(){
   const id=globalThis.location.pathname?.match(/^\/recordings\/([a-f0-9-]{36})\/?$/)?.[1]||globalThis.location.hash.match(/^#track=([a-f0-9-]{36})$/)?.[1];

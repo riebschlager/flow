@@ -33,10 +33,10 @@ console.log('PASS: deferred community loading, escaped public metadata, sign-in 
 failList=false;recorder.phase='idle';requests=[];let previewed=null,blocked=true;
 ui.setWorkspace({preview:t=>{previewed=t;}});
 recorder.prepareExternal=async({autoplay}={})=>{unlocked++;if(autoplay&&blocked)throw new DOMException('Blocked','NotAllowedError');};
-location.pathname='/recordings/'+id;await ui.openRoute();assert.equal($('communityDialog').open,false);assert.equal(previewed.communityId,id);assert.equal(recorder.phase,'idle');assert.equal($('previewStatus').textContent,'Press Play to listen.');assert.equal($('quickPlay').disabled,false);assert.deepEqual(requests.map(r=>r[0]),['/api/community/tracks/'+id,'/api/community/tracks/'+id+'/performance']);
+location.pathname='/recordings/'+id;await ui.openRoute();assert.equal($('communityDialog').open,false);assert.equal(previewed.communityId,id);assert.equal(recorder.phase,'idle');assert.equal($('previewStatus').textContent,'Press Play to listen.');assert.equal($('start').disabled,false);assert.deepEqual(requests.map(r=>r[0]),['/api/community/tracks/'+id,'/api/community/tracks/'+id+'/performance']);
 const before=played;await ui.playPreview();assert.equal(played,before+1);assert.equal($('previewStatus').textContent,'');
 recorder.phase='idle';blocked=false;location.pathname='/';location.hash='#track='+id;await ui.openRoute();assert.equal(played,before+2);assert.equal($('communityDialog').open,false);
-recorder.phase='idle';recorder.prepareExternal=async()=>{throw Error('Instrument unavailable');};await ui.openRoute();assert.equal($('previewStatus').textContent,'Instrument unavailable');assert.equal($('quickPlay').disabled,false);
+recorder.phase='idle';recorder.prepareExternal=async()=>{throw Error('Instrument unavailable');};await ui.openRoute();assert.equal($('previewStatus').textContent,'Instrument unavailable');assert.equal($('start').disabled,false);
 console.log('PASS: direct and legacy shared links bypass modal/account/chart, attempt autoplay, invite Play when blocked, retry the loaded track, and report genuine playback failures.');
 
 // Presentation links load one selected track, preserve the chosen composition,

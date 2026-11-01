@@ -37,12 +37,30 @@ const originalId=sessionRoute(location.pathname);await workspace.importProject(p
 await assert.rejects(()=>workspace.importProject({...project,takes:['invalid']}));
 console.log('PASS: portable project export/import preserves draft and recorded events, assigns independent identities, and rejects malformed takes.');
 
-// The shared-view Play button replays the shared track even with a local selection.
-let sharedPlays=0;const sharedCommunity={openRoute:async()=>{},open:async()=>{},playPreview:async()=>sharedPlays++};
+// The take chip names the selected take; × returns Play to the live scene.
+const tick=intervals.at(-1),withTake=sessionRoute(location.pathname);
+tick();assert.equal(el('takeChip').hidden,false);assert.equal(el('takeChipName').textContent,recorder.selectedTake.name);
+await el('takeChipClear').onclick();assert.equal(recorder.selectedTake,null);assert.equal(el('takeChip').hidden,true);assert.equal(location.search,'');await workspace.save();assert.equal(sessions.get(withTake).selectedTake,null);
+// Record names an unnamed take after the session; a typed name wins, and a saved take clears it for the next one.
+el('recordName').value='';assert.equal(await workspace.beforeRecord(),true);assert.equal(el('recordName').value,sessions.get(withTake).name+' · Take 2');
+el('recordName').value='Morning';await workspace.beforeRecord();assert.equal(el('recordName').value,'Morning');
+workspace.takeFinished(take,true);assert.equal(el('toast').hidden,false);assert.equal(el('toastMessage').textContent,'Saved');assert.equal(el('toastAction').textContent,'Open in library');assert.equal(el('toastAction').hidden,false);assert.equal(el('recordName').value,'');
+let library=0;el('recordLauncher').onclick=()=>library++;el('toastAction').onclick();assert.equal(library,1,'the toast opens the Library');
+let retried=0;el('retryTakeSave').onclick=()=>retried++;workspace.takeFinished(take,false);assert.equal(el('toastMessage').textContent,'Take not saved');assert.equal(el('toastAction').textContent,'Retry');el('toastAction').onclick();assert.equal(retried,1);
+console.log('PASS: take chip names the selected take and × returns to live, Record names unnamed takes, Saved toast opens the Library, unsaved toast retries.');
+
+// Capture settings persist on this device.
+const stored=new Map([['flow-capture-v1',JSON.stringify({mode:'manual',cycles:5,autoLoop:true})]]);globalThis.localStorage={getItem:k=>stored.get(k)??null,setItem:(k,v)=>stored.set(k,v)};
+// The shared view: Play is app.js's dispatcher; the chip names the shared track while it plays, never a hidden local selection.
+const sharedCommunity={openRoute:async()=>{},open:async()=>{},playPreview:async()=>{}};
 const sharedWorkspace=createSessionWorkspace({bridge,recorder,store,community:sharedCommunity});
-sharedWorkspace.preview({...portable,communityId:'public-track',artist:'River'});assert.equal(el('sharedPreview').hidden,false);assert.equal(document.title,portable.name+' · Flow');await el('quickPlay').onclick();assert.equal(sharedPlays,1);
-recorder.phase='playing';recorder.replaying=true;el('quickStop').onclick();assert.equal(recorder.phase,'idle');assert.equal(el('sharedPreview').hidden,false);await el('quickPlay').onclick();assert.equal(sharedPlays,2);
-console.log('PASS: shared listening view and title, Play targets shared track, Stop retains the track for replay.');
+assert.equal(el('recordMode').value,'manual');assert.equal(el('recordCycles').value,'5');assert.equal(el('recordAutoLoop').checked,true);
+el('recordCycles').value='7';el('recordCycles').listeners.change();assert.deepEqual(JSON.parse(stored.get('flow-capture-v1')),{mode:'manual',cycles:7,autoLoop:true});delete globalThis.localStorage;
+recorder.selectedTake=portable;sharedWorkspace.preview({...portable,communityId:'public-track',artist:'River'});assert.equal(el('sharedPreview').hidden,false);assert.equal(document.title,portable.name+' · Flow');assert.equal(sharedWorkspace.previewing,true);
+const sharedTick=intervals.at(-1);sharedTick();assert.equal(el('takeChip').hidden,true,'a local take is not offered while a shared track is open');
+recorder.phase='playing';recorder.replaying=true;recorder.playingTake={id:'public-track',name:'Shared track'};sharedTick();assert.equal(el('takeChip').hidden,false);assert.equal(el('takeChipName').textContent,'Shared track');
+await el('takeChipClear').onclick();assert.equal(recorder.phase,'idle');assert.equal(el('sharedPreview').hidden,false,'stopping keeps the shared track for replay');recorder.playingTake=null;sharedTick();assert.equal(el('takeChip').hidden,true);
+console.log('PASS: capture settings persist; shared listening view and title; the take chip names the playing shared track and × stops it while keeping the track for replay.');
 
 // Deletion is explicit, cancellable, persistent, and preserves shared take references.
 const deleteClick=id=>el('recentSessions').onclick({target:{closest:selector=>selector==='[data-delete-session]'?{dataset:{deleteSession:id}}:null}});

@@ -1,5 +1,5 @@
 // Flow design system primitives: Segmented, swatch grid, Stepper, Layer,
-// EnvelopeGraph and Popover. Like the knobs, each one is a progressive enhancement: the
+// EnvelopeGraph, Popover, ChordStrip and Toast. Like the knobs, each one is a progressive enhancement: the
 // native input stays the state, the component writes .value and dispatches
 // input/change, and programmatic writes and `disabled` flow back into the view.
 // Nothing here runs on import; a component appears only where it is applied.
@@ -232,6 +232,57 @@ export function enhancePopover(trigger,panel,{menu=false}={}){
  host.addEventListener('focusout',e=>{if(isOpen()&&e.relatedTarget&&!host.contains(e.relatedTarget))close();});
  panel.hidden=true;
  return {open,close,get isOpen(){return isOpen();}};
+}
+
+// The kit's ChordStrip over the chips app.js renders into #chords: one column
+// per chord, the current one lit with its progress line, earlier ones filled.
+// Arrow keys, Home and End move between chips; Enter or a click still jumps.
+export function enhanceChordStrip(host){
+ if(host.dataset.enhanced)return null;
+ host.dataset.enhanced='chord-strip';host.classList.add('chord-strip');host.setAttribute('role','group');
+ const chips=()=>[...host.querySelectorAll('[data-chord]')];
+ function render(){
+  const list=chips(),current=list.findIndex(b=>b.classList.contains('active'));
+  host.style.setProperty('--chords',String(list.length||1));
+  list.forEach((b,i)=>{const state=i===current?'current':i<current?'past':'next';if(b.dataset.state!==state)b.dataset.state=state;b.tabIndex=i===Math.max(0,current)?0:-1;});
+ }
+ host.addEventListener('keydown',e=>{
+  const list=chips(),i=list.indexOf(document.activeElement);
+  if(i<0)return;
+  const to={ArrowRight:i+1,ArrowDown:i+1,ArrowLeft:i-1,ArrowUp:i-1,Home:0,End:list.length-1}[e.key];
+  if(to===undefined)return;
+  e.preventDefault();list[(to+list.length)%list.length].focus();
+ });
+ new MutationObserver(render).observe(host,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+ render();
+ return host;
+}
+
+// A toast whose `hidden` attribute is the state: unhiding it shows it, and it
+// hides itself after data-timeout ms (default 6000, 0 keeps it). Hover or focus
+// pauses the timer; the action button and Escape dismiss it.
+export function enhanceToast(host,{timeout=6000}={}){
+ if(host.dataset.enhanced)return null;
+ host.dataset.enhanced='toast';
+ const close=make('button','toast-close',host);close.type='button';close.textContent='×';close.setAttribute('aria-label','Dismiss');
+ let timer=null,paused=false;
+ const hide=()=>{clearTimeout(timer);timer=null;host.hidden=true;};
+ function arm(){
+  clearTimeout(timer);timer=null;
+  const ms=host.dataset.timeout===undefined?timeout:+host.dataset.timeout;
+  if(!host.hidden&&ms>0&&!paused)timer=setTimeout(hide,ms);
+ }
+ function render(){host.classList.toggle('is-visible',!host.hidden);arm();}
+ host.addEventListener('pointerenter',()=>{paused=true;arm();});
+ host.addEventListener('pointerleave',()=>{paused=host.contains(document.activeElement);arm();});
+ host.addEventListener('focusin',()=>{paused=true;arm();});
+ host.addEventListener('focusout',e=>{if(!host.contains(e.relatedTarget)){paused=false;arm();}});
+ host.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();hide();}});
+ // The action's own handler runs first; then the toast closes.
+ host.addEventListener('click',e=>{if(e.target.closest?.('button'))hide();});
+ new MutationObserver(render).observe(host,{attributes:true,attributeFilter:['hidden','data-timeout']});
+ render();
+ return {hide};
 }
 
 // ADSR preview drawn from the arpeggiator's note-shape ranges. The segment of
