@@ -335,7 +335,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7b"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7b/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7c"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7c/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -697,4 +697,55 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.equal(key(tipButton,'Escape').defaultPrevented,true,'the dialog stays open');assert.equal(tipButton.getAttribute('aria-expanded'),'false');assert.equal(key(tipButton,'Escape').defaultPrevented,false,'a closed tip lets Escape close the dialog');
  const kit=$('studioKit').parentElement.querySelector('[role="tooltip"]');assert.equal(kit.children.length,3);assert.ok(kit.contains($('studioKitDescription')));assert.equal($('studioKit').getAttribute('aria-describedby'),'studioKitDescription');
 }
+// Phase 7c: Community's charts are Tabs, its tracks are TrackRows with a like and a ⋯ menu.
+{
+ const {TABS,ROW_MENUS}=await import('../public/controls-ui.js');
+ const {communityRow}=await import('../public/community-ui.js');
+ const dialog=html.match(/<dialog id="communityDialog"[\s\S]*?<\/dialog>/)[0];
+ for(const id of ['closeCommunity','communitySignIn','communitySignOut','chartToday','chartWeek','chartAll','chartNewest','chartMine','chartDescription','communityRefresh','communityMore','communityRecordings','communityTracks','shareForm','sharePublish','shareSignIn','shareAuthRetry'])assert.ok(dialog.includes(`id="${id}"`),`${id} keeps its id`);
+ assert.deepEqual(TABS,{communityTabs:{panel:'communityTracks'}});assert.deepEqual(ROW_MENUS,['communityTracks']);assert.deepEqual(POPOVERS.communityMenuButton,{panel:'communityMenu',menu:true});
+ // Every button or link outside the tablist and the ⋯ menu is one of these. community-ui.test checks that at most 4 show in any state.
+ const tablist=dialog.match(/<div id="communityTabs"[\s\S]*?<\/div>/)[0],menuHtml=dialog.match(/<div id="communityMenu"[\s\S]*?<\/div>/)[0];
+ assert.ok(['communityRefresh','communityRecordings'].every(id=>menuHtml.includes(`id="${id}" type="button" role="menuitem"`)),'Refresh and Open browser library are in the ⋯ menu');
+ const chrome=[...dialog.replace(tablist,'').replace(menuHtml,'').matchAll(/<(?:button|a) id="(\w+)"/g)].map(m=>m[1]).filter(id=>id!=='closeCommunity');
+ assert.deepEqual(chrome,['communitySignIn','communitySignOut','communityMenuButton','communityMore','shareSignIn','shareAuthRetry','sharePublish']);
+
+ doc.body.replaceChildren();
+ const wrap=new Node('div');doc.body.append(wrap);wrap.innerHTML=dialog;
+ const $=id=>doc.getElementById(id);
+ enhanceHelpTips(doc);enhanceKnobs(doc);enhanceChrome(doc);await flush();
+ // Tabs: roles, one tab stop, activation follows focus, the panel is labelled by the selected tab.
+ const list=$('communityTabs'),tabs=['chartToday','chartWeek','chartAll','chartNewest','chartMine'].map($),panel=$('communityTracks');
+ assert.equal(list.getAttribute('role'),'tablist');assert.ok(list.classList.contains('tabs'));assert.ok(tabs.every(t=>t.getAttribute('role')==='tab'&&t.getAttribute('aria-controls')==='communityTracks'));
+ assert.equal(panel.getAttribute('role'),'tabpanel');assert.equal(panel.getAttribute('aria-labelledby'),'chartToday');
+ assert.deepEqual(tabs.map(t=>t.tabIndex),[0,-1,-1,-1,-1],'one tab stop');assert.ok(list.querySelector('.tabs-bar'),'the underline bar');
+ // The app owns aria-selected through its click handler, as community-ui.js does.
+ const clicked=[];tabs.forEach(t=>t.addEventListener('click',()=>{clicked.push(t.id);tabs.forEach(o=>o.setAttribute('aria-selected',String(o===t)));}));
+ tabs[0].focus();key(tabs[0],'ArrowRight');assert.equal(doc.activeElement,tabs[1]);assert.deepEqual(clicked,['chartWeek'],'arrows select');await flush();
+ assert.deepEqual(tabs.map(t=>t.tabIndex),[-1,0,-1,-1,-1],'the tab stop follows the selection');assert.equal(panel.getAttribute('aria-labelledby'),'chartWeek');
+ key(tabs[1],'End');assert.equal(doc.activeElement,tabs[4]);key(tabs[4],'ArrowRight');assert.equal(doc.activeElement,tabs[0],'right from the last tab wraps');
+ key(tabs[0],'ArrowLeft');key(tabs[4],'Home');assert.deepEqual(clicked,['chartWeek','chartMine','chartToday','chartMine','chartToday']);
+ tabs[3].setAttribute('aria-selected','true');tabs[0].setAttribute('aria-selected','false');await flush();assert.equal(tabs[3].tabIndex,0,'a selection the app makes itself moves the tab stop');
+ // The chart's ⋯ menu.
+ const more=$('communityMenuButton');assert.equal($('communityMenu').hidden,true);assert.equal(more.getAttribute('aria-haspopup'),'menu');
+ let refreshed=0;$('communityRefresh').addEventListener('click',()=>refreshed++);key(more,'ArrowDown');assert.equal(doc.activeElement,$('communityRefresh'));$('communityRefresh').click();assert.equal(refreshed,1);assert.equal($('communityMenu').hidden,true);assert.equal(doc.activeElement,more);
+ // Rows exactly as community-ui.js renders them.
+ const track=(id,extra)=>({id,title:'Low tide',artist:'mara',created:Date.UTC(2026,9,30),duration:192000,bytes:1,likes:4,score:2,liked:false,mine:false,...extra});
+ panel.innerHTML=[track('a'),track('b',{mine:true,liked:true})].map((t,i)=>communityRow(t,i,{sort:'popular',window:'today'})).join('');await flush();
+ const rows=panel.querySelectorAll('.community-row');assert.equal(rows.length,2);
+ assert.equal(rows[0].querySelector('.community-rank').textContent,'01');assert.equal(rows[0].querySelector('.track-play').getAttribute('aria-label'),'Play Low tide');
+ assert.equal(rows[0].querySelector('.track-meta').textContent.split(' · ').at(-1),'2 today likes');assert.equal(rows[0].querySelector('.track-duration').textContent,'3:12');
+ assert.equal(rows[1].querySelector('.track-like').getAttribute('aria-pressed'),'true');assert.equal(rows[1].querySelector('.track-like').textContent,'4');
+ const items=r=>rows[r].querySelectorAll('[role="menuitem"]').map(b=>b.dataset.action||b.getAttribute('data-action'));
+ assert.deepEqual(items(0),['fork','save','present','link']);assert.deepEqual(items(1),['fork','save','present','link','remove'],'Remove only on your own tracks');
+ const rowMenu=rows[1].querySelector('[data-menu]'),rowPanel=rowMenu.nextElementSibling;assert.equal(rowPanel.hidden,true);assert.equal(rowMenu.getAttribute('aria-haspopup'),'menu');
+ rowMenu.click();assert.equal(rowPanel.hidden,false);assert.equal(doc.activeElement,rowPanel.querySelector('[role="menuitem"]'));
+ const remove=rowPanel.querySelectorAll('[role="menuitem"]')[4];remove.click();assert.equal(rowPanel.hidden,false,'Remove keeps the menu open for its confirm');
+ rowPanel.querySelectorAll('[role="menuitem"]')[3].click();assert.equal(rowPanel.hidden,true,'other items close it');assert.equal(doc.activeElement,rowMenu);
+ // A new render (another tab, a load) is decorated again.
+ panel.innerHTML=communityRow(track('c'),0,{sort:'newest',window:'all'});await flush();
+ const fresh=panel.querySelector('.community-row');assert.equal(fresh.querySelector('.community-rank'),null,'no rank outside the popular charts');
+ assert.equal(fresh.querySelector('[data-menu]').getAttribute('aria-haspopup'),'menu','re-rendered rows get their menu');
+}
+console.log('PASS: Community has chart Tabs with roving focus and a sliding bar, a ⋯ menu for Refresh and the browser library, and TrackRows with a like and a per-row menu whose Remove keeps it open to confirm.');
 console.log('PASS: beat studio is a StepGrid with per-voice tools, mirrored knobs and HelpTips; the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');

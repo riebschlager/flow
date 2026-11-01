@@ -1,5 +1,5 @@
 // Flow design system primitives: Segmented, swatch grid, Stepper, Layer,
-// EnvelopeGraph, Popover, ChordStrip, StepGrid, Toast and TrackRow list. Like the knobs, each one is a progressive enhancement: the
+// EnvelopeGraph, Popover, row menus, Tabs, ChordStrip, StepGrid, Toast and TrackRow list. Like the knobs, each one is a progressive enhancement: the
 // native input stays the state, the component writes .value and dispatches
 // input/change, and programmatic writes and `disabled` flow back into the view.
 // Nothing here runs on import; a component appears only where it is applied.
@@ -264,11 +264,63 @@ export function enhancePopover(trigger,panel,{menu=false}={}){
   if(to===undefined||!n)return;
   e.preventDefault();list[to].focus();
  });
- // An item's own click handler runs first; then the menu closes.
- if(menu)panel.addEventListener('click',e=>{if(e.target.closest?.('[role=menuitem]'))close({restore:true});});
+ // An item's own click handler runs first; then the menu closes. An item with
+ // data-keep-open (a two-step confirm) leaves it open.
+ if(menu)panel.addEventListener('click',e=>{const item=e.target.closest?.('[role=menuitem]');if(item&&!item.hasAttribute('data-keep-open'))close({restore:true});});
  host.addEventListener('focusout',e=>{if(isOpen()&&e.relatedTarget&&!host.contains(e.relatedTarget))close();});
  panel.hidden=true;
  return {open,close,get isOpen(){return isOpen();}};
+}
+
+// Per-row overflow menus in a list an app renders and re-renders: each
+// [data-menu] button opens the role=menu panel that follows it. Rows are
+// decorated again after every render, like the ChordStrip.
+export function enhanceRowMenus(host){
+ if(host.dataset.enhanced)return null;
+ host.dataset.enhanced='row-menus';
+ function decorate(){for(const trigger of host.querySelectorAll('[data-menu]')){const panel=trigger.nextElementSibling;if(panel)enhancePopover(trigger,panel,{menu:true});}}
+ new MutationObserver(decorate).observe(host,{childList:true});
+ decorate();
+ return host;
+}
+
+// The kit's Tabs over buttons an app renders in a container: the app owns each
+// tab's aria-selected and click. One tab stop; arrows, Home and End move and
+// select (activation follows focus), and a 1px accent bar slides under the
+// selected tab. The panel, if given, is labelled by the selected tab.
+export function enhanceTabs(list,{panel}={}){
+ if(list.dataset.enhanced)return null;
+ list.dataset.enhanced='tabs';list.classList.add('tabs');list.setAttribute('role','tablist');
+ const tabs=()=>[...list.children].filter(c=>c.tagName==='BUTTON');
+ for(const tab of tabs()){tab.setAttribute('role','tab');if(panel?.id)tab.setAttribute('aria-controls',panel.id);}
+ panel?.setAttribute('role','tabpanel');
+ const bar=make('span','tabs-bar',list);bar.setAttribute('aria-hidden','true');
+ function render(){
+  const all=tabs(),on=all.find(t=>t.getAttribute('aria-selected')==='true');
+  all.forEach(t=>{t.tabIndex=t===(on||all[0])?0:-1;});
+  if(panel&&on?.id)panel.setAttribute('aria-labelledby',on.id);
+  bar.classList.toggle('is-shown',!!on);
+  if(!on||!on.offsetWidth)return;
+  bar.style.setProperty('--tab-left',on.offsetLeft+'px');bar.style.setProperty('--tab-width',on.offsetWidth+'px');
+  // Narrow screens scroll the row; keep the selected tab in view without scrolling the dialog.
+  if(on.offsetLeft<list.scrollLeft)list.scrollLeft=on.offsetLeft;
+  else if(on.offsetLeft+on.offsetWidth>list.scrollLeft+list.clientWidth)list.scrollLeft=on.offsetLeft+on.offsetWidth-list.clientWidth;
+ }
+ list.addEventListener('keydown',e=>{
+  const all=tabs().filter(t=>!t.disabled),i=all.indexOf(e.target);
+  if(i<0)return;
+  const to={ArrowRight:i+1,ArrowLeft:i-1,Home:0,End:all.length-1}[e.key];
+  if(to===undefined)return;
+  e.preventDefault();
+  const next=all[(to+all.length)%all.length];
+  if(next===e.target)return;
+  next.focus();next.click();
+ });
+ new MutationObserver(render).observe(list,{attributes:true,subtree:true,attributeFilter:['aria-selected']});
+ // Sizes are known only once the dialog is shown, and change with the viewport.
+ if(typeof ResizeObserver!=='undefined')new ResizeObserver(render).observe(list);
+ render();
+ return list;
 }
 
 // The kit's ChordStrip over the chips app.js renders into #chords: one column

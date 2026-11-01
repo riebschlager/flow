@@ -3,10 +3,10 @@
 // remains the source of truth, so existing listeners, storage and sessions are
 // unchanged: the knob writes .value and dispatches the same input/change events.
 // Static helper copy moves into a "?" tip beside its section title.
-// Segmented, swatch grid, Stepper, Layer, EnvelopeGraph, Popover, ChordStrip,
-// StepGrid, Toast and the TrackRow list live in controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
-import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList} from './controls-kit.js?rev=controls-7b';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList} from './controls-kit.js?rev=controls-7b';
+// Segmented, swatch grid, Stepper, Layer, EnvelopeGraph, Popover, row menus, Tabs,
+// ChordStrip, StepGrid, Toast and the TrackRow list live in controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList,enhanceTabs,enhanceRowMenus} from './controls-kit.js?rev=controls-7c';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList,enhanceTabs,enhanceRowMenus} from './controls-kit.js?rev=controls-7c';
 
 export const KNOBS={
  reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioSwing:{},studioHumanize:{},studioReverb:{},studioDelay:{},
@@ -238,8 +238,10 @@ export function enhanceRail(root=document){
 // The capture popover opens from the chevron beside Record; its settings keep their ids.
 // The Library's overflow menu holds the rarely used take actions, also with their ids.
 // Beat studio: each voice's ⋯ opens its tools (level, even spread, rotate, vary, clear).
+// Community: the ⋯ by the chart description holds Refresh and Open browser library.
 const LANES=[0,1,2,3];
 export const POPOVERS={sessionMenuButton:{panel:'sessionMenu',menu:true},captureMenuButton:{panel:'capturePanel'},takeMenuButton:{panel:'takeMenu',menu:true},
+ communityMenuButton:{panel:'communityMenu',menu:true},
  ...Object.fromEntries(LANES.map(i=>['laneMenuButton'+i,{panel:'laneMenu'+i}]))};
 export const STEPPERS={bpm:{unit:'BPM'},recordCycles:{unit:'cycles'},...Object.fromEntries(LANES.map(i=>['laneHits'+i,{}]))};
 export const CAPTURE_SEGMENTED={recordMode:{size:'sm',full:true}};
@@ -249,6 +251,10 @@ export const TOASTS=['toast'];
 export const STEP_GRIDS=['beatLanes'];
 // Library: the saved recordings are TrackRows over takeSelect; clip export is Segmented.
 export const TRACK_LISTS=['takeSelect'];
+// Community: the chart buttons are Tabs over the track list, and each track row
+// community-ui.js renders gets its ⋯ menu (fork, save, present, link, remove).
+export const TABS={communityTabs:{panel:'communityTracks'}};
+export const ROW_MENUS=['communityTracks'];
 export const DIALOG_SEGMENTED={clipLength:{size:'sm',full:true},clipAspect:{size:'sm',full:true},clipFraming:{size:'sm',full:true}};
 export function enhanceChrome(root=document){
  const byId=id=>root.getElementById?.(id)||null;
@@ -259,6 +265,8 @@ export function enhanceChrome(root=document){
  for(const id of TOASTS){const host=byId(id);if(host)enhanceToast(host);}
  for(const id of TRACK_LISTS){const select=byId(id);if(select)enhanceTrackList(select);}
  for(const [id,opts] of Object.entries(DIALOG_SEGMENTED)){const select=byId(id);if(select)enhanceSegmented(select,opts);}
+ for(const [id,{panel}] of Object.entries(TABS)){const list=byId(id);if(list)enhanceTabs(list,{panel:byId(panel)});}
+ for(const id of ROW_MENUS){const host=byId(id);if(host)enhanceRowMenus(host);}
  for(const [id,{panel,...opts}] of Object.entries(POPOVERS)){const trigger=byId(id);if(trigger&&byId(panel))enhancePopover(trigger,byId(panel),opts);}
 }
 

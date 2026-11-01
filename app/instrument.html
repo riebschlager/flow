@@ -26,7 +26,7 @@
 <meta name="twitter:image" content="https://flow.the816.com/social/flow-ambient.jpg">
 <meta name="twitter:image:alt" content="Flow — infinite ambient music in your browser. authored by humans. Colorful ribbons on a dark canvas.">
 <link rel="stylesheet" href="/presentation.css?rev=design-system-1">
-<link rel="stylesheet" href="/flow-ds.css?rev=controls-7b">
+<link rel="stylesheet" href="/flow-ds.css?rev=controls-7c">
 <script>if(/^\/recordings\//.test(location.pathname)&&["portrait","landscape"].includes(new URLSearchParams(location.search).get("present")))document.documentElement.classList.add("presentation-pending");</script>
 </head>
 <body class="session-loading">
@@ -105,11 +105,11 @@
 <span class="eyebrow">AUTHORED BY HUMANS</span><h2 id="communityTitle">Made by people. Shared with you.</h2>
 <p class="community-intro">Explore ambient music shaped and shared by the people who use Flow. These recordings loop their captured performances; live sessions keep unfolding.</p>
 <div class="community-account"><span id="communityAuthStatus">Listening is free, no account needed. Sign in only to share music or vote with a like.</span><a id="communitySignIn" href="/signin-with-chatgpt?return_to=%2F%23community" target="_top">Sign in with ChatGPT ↗</a><a id="communitySignOut" href="/signout-with-chatgpt?return_to=%2F%23community" target="_top" hidden>Sign out ↗</a></div>
-<div class="community-tabs" role="group" aria-label="Choose leaderboard period"><button id="chartToday" aria-pressed="true">Today</button><button id="chartWeek" aria-pressed="false">This week</button><button id="chartAll" aria-pressed="false">All time</button><button id="chartNewest" aria-pressed="false">New discoveries</button><button id="chartMine" aria-pressed="false">My shared tracks</button></div>
-<div class="community-chart-heading"><p id="chartDescription">Ranked by likes received since midnight UTC.</p><button id="communityRefresh" class="text-button">Refresh ↻</button></div>
+<div id="communityTabs" class="community-chart-tabs" role="group" aria-label="Choose leaderboard period"><button id="chartToday" type="button" aria-selected="true">Today</button><button id="chartWeek" type="button" aria-selected="false">This week</button><button id="chartAll" type="button" aria-selected="false">All time</button><button id="chartNewest" type="button" aria-selected="false">New discoveries</button><button id="chartMine" type="button" aria-selected="false">My shared tracks</button></div>
+<div class="community-chart-heading"><p id="chartDescription">Ranked by likes received since midnight UTC.</p><div class="community-menu"><button id="communityMenuButton" class="icon-button" type="button" aria-label="More community actions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="12.5" cy="8" r="1.2"/></svg></button><div id="communityMenu" class="popover menu" role="menu" aria-label="Community actions" hidden><button id="communityRefresh" type="button" role="menuitem">Refresh ↻</button><button id="communityRecordings" type="button" role="menuitem">Open browser library</button></div></div></div>
 <p id="communityStatus" class="community-status" role="status" aria-live="polite"></p>
-<div id="communityTracks" class="community-tracks" aria-busy="false"></div><button id="communityMore" class="outline-button" hidden>Find more music</button>
-<section class="community-share" aria-labelledby="shareTitle"><div><span class="eyebrow">YOUR MUSIC, SHARED</span><h3 id="shareTitle">Share a recorded moment</h3><p id="shareTakeInfo" class="helper">Select a take in your session, then choose Share.</p></div><button id="communityRecordings" class="outline-button">Open browser library</button>
+<div id="communityTracks" class="community-tracks" aria-busy="false"></div><button id="communityMore" class="outline-button" type="button" hidden>Find more music</button>
+<section class="community-share" aria-labelledby="shareTitle"><div><span class="eyebrow">YOUR MUSIC, SHARED</span><h3 id="shareTitle">Share a recorded moment</h3><p id="shareTakeInfo" class="helper">Select a take in your session, then choose Share.</p></div>
 <div id="shareSignInGate" class="share-sign-in" hidden><h4>Sign in to share your session</h4><p class="helper" id="shareSignInMessage" role="status" aria-live="polite">Sharing publicly requires a ChatGPT account. Your saved take stays in this browser. After signing in, review its details and confirm sharing.</p><a id="shareSignIn" class="outline-button" href="/signin-with-chatgpt?return_to=%2Fcommunity" target="_top">Sign in with ChatGPT to share ↗</a><button id="shareAuthRetry" class="outline-button" type="button" hidden>Retry account check</button></div><form id="shareForm" hidden><div class="share-fields"><div><label for="shareArtist">Your public name</label><input id="shareArtist" type="text" maxlength="40" minlength="2" required autocomplete="nickname" placeholder="What should we call you?"></div><div><label for="shareTrackTitle">Track title</label><input id="shareTrackTitle" type="text" maxlength="80" minlength="2" required placeholder="A name for this moment"></div></div><label class="share-consent" for="shareConsent"><input id="shareConsent" type="checkbox" required> I made this performance and want to share its notes, canvas and settings publicly.</label><p class="helper">Names and titles are checked before publishing. Keep them kind. Session data only · up to 8 MB per shared loop; your original stays in your browser. Your account email is never shown.</p><button id="sharePublish" type="submit" class="outline-button">↑ Share with everyone</button><progress id="shareProgress" hidden aria-label="Upload progress" max="1" value="0"></progress><p id="shareStatus" class="community-status" role="status" aria-live="polite"></p></form></section>
 </dialog>
 <dialog id="presentationDialog" class="presentation-dialog" aria-labelledby="presentationHeading">
@@ -131,7 +131,7 @@
 <p id="presentationNextStatus" class="presentation-next-status" role="status" aria-live="polite"></p>
 <div id="presentationGate" class="presentation-gate" hidden><p id="presentationStatus" role="status" aria-live="polite">Preparing your moment…</p><button id="presentationBegin" hidden>Tap to begin</button></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden><span id="toastMessage"></span><button id="toastAction" class="toast-action" type="button" hidden></button></div>
-<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=controls-7b"></script>
+<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=controls-7c"></script>
 <script type="module" src="select-ui.js?rev=controls-4"></script>
-<script type="module" src="controls-ui.js?rev=controls-7b"></script>
+<script type="module" src="controls-ui.js?rev=controls-7c"></script>
 </body></html>

@@ -178,7 +178,7 @@ Settled before 6b:
 **Left for Phase 8.** `.session-capture`, `.take-tray`, `.capture-options` and `.record-bar` rules remain in `style.css` as orphans.
 
 ### Phase 7 · Dialogs and Zen
-Rebuild the Library as list + detail (7a), port beat studio to StepGrid (7b), switch Community to Tabs and TrackRows (7c), and turn Zen and presentation into one glass strip (7d). Update `recorder-ui`, `community-ui`, `presentation-*` and `rhythm-ui`. **Done when:** no dialog has more than 4 visible buttons before the overflow menu.
+Rebuild the Library as list + detail (7a), port beat studio to StepGrid (7b), switch Community to Tabs and TrackRows (7c), and turn Zen and presentation into one glass strip, remove `zenTransportToggle`/`zenHarmonyToggle`, and fix the mobile dock's "Play take" label (7d). Update `recorder-ui`, `community-ui`, `presentation-*` and `rhythm-ui`. **Done when:** no dialog has more than 4 visible buttons before the overflow menu.
 
 Settled before 7a:
 - **Split.** 7a is the Library, along with the TrackRow list, the overflow menu and dialog HelpTips. 7b is beat studio (StepGrid, `studioEnabled` as a Switch) plus Community (Tabs, reusing 7a's TrackRow), and it fixes `studioPlay`'s "Play scene" label. 7c is the Zen/presentation glass strip, removes `zenTransportToggle`/`zenHarmonyToggle` and their CSS, and fixes the mobile dock's "Play take" label.
@@ -246,6 +246,44 @@ Settled before 7b:
 **Known, not new.** On phones the dialog's × stays pinned at the top, so a control scrolled exactly under it can't be tapped. The Library behaves the same; Phase 8's mobile pass can give dialog content a top scroll margin.
 
 **Left for Phase 8.** The old beat studio rules in `style.css` (`.beat-studio-header`, `.studio-transport`, `.studio-toolbar`, `.studio-effects`, `.studio-bottom`, `.studio-tip`, `.beat-lane*`, `.lane-*`, `.step-grid`, `.drum-step`, `.step-legend`, `.legend-*`) are orphans, as are `flow-ds.css`'s two `.drum-step` rules. `.studio-kit`'s old box is overridden in `flow-ds.css`.
+
+Settled before 7c:
+- **One pass.** The home page list (`#homeCommunityTracks`, `loadHome`) is out of scope: it's a card grid on the sessions home, not a dialog. Its Listen and Present still go through `action()`.
+- **Counting.** As in 7a/7b, × is excluded, the tablist counts as one control (like a Segmented), and each row's play, like and ⋯ belong to the list. `communityMore` counts.
+- **Chrome.** A ⋯ menu in the chart heading holds `communityRefresh` and `communityRecordings`. `communitySignIn` hides while the share sign-in gate shows, because `shareSignIn` does the same and keeps the pending take.
+- **Remove's confirm** stays two clicks with the same text and 5 s reset, inside the open menu.
+- **Busy rows.** An item in a closed menu can't show its own busy state, so the row dims while its action runs; the status line already speaks.
+- **Rank and cover.** The rank stays on the popular charts as a mono column; "✧" is dropped. The generated cover is dropped from dialog rows (the home cards keep it), as are the MB size and the palette dots (the API has no palette).
+- **Likes update in place**, so focus stays and the list doesn't jump; ranks re-sort on the next load. Every other load still re-renders the list.
+- **Copy.** "Choose Listen to settle into a shared recording." became "Press play on a track to settle into a shared recording.", because Listen is now the play icon. Play always plays (and closes the dialog), so the row has no playing state.
+
+*Status: 7c done (`rev=controls-7c`).*
+
+**Layout.** `#communityDialog` reads header · account line · Tabs · chart description with ⋯ · status · TrackRows · Find more · share section.
+- **Tabs.** The chart buttons sit in `#communityTabs` (new id; the old `.community-tabs` class is gone, so its rules in both stylesheets are orphans). `tabs()` in `community-ui.js` writes `aria-selected` instead of `aria-pressed`, and each button keeps its id and `onclick`.
+- **Chart menu.** `communityMenuButton` → `communityMenu` holds `communityRefresh` and `communityRecordings` as `role=menuitem` buttons with their ids and handlers, applied through `POPOVERS`. Open browser library left the share section.
+- **Rows.** `communityRow(track,index,{sort,window})` is exported from `community-ui.js`, and `render()` uses it. A row is `article.community-row[data-track]` (`.is-ranked` on popular charts): `.community-rank` · `.track-play` (icon, "Play <title>") · `.track-text` (title; "artist · date[ · N likes today]") · `.track-duration` · `.track-like` (heart and count, `aria-pressed`, "Like/Unlike <title>") · `.row-menu` with a `[data-menu]` ⋯ and a `role=menu` panel. Its items keep `data-action`/`data-id`: Use this setup, Save a copy, Present ↗, Copy link, and Remove (`.menu-danger data-keep-open`) on your own tracks. The delegated handler and `action()` are unchanged apart from the like and busy changes below.
+- **Visible buttons.** At most 4 in any state: signed out, the account sign-in, ⋯ and Find more; with a take signed out, ⋯, Find more and `shareSignIn` (plus `shareAuthRetry` after an account error, when the list can't load, so Find more is hidden); signed in with a take, `communitySignOut`, ⋯, Find more and `sharePublish`.
+
+**New kit primitives** in `controls-kit.js`:
+- `enhanceTabs(list,{panel})` gives the buttons role=tablist/tab, one tab stop and arrow/Home/End keys where activation follows focus (it calls `.click()`, so the app's handler runs; `load()` drops stale responses). A `.tabs-bar` slides a 1px accent line under the tab whose `aria-selected` is true, including selections the app makes itself (publishing switches to My shared tracks). A ResizeObserver places it once the dialog is shown. The panel gets role=tabpanel and is labelled by the selected tab. On phones the row scrolls sideways and keeps the selected tab in view without scrolling the dialog.
+- `enhanceRowMenus(host)` decorates every `[data-menu]` button in a list the app renders as a menu `enhancePopover`, and decorates again after each render, like the ChordStrip.
+- `enhancePopover` menus: an item with `data-keep-open` doesn't close the menu. A delegated handler on an ancestor runs after the panel's close listener, so the confirm needed a static marker.
+
+**Tables in `controls-ui.js`.** `TABS` (`communityTabs` over `communityTracks`), `ROW_MENUS` (`communityTracks`) and `POPOVERS.communityMenuButton`.
+
+**Behavior changes in `community-ui.js`.**
+- A like updates `tracks[i]` and its button from the response's `liked`/`likes` and doesn't call `load()`. The response's `score` is for another window, so the meta's chart likes update on the next load. The like button isn't disabled while busy (that dropped focus to the page); `actionBusy` already ignores repeat clicks.
+- Rows get `aria-busy` during an action. After Remove, focus moves to the next row's play, else the selected tab.
+- A like while signed out focuses whichever sign-in link is visible.
+
+**Fix.** Since 7a, `flow-ds.css`'s Library `.track-play`, `.track-title` and `.track-meta` rules also styled the old community rows, so "↻ Listen" was squeezed into a 32px circle over the like count. The new rows use those classes on purpose.
+
+**Phones.** Play, like and ⋯ are 44px. Titles and meta wrap instead of ellipsizing. The ⋯ stays beside the chart description.
+
+**Tests.** `community-ui` covers `aria-selected`, the new status copy, the like updating in place without a list request, Remove only on your own tracks with `data-keep-open`, the hidden account sign-in and the visible-button sets in the reachable states. `controls-ui` enhances the real dialog: tab roles, one tab stop, arrows that wrap, Home/End, the panel label, a selection made by the app, the chart menu, and rows from `communityRow` with their menus, the confirm that keeps the menu open, and re-decoration after a re-render. It also checks every visible button id outside the tablist and menus from the markup.
+
+**Left for Phase 8.** `.community-tabs`, `.community-track`, `.track-cover`, `.track-artist`, `.track-actions` and `.track-rank` rules in `style.css`, and `.community-tabs`/`.community-track`/`.track-rank` in `flow-ds.css`, are orphans (`.home-track` in the shared `flow-ds.css` rule is still used). `--font-mono` names Geist Mono, but no `@font-face` loads it, so every mono readout falls back to the system mono.
 
 ### Phase 8 · Mobile, accessibility, dead CSS
 Check the rail at 375px. The mobile dock and `closeMobileControls` must still work, and Segmented controls with 7 options need a scroll fallback. Do a keyboard-only pass on every new component. Delete the CSS for removed structures from `style.css` (`.layer-editor`, `.nested-fold`, `.take-tray`, `.capture-options` and others). Run `benchmark-performance.mjs` to check that rendering cost didn't regress. **Done when:** an axe or keyboard pass is clean and `style.css` contains no orphaned selectors.
