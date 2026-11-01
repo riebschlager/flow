@@ -47,30 +47,23 @@ export const blurShader=header+`
 uniform sampler2D image;
 void main(){vec2 step=1./vec2(textureSize(image,0));vec3 sum=vec3(0);for(int y=-2;y<=2;y++)for(int x=-2;x<=2;x++){vec3 c=texture(image,uv+vec2(x,y)*step*2.).rgb;float brightness=max(c.r,max(c.g,c.b));sum+=c*smoothstep(.18,.7,brightness);}result=vec4(sum/25.,1);}`;
 export const surfaceShader=header+`
-uniform sampler2D image,bloom,red,green,blue,velocityX,velocityY,curl;
-uniform vec3 fieldScale,motionScale;
+uniform sampler2D image,bloom,red,green,blue,curl;
+uniform vec3 fieldScale;
+uniform float curlScale;
 uniform float motionBias;
 uniform vec4 effects;
-uniform vec4 water;
-uniform float waterReflection,time;
 uniform vec2 lightPosition;
 vec3 dye(vec2 p){return vec3(texture(red,p).r,texture(green,p).r,texture(blue,p).r)*fieldScale;}
 vec3 sampleImage(vec2 p){vec2 size=vec2(textureSize(image,0));return texture(image,clamp(p,.5/size,1.-.5/size)).rgb;}
 void main(){
  vec2 q=vec2(uv.x,1.-uv.y);
- vec2 size=vec2(textureSize(image,0)),cell=1./size,p=q;float curve=0.;vec2 n=vec2(0);
- if(water.x>0.){
-  const vec4 waves[5]=vec4[5](vec4(.058,.024,.32,.60),vec4(.027,-.067,.24,.47),vec4(.115,.072,.12,.83),vec4(-.17,.105,.075,.98),vec4(.25,.19,.035,1.24));
-  for(int k=0;k<5;k++){vec4 wave=waves[k];float phase=dot(q*size-.5-size*.5,wave.xy)+time*water.y*wave.w;n+=cos(phase)*wave.z*wave.xy*12.;curve+=sin(phase)*wave.z;}
-  n+=clamp((vec2(texture(velocityX,q).r,texture(velocityY,q).r)-motionBias)*motionScale.xy* .008,vec2(-.16),vec2(.16));n*=water.x;p+=n*water.z*min(size.x,size.y)*.085*cell;
- }
+ vec2 size=vec2(textureSize(image,0)),cell=1./size,p=q;
  vec3 dx=dye(q+vec2(cell.x,0))-dye(q-vec2(cell.x,0)),dy=dye(q+vec2(0,cell.y))-dye(q-vec2(0,cell.y));
  vec2 gradient=vec2(dot(dx,vec3(1)),dot(dy,vec3(1)));gradient/=1.+length(gradient);
  p+=gradient*cell*effects.y;vec3 c=sampleImage(p);
- if(water.x>0.){float fold=max(0.,1.-abs(curve+n.x*.36-n.y*.28)*13.);float facing=max(0.,1.-dot(n-vec2(.18,-.16),n-vec2(.18,-.16))*9.);c=c*(1.+n.y*.12+n.x*.07)+(fold*fold*water.w*water.x*65.*vec3(.52,.85,1)+pow(facing,10.)*waterReflection*water.x*110.*vec3(.78,.92,1)+water.x*vec3(1,5,9))/255.;}
  float background=exp(-dot(p-lightPosition,p-lightPosition)*5.);c*=1.+effects.y*.012*background;
  vec3 glow=texture(bloom,q).rgb;c+=glow*(1.-c)*effects.x;
- float swirl=abs((texture(curl,q).r-motionBias)*motionScale.z),film=swirl/(1.+swirl);
+ float swirl=abs((texture(curl,q).r-motionBias)*curlScale),film=swirl/(1.+swirl);
  // Interference borrows neighboring pigment, keeping every hue inside the palette mixture.
  vec3 neighbor=sampleImage(p+vec2(cell.x,-cell.y));float interference=.5+.5*cos(film*18.+dot(q,size)*.07);c=mix(c,neighbor,effects.z*film*interference);
  float grain=fract(sin(dot(floor(q*size),vec2(12.9898,78.233)))*43758.5453)-.5;
@@ -90,13 +83,13 @@ export class GPUFluidRenderer{
  }
  initialize(){
   const gl=this.gl;this.resources=[];this.ready=false;this.w=0;this.h=0;this.palette=null;this.locations=new Map();
-  if(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)<9)throw new Error('Texture units');
+  if(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)<6)throw new Error('Texture units');
   gl.disable(gl.DITHER);gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
   this.programs=[colorShader,blurShader,surfaceShader].map(source=>{
    const shaders=[this.shader(gl.VERTEX_SHADER,vertexShader),this.shader(gl.FRAGMENT_SHADER,source)],p=gl.createProgram();this.resources.push(['Program',p]);for(const shader of shaders)gl.attachShader(p,shader);gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return p;
   });
   this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.R16F,1,1,0,gl.RED,gl.FLOAT,new Float32Array([1]));this.float=gl.getError()===gl.NO_ERROR;
-  this.fields=Array.from({length:6},()=>this.texture());this.targets=Array.from({length:2},()=>({texture:this.texture(gl.LINEAR),framebuffer:this.resource('Framebuffer')}));
+  this.fields=Array.from({length:4},()=>this.texture());this.targets=Array.from({length:2},()=>({texture:this.texture(gl.LINEAR),framebuffer:this.resource('Framebuffer')}));
   this.ready=true;
  }
  resource(type){const value=this.gl['create'+type]();if(!value)throw new Error('GPU allocation');this.resources.push([type,value]);return value;}
@@ -106,20 +99,20 @@ export class GPUFluidRenderer{
  uniform(p,name,type,...values){const key=this.programs.indexOf(p)+':'+name;if(!this.locations.has(key))this.locations.set(key,this.gl.getUniformLocation(p,name));this.gl['uniform'+type](this.locations.get(key),...values);}
  bind(p,name,texture,unit){const gl=this.gl;gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,texture);this.uniform(p,name,'1i',unit);}
  resize(w,h){
-  const gl=this.gl;this.w=w;this.h=h;this.canvas.width=w;this.canvas.height=h;this.bytes=this.float?null:Array.from({length:6},()=>new Uint8Array(w*h));this.scales=new Float32Array(6);
+  const gl=this.gl;this.w=w;this.h=h;this.canvas.width=w;this.canvas.height=h;this.bytes=this.float?null:Array.from({length:4},()=>new Uint8Array(w*h));this.scales=new Float32Array(4);
   for(const texture of this.fields){gl.bindTexture(gl.TEXTURE_2D,texture);gl.texImage2D(gl.TEXTURE_2D,0,this.float?gl.R16F:gl.R8,w,h,0,gl.RED,this.float?gl.FLOAT:gl.UNSIGNED_BYTE,null);}
   for(let k=0;k<2;k++){const target=this.targets[k];target.w=k?Math.max(1,Math.ceil(w/2)):w;target.h=k?Math.max(1,Math.ceil(h/2)):h;gl.bindTexture(gl.TEXTURE_2D,target.texture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,target.w,target.h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,target.framebuffer);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,target.texture,0);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error('Framebuffer');}
  }
  upload(sim){
-  const gl=this.gl,keys=['r','g','b','u','v','curl'];
-  for(let k=0;k<6;k++){
+  const gl=this.gl,keys=['r','g','b','curl'];
+  for(let k=0;k<4;k++){
    const data=sim[keys[k]];gl.activeTexture(gl.TEXTURE0+k);gl.bindTexture(gl.TEXTURE_2D,this.fields[k]);
    if(this.float){this.scales[k]=1;gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,sim.w,sim.h,gl.RED,gl.FLOAT,data);}
    else{let max=1e-10;for(const v of data)max=Math.max(max,Math.abs(v));this.scales[k]=k<3?max:max*2;const bytes=this.bytes[k];for(let i=0;i<data.length;i++)bytes[i]=Math.round(clamp(data[i]/this.scales[k]+(k<3?0:.5))*255);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,sim.w,sim.h,gl.RED,gl.UNSIGNED_BYTE,bytes);}
   }
  }
  pass(p,target){const gl=this.gl;gl.useProgram(p);gl.bindFramebuffer(gl.FRAMEBUFFER,target?.framebuffer||null);gl.viewport(0,0,target?.w||this.w,target?.h||this.h);}
- render(sim,time,{palette='classic',luminance=1,energy=0,reverb=0,lightPosition=[.5,.48],water={},...switches}={}){
+ render(sim,time,{palette='classic',luminance=1,energy=0,reverb=0,lightPosition=[.5,.48],...switches}={}){
   if(!this.ready||this.lost)return false;
   try{
    const gl=this.gl;if(sim.w!==this.w||sim.h!==this.h)this.resize(sim.w,sim.h);this.upload(sim);
@@ -129,9 +122,8 @@ export class GPUFluidRenderer{
    const strengths=effectStrengths({energy,reverb,...switches});
    if(strengths[0]){this.pass(blur,this.targets[1]);this.bind(blur,'image',this.targets[0].texture,0);gl.drawArrays(gl.TRIANGLES,0,3);}
    this.pass(surface);this.bind(surface,'image',this.targets[0].texture,0);this.bind(surface,'bloom',this.targets[1].texture,1);
-   ['red','green','blue','velocityX','velocityY','curl'].forEach((key,i)=>this.bind(surface,key,this.fields[i],i+2));this.uniform(surface,'fieldScale','3fv',this.scales.subarray(0,3));this.uniform(surface,'motionScale','3fv',this.scales.subarray(3));
-   this.uniform(surface,'motionBias','1f',this.float?0:.5);this.uniform(surface,'effects','4fv',strengths);this.uniform(surface,'time','1f',time);this.uniform(surface,'lightPosition','2fv',lightPosition);
-   const enabled=water.enabled&&energy>0;this.uniform(surface,'water','4f',enabled?clamp(water.swell/100)*energy:0,water.speed/100||0,clamp(water.refraction/100)*energy||0,clamp(water.caustics/100)*energy||0);this.uniform(surface,'waterReflection','1f',clamp(water.reflection/100)*energy||0);
+   ['red','green','blue','curl'].forEach((key,i)=>this.bind(surface,key,this.fields[i],i+2));this.uniform(surface,'fieldScale','3fv',this.scales.subarray(0,3));this.uniform(surface,'curlScale','1f',this.scales[3]);
+   this.uniform(surface,'motionBias','1f',this.float?0:.5);this.uniform(surface,'effects','4fv',strengths);this.uniform(surface,'lightPosition','2fv',lightPosition);
    gl.drawArrays(gl.TRIANGLES,0,3);return true;
   }catch{this.release();return false;}
  }

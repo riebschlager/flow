@@ -80,7 +80,6 @@ Remove `mixFromLayers`.
 | Energy | `energy` Slider with extents Lights down ↔ Vivid |
 | Color palette | `colorPalette` → **swatch grid** (2 columns, 8 palettes). The "Color behavior" copy goes into its HelpTip, and that section is deleted |
 | The fluid | Knobs `swirl` `persistence` `dropSize` `chordAtmosphere` (Harmonic glow), plus the `fluidListens` Switch |
-| Living water (action: `waterEnabled` Switch) | `waterPreset` → **Segmented** (4, including Custom), 5 sm knobs, no longer folded |
 | Percussion response | `rhythmVisualMode` → **Segmented**, `rhythmVisual` Slider (Still ↔ Tidal). Dimmed when percussion is off. No longer folded |
 
 ### Rail · Mix
@@ -125,7 +124,7 @@ Add tests to `checks/controls-ui.test.mjs`. Each enhancer must keep `.value`, ev
 *Status: done (`rev=controls-1`).* The primitives live in `public/controls-kit.js` and are re-exported from `controls-ui.js`: `enhanceSegmented(select,{size,full})`, `enhanceSwatchGrid(select)`, `enhanceStepper(input,{label,unit})`, `enhanceLayer(switch,body,{status})` and `enhanceEnvelopeGraph(host)`. For a vertical fader, set `data-orientation="vertical"` on a range and use `--fader-length` to size it. Tempo now has a hidden `#bpm` number input (30–100, step 2) that mirrors `state.bpm` both ways through `showBpm()`/`setBpm()` in `app.js`. Property watchers chain, so a knob and the EnvelopeGraph can watch the same range.
 
 ### Phase 2 · Sound and Scene tabs
-These two have the least coupling to other code. Apply Segmented to `chordLength`, `waterPreset` and `rhythmVisualMode`. Add the swatch grid, unfold Color voices, remove the Color behavior section, flatten the water and percussion-response folds, and group the fluid knobs. **Done when:** each tab matches its target table and neither tab has a nested fold.
+These two have the least coupling to other code. Apply Segmented to `chordLength` and `rhythmVisualMode`. Add the swatch grid, unfold Color voices, remove the Color behavior section, flatten the percussion-response fold, and group the fluid knobs. **Done when:** each tab matches its target table and neither tab has a nested fold.
 
 *Status: done (`rev=controls-2`).* `enhanceRail()` in `controls-ui.js` runs at startup, after the HelpTips, knobs and sliders. It applies the components listed in `SEGMENTED` and `SWATCH_GRIDS`, and `DIM_WHEN_OFF` dims Percussion response (without disabling it) while `rhythmEnabled` is off. Later phases add their controls to these tables. Two small extensions: an option's `data-label` gives a shorter segment and keeps the full text as its title, and a helper with an id (a live description such as `scapeDescription`) moves into its section's HelpTip only when it has `data-help-tip`. The tabs now have no folds. The water knobs are `sm` knobs, and `chordAtmosphere` became a knob in The fluid. The Energy readout sits in its section title. `palettePreview` stays in the DOM for `app.js` but is hidden while the swatch grid is present. `fluidListens` is still in Play.
 

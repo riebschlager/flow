@@ -11,7 +11,6 @@ export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorSta
 export const KNOBS={
  reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioSwing:{},studioHumanize:{},studioReverb:{},studioDelay:{},
  swirl:{},persistence:{},dropSize:{},chordAtmosphere:{},
- waterSwell:{sm:true},waterSpeed:{sm:true},waterRefraction:{sm:true},waterCaustics:{sm:true},waterReflection:{sm:true},
  arpProbability:{},arpCount:{},
  arpLength:{skew:2,sm:true},arpAttack:{skew:3,sm:true},arpDecay:{skew:3,sm:true},arpSustain:{sm:true},
  arpGlideTime:{skew:3,sm:true},arpGlideAmount:{sm:true},
@@ -208,7 +207,7 @@ export function enhanceHelpTips(root=document){
 }
 
 // Design-system components per rail control. The native select stays the state.
-export const SEGMENTED={chordLength:{full:true},waterPreset:{size:'sm',full:true},rhythmVisualMode:{size:'sm',full:true},arpRate:{size:'sm',full:true},rhythmRate:{full:true},
+export const SEGMENTED={chordLength:{full:true},rhythmVisualMode:{size:'sm',full:true},arpRate:{size:'sm',full:true},rhythmRate:{full:true},
  gestureTool:{full:true},quantizeBeats:{size:'sm',full:true},octavesDown:{size:'sm',full:true},octavesUp:{size:'sm',full:true}};
 export const SWATCH_GRIDS=['colorPalette'];
 // Sections, and Mix level faders, that dim without disabling while their layer's switch is off.

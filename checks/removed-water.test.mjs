@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {sanitizeSnapshot,sanitizeTake} from '../public/recording-state.js';
+import {sessionFixture} from './session-fixture.mjs';
+const take=sessionFixture(),original=structuredClone(take.snapshot);
+const legacy={waterEnabled:true,waterSwell:62,waterSpeed:30,waterRefraction:40,waterCaustics:75,waterReflection:40};
+Object.assign(take.snapshot.main.settings,legacy);
+take.events.push({t:1,kind:'settings',data:structuredClone(take.snapshot)});
+const clean=sanitizeTake(take);
+assert.deepEqual(clean.snapshot,sanitizeSnapshot(original),'old water settings do not change music, fluid, or playback state');
+for(const snapshot of [clean.snapshot,clean.events.at(-1).data])for(const key of Object.keys(legacy))assert(!Object.hasOwn(snapshot.main.settings,key),'removed settings are discarded from snapshots and recorded settings changes');
+console.log('PASS: legacy water settings are ignored in saved sessions and recorded settings events, preserving all supported state.');

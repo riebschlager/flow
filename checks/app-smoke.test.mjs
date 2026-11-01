@@ -56,17 +56,8 @@ assert(!document.body.classList.contains('listening-invitation'),'idle canvas do
 const canvas=$('fluid'),event={pointerId:1,button:0,pointerType:'mouse',clientX:500,clientY:350};for(const fn of canvas.listeners.pointerdown)fn(event);for(let i=0;i<60;i++)tick();for(const fn of canvas.listeners.pointerup)fn(event);for(let i=0;i<45;i++)tick();await Promise.resolve();await Promise.resolve();assert.equal($('gestureName').textContent,'Bloom');const coral=all.find(e=>e.dataset.color==='2');for(const fn of coral.listeners.click)fn();assert.equal($('cycleColors').checked,false);assert.equal($('paletteHint').textContent,'CORAL ONLY');assert.equal($('pitchRangeValue').textContent,'Coral: C2 → B3 · 8 notes');$('clear').onclick();tick();
 assert(!document.body.classList.contains('listening-invitation'),'first touch starts audio without a redundant Play invitation');
 mobileMedia.matches=true;$('mobileControls').onclick();assert(document.body.classList.contains('mobile-controls-open'));assert.equal($('panel')['aria-modal'],'true');assert.equal($('mobileControls')['aria-expanded'],'true');assert.equal(document.activeElement,$('closeMobileControls'));$('closeMobileControls').onclick();assert(!document.body.classList.contains('mobile-controls-open'));assert.equal($('mobileBackdrop').hidden,true);assert.equal($('panel')['aria-modal'],undefined);mobileMedia.matches=false;
-// Surface presets, custom controls and bypass persist alongside the scene.
-$('waterPreset').value='lagoon';for(const fn of $('waterPreset').listeners.change)fn();
-assert.equal(Number($('waterCaustics').value),75);assert.equal($('waterEnabled').checked,true);
-$('waterSwell').value='62';for(const fn of $('waterSwell').listeners.input)fn();
-assert.equal($('waterPreset').value,'custom');assert.equal($('waterSwellValue').textContent,'62%');
-assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.waterSwell,'62');
-$('waterEnabled').checked=false;for(const fn of $('waterEnabled').listeners.change)fn();
-assert.equal($('waterSwell').disabled,true);tick();
-$('waterPreset').value='sea';for(const fn of $('waterPreset').listeners.change)fn();
-assert.equal($('waterSwell').disabled,false);tick();
-console.log('PASS: water presets, custom values, local persistence and disabled/bypassed surface controls.');
+// The removed visual layer has no controls or runtime dependencies.
+assert(!ids.has('waterEnabled'));tick();
 console.log('PASS: complete app initializes, draws frames, opens Perform, processes a held bloom and impacts, preserves color lock, and resets without runtime errors.');
 // Exercise the live app's quantized launch, scheduler, splash, and transport controls.
 const {AmbientAudio}=await import('../public/music.js?rev=chaos-86');

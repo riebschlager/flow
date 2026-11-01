@@ -337,9 +337,9 @@ No new settings are persisted. Recordings keep the existing session version with
 
 ### GPU display renderer
 
-WebGL2 displays the unchanged CPU fluid using half-float uploads (8-bit fallback), palette-faithful color, soft bloom tied to reverb, density refraction, curl shimmer and static grain. Energy scales every addition; zero bypasses them. Living water, 2D overlays and clip capture keep their existing controls. Unsupported or lost contexts fall back to Canvas2D; restoration retries WebGL. Use `?renderer=cpu` to force CPU; renderer selection is URL-only and nothing new is persisted.
+WebGL2 displays the unchanged CPU fluid using half-float uploads (8-bit fallback), palette-faithful color, soft bloom tied to reverb, density refraction, curl shimmer and static grain. Energy scales every addition; zero bypasses them. 2D overlays and clip capture keep their existing controls. Unsupported or lost contexts fall back to Canvas2D; restoration retries WebGL. Use `?renderer=cpu` to force CPU; renderer selection is URL-only and nothing new is persisted.
 
-Serve `checks/gpu-renderer.html` locally for shader/reference comparisons, export composition, context recovery and timings; `?format=8` checks quantized uploads. Desktop verification: 232 renders/all eight palettes, maximum channel error 1/255 for R16F and 2/255 for R8 (tolerance 2/255). At 224×156, display measured 2.18 ms GPU vs 2.72 ms CPU; with Living water, 2.02 ms vs 5.73 ms. Device battery/heat still needs human QA.
+Serve `checks/gpu-renderer.html` locally for shader/reference comparisons, export composition, context recovery and timings; `?format=8` checks quantized uploads. Desktop verification: 232 renders/all eight palettes, maximum channel error 1/255 for R16F and 2/255 for R8 (tolerance 2/255). At 224×156, display measured 2.18 ms GPU vs 2.72 ms CPU. Device battery/heat still needs human QA.
 
 ## Design system
 
@@ -347,9 +347,17 @@ The interface follows the Flow design system in `.claude/skills/flow-design-syst
 
 `public/flow-ds.css` loads after `style.css` and `presentation.css`. It declares the tokens and re-skins the existing markup, so structure, IDs and hooks are unchanged. The legacy stylesheets were remapped onto the token palette and type families. `public/controls-ui.js` applies the control model:
 
-- Character parameters become knobs: reverb, delay, fluid swirl, persistence and droplet size, the water surface, the arpeggio envelope and glide, atmosphere activity and tone, groove feel and gesture intensity. Millisecond knobs use a skewed taper. Levels and proportions stay sliders.
+- Character parameters become knobs: reverb, delay, fluid swirl, persistence and droplet size, the arpeggio envelope and glide, atmosphere activity and tone, groove feel and gesture intensity. Millisecond knobs use a skewed taper. Levels and proportions stay sliders.
 - Each knob drives its original range input, writing `.value` and dispatching the same `input`/`change` events. Settings, sessions and recordings are therefore untouched. Programmatic value changes redraw the knob.
 - One gesture vocabulary applies everywhere. Vertical drag covers the full range over 200px. Shift gives 1/10 speed. Double-click resets to the default. Arrows move 1% (Shift 0.1%), PgUp/PgDn 10%, plus Home/End. The wheel moves 1% per notch; it is ignored during a panel scroll so scrolling past a control never changes it.
 - Static helper paragraphs in the rail move into a "?" tip beside their section or fold title. Status lines, and helpers with IDs, stay inline.
 
 `node checks/controls-ui.test.mjs` verifies the knob IDs against the markup and the taper math.
+
+### Living water removal
+
+The Scene water switch, presets, and five surface controls have been removed, along with the CPU surface module, GPU waves/caustics/reflections, and the presentation crossfade surface pass. GPU display uploads dye and curl only; velocity fields remain in the CPU fluid simulation. Core ink motion, palettes, harmonic glow, percussion ripples, audio, and clip composition remain supported.
+
+Older local preferences, saved sessions, and recorded settings events may still contain water fields. Restoration ignores them and snapshot sanitization drops them; no database or session-format migration is required. Newly saved settings omit them. Replaying an old performance or exporting a new clip from it uses the current ink appearance, without its former water surface; existing exported media and stored cover images are unchanged. Retaining the old publication/source version provides rollback, but resaving a session in this version does not retain its water settings.
+
+Validation includes legacy snapshots and recorded settings events in `checks/removed-water.test.mjs`, app smoke coverage, and the GPU renderer's fallback, quantized uploads, resize, and context recovery checks. Historical renderer timings above are not a new performance guarantee.

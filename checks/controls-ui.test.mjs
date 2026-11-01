@@ -102,7 +102,7 @@ assert.deepEqual([...html.matchAll(/<input id="(\w+)"[^>]*data-orientation="vert
  for(const [name,markup] of [['Sound',sound],['Scene',scene]])assert.ok(!markup.includes('<details'),`${name} has no folds`);
  const order=(markup,titles)=>titles.map(t=>{const i=markup.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;}).forEach((i,k,all)=>assert.ok(!k||i>all[k-1],`${titles[k]} follows ${titles[k-1]}`));
  order(sound,['for="soundscape">Vibe<','for="progression">Chord progression<','<label for="chordLength">Chord length</label>','<div class="section-label">Color voices</div><div id="voices"></div>']);
- order(scene,['for="energy">Energy<','for="colorPalette">Color palette<','<div class="section-label">The fluid</div>','<span>Living water<','<div class="section-label">Percussion response</div>']);
+ order(scene,['for="energy">Energy<','for="colorPalette">Color palette<','<div class="section-label">The fluid</div>','<div class="section-label">Percussion response</div>']);
  for(const id of ['scapeDescription','progressionDescription'])assert.match(sound,new RegExp(`id="${id}"[^>]*data-help-tip`),`${id} moves into its section's HelpTip`);
  const paletteSection=scene.match(/<section class="control-section"><label class="section-label" for="colorPalette">[\s\S]*?<\/section>/)[0];
  assert.ok(paletteSection.includes('<p class="helper color-guide">Choose a swatch on the canvas to use only that color and voice. Turn on <strong>Cycle colors</strong> beside the palette to randomly use each color once before repeating, for painting, rain, and blooms.</p>'),'Color behavior copy moves verbatim into the palette section');
@@ -110,9 +110,8 @@ assert.deepEqual([...html.matchAll(/<input id="(\w+)"[^>]*data-orientation="vert
  const fluid=scene.match(/<div class="section-label">The fluid<\/div>[\s\S]*?<\/section>/)[0];
  for(const id of ['swirl','persistence','dropSize','chordAtmosphere'])assert.ok(fluid.includes(`<input id="${id}" type="range"`),`${id} sits in The fluid`);
  assert.ok(fluid.includes('<input id="fluidListens" type="checkbox" role="switch"'),'fluidListens is a switch in The fluid (decision 3)');assert.match(fluid,/id="fluidListensHelp"[^>]*data-help-tip/,'its helper moves into the HelpTip');
- for(const id of ['fluidListens','fluidListensHelp','soundscape','progression','chordInput','applyChords','chordLength','voices','voiceControls','energy','energyValue','colorPalette','palettePreview','paletteDescription','swirl','persistence','dropSize','chordAtmosphere','waterEnabled','waterPreset','waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection','rhythmVisualControls','rhythmVisualMode','rhythmVisual'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
- assert.deepEqual(Object.keys(SEGMENTED).slice(0,3),['chordLength','waterPreset','rhythmVisualMode']);assert.deepEqual(SWATCH_GRIDS,['colorPalette']);
- for(const id of ['waterSwell','waterSpeed','waterRefraction','waterCaustics','waterReflection'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
+ for(const id of ['fluidListens','fluidListensHelp','soundscape','progression','chordInput','applyChords','chordLength','voices','voiceControls','energy','energyValue','colorPalette','palettePreview','paletteDescription','swirl','persistence','dropSize','chordAtmosphere','rhythmVisualControls','rhythmVisualMode','rhythmVisual'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ assert.deepEqual(Object.keys(SEGMENTED).slice(0,2),['chordLength','rhythmVisualMode']);assert.deepEqual(SWATCH_GRIDS,['colorPalette']);
 }
 assert.match(html,/<input id="bpm" type="number" min="30" max="100" step="2" value="56" aria-label="Tempo" hidden>/,'tempo state has a hidden number input for the Stepper');
 const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
@@ -294,20 +293,16 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
 // enhanceRail applies Phase 2's components by id and dims Percussion response with its layer.
 {
  doc.body.replaceChildren();
- const ids={chordLength:[['4','4 beats'],['8','8 beats'],['16','16 beats']],waterPreset:[['sea','Gentle sea'],['glass','Glassy water'],['lagoon','Sunlit lagoon'],['custom','Your own water']],colorPalette:[['classic','Original glow'],['ember','Ember']]};
+ const ids={chordLength:[['4','4 beats'],['8','8 beats'],['16','16 beats']],colorPalette:[['classic','Original glow'],['ember','Ember']]};
  const selects=Object.fromEntries(Object.entries(ids).map(([id,values])=>[id,select(id,values)]));
  const section=new Node('section');section.id='rhythmVisualControls';section.className='control-section';doc.body.append(section);
  const title=new Node('div');title.className='section-label';section.append(title);
  const mode=new Select();mode.id='rhythmVisualMode';for(const [v,t] of [['both','Ripples + stir the fluid'],['ripples','Ripples only'],['fluid','Stir the fluid only']])mode.append(new Option(v,t));section.append(mode);
  const toggle=new Input();toggle.id='rhythmEnabled';toggle.type='checkbox';doc.body.append(toggle);
  enhanceRail(doc);
- for(const id of ['chordLength','waterPreset','rhythmVisualMode'])assert.equal(doc.getElementById(id).dataset.enhanced,'segmented',`${id} is Segmented`);
+ for(const id of ['chordLength','rhythmVisualMode'])assert.equal(doc.getElementById(id).dataset.enhanced,'segmented',`${id} is Segmented`);
  assert.ok(selects.chordLength.nextElementSibling.classList.contains('segmented-full'));
- assert.ok(selects.waterPreset.nextElementSibling.classList.contains('segmented-sm'),'water character uses the small size');
  assert.equal(selects.colorPalette.dataset.enhanced,'swatch-grid');
- const seen=log(selects.waterPreset);selects.waterPreset.nextElementSibling.children[2].click();
- assert.equal(selects.waterPreset.value,'lagoon');assert.deepEqual(seen,['input:lagoon','change:lagoon'],'segments drive the native select');
- selects.waterPreset.value='custom';assert.equal(selects.waterPreset.nextElementSibling.children[3].getAttribute('aria-checked'),'true','app writes (preset → custom) show in the segments');
  assert.ok(section.classList.contains('is-dimmed'),'Percussion response dims while percussion is off');
  toggle.checked=true;assert.ok(!section.classList.contains('is-dimmed'),'programmatic checked lifts the dim');
  toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));assert.ok(section.classList.contains('is-dimmed'));
@@ -335,7 +330,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-8b"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-8b/);assert.match(html,/style\.css\?rev=controls-8b/);assert.match(html,/presentation\.css\?rev=controls-8a/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=remove-water-93"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-8b/);assert.match(html,/style\.css\?rev=controls-8b/);assert.match(html,/presentation\.css\?rev=controls-8a/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();

@@ -2,7 +2,6 @@
 import {GPUFluidRenderer} from '../public/gpu-fluid-renderer.js';
 import {Fluid} from '../public/fluid.js';
 import {createFluidColorizer,renderFluidPixels} from '../public/fluid-renderer.js';
-import {WaterSurface} from '../public/water-surface.js';
 import {canonicalDyes,colorPalettes} from '../public/palettes.js';
 const result=document.querySelector('#result'),cpu=document.querySelector('#cpu'),display=document.querySelector('#display'),context=cpu.getContext('2d'),output=display.getContext('2d');
 try{
@@ -34,14 +33,11 @@ try{
  const bench=(fn,n=90)=>{for(let i=0;i<15;i++)fn(i);gl.finish();const start=performance.now();for(let i=0;i<n;i++)fn(i);gl.finish();return (performance.now()-start)/n;};
  const cpuMs=bench(t=>{renderFluidPixels(sim,image.data,t,colorize);context.putImageData(image,0,0);});
  const gpuMs=bench(t=>{renderer.render(sim,t,{palette:'porcelain',energy:.7,reverb:.5});output.drawImage(renderer.canvas,0,0);});
- const surface=new WaterSurface(),water={enabled:true,swell:45,speed:30,refraction:40,caustics:35,reflection:40};
- const cpuWaterMs=bench(t=>{renderFluidPixels(sim,image.data,t,colorize);surface.render(image.data,224,156,t,{...water,swell:31.5,refraction:28,caustics:24.5,reflection:28,flow:sim});context.putImageData(image,0,0);});
- const gpuWaterMs=bench(t=>{renderer.render(sim,t,{palette:'porcelain',energy:.7,reverb:.5,water});output.drawImage(renderer.canvas,0,0);});
  // Exercise real context-loss events and restoration; the app retains its 2D surface.
  const ext=gl.getExtension('WEBGL_lose_context');let lifecycle='extension unavailable';
  if(ext){await new Promise(resolve=>{renderer.canvas.addEventListener('webglcontextlost',()=>{lifecycle=renderer.render(sim,0)===false?'CPU fallback ready':'FAIL';setTimeout(()=>ext.restoreContext(),50);},{once:true});renderer.canvas.addEventListener('webglcontextrestored',()=>{lifecycle+='; restored '+renderer.render(sim,0);resolve();},{once:true});ext.loseContext();});}
  renderFluidPixels(sim,image.data,4,colorize);context.putImageData(image,0,0);renderer.render(sim,4,{palette:'porcelain',energy:0});output.drawImage(renderer.canvas,0,0);
  const captured=output.getImageData(0,0,224,156).data;let exportError=0;for(let i=0;i<captured.length;i++)exportError=Math.max(exportError,Math.abs(captured[i]-image.data[i]));
- result.textContent=JSON.stringify({status:failures.length||exportError>2||lifecycle.includes('FAIL')||!lifecycle.includes('restored true')?'FAIL':'PASS',format,images,samples,worstChannelError:worst,tolerance:2,cpuMs,gpuMs,cpuWaterMs,gpuWaterMs,exportError,lifecycle,failures:failures.slice(0,10)},null,2);
+ result.textContent=JSON.stringify({status:failures.length||exportError>2||lifecycle.includes('FAIL')||!lifecycle.includes('restored true')?'FAIL':'PASS',format,images,samples,worstChannelError:worst,tolerance:2,cpuMs,gpuMs,exportError,lifecycle,failures:failures.slice(0,10)},null,2);
 }catch(error){result.textContent='ERROR: '+error.stack;}
 </script></html>
