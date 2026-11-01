@@ -7,7 +7,7 @@ function parse(html){for(const t of html.matchAll(/<([\w-]+)(\s[^>]*?)?>/g))make
 const body=make('body',{id:'body'});globalThis.document={body,activeElement:body,events:{},getElementById:id=>{assert(ids.has(id),'Missing ID: '+id);return ids.get(id);},querySelectorAll:selector=>all.filter(e=>selector.split('.').filter(Boolean).every(c=>e.classList.contains(c))),querySelector(selector){return this.querySelectorAll(selector)[0];},addEventListener(k,fn){(this.events[k]??=[]).push(fn);},createElement:tag=>make(tag)};const mobileMedia={matches:false,addEventListener(){}};globalThis.window={innerWidth:1200,devicePixelRatio:1,matchMedia:()=>mobileMedia};globalThis.ResizeObserver=class{constructor(fn){resizeCallback=fn;}observe(){}};globalThis.requestAnimationFrame=fn=>{frame=fn;return 1;};Object.defineProperty(globalThis,'performance',{value:{now:()=>clock},configurable:true});const store=new Map(process.env.FLOW_FIRST_RUN?[]:[['chromaflow-v1','{"settings":{}}']]);globalThis.localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};parse(fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8'));
 const {ChordAtmosphere}=await import('../public/chord-atmosphere.js?rev=fluid-feedback-82');let atmosphereFrame;const atmosphereStep=ChordAtmosphere.prototype.frame;ChordAtmosphere.prototype.frame=function(dt,options){atmosphereStep.call(this,dt,options);atmosphereFrame={...options,light:this.light,pulse:this.pulse};};
 globalThis.location={pathname:'/',search:'',hash:''};globalThis.history={pushState(){},replaceState(){}};globalThis.addEventListener=()=>{};globalThis.setInterval=()=>0;
-await import('../public/app.js');ids.get('driftEnabled').checked=false;for(const fn of ids.get('driftEnabled').listeners.change)fn();assert.equal(typeof frame,'function');const $=document.getElementById;const stepTempo=d=>{$('bpm').value=String(Number($('bpm').value)+d);for(const fn of $('bpm').listeners.input)fn();};function tick(){clock+=16;serviceTimers();frame(clock);}for(let i=0;i<3;i++)tick();document.body.classList.remove('session-home');$('sharedPreview').hidden=true;
+await import('../public/app.js');assert.equal(typeof frame,'function');const $=document.getElementById;const stepTempo=d=>{$('bpm').value=String(Number($('bpm').value)+d);for(const fn of $('bpm').listeners.input)fn();};function tick(){clock+=16;serviceTimers();frame(clock);}for(let i=0;i<3;i++)tick();document.body.classList.remove('session-home');$('sharedPreview').hidden=true;
 for(const [w,h,viewport] of [[366,488,390],[744,360,844],[406.25,508.5,430],[1000,600,1200]]){surface={width:w,height:h};window.innerWidth=viewport;window.matchMedia=query=>({matches:query==='(pointer: coarse)'&&viewport!==1200});window.devicePixelRatio=2;resizeCallback();tick();const grid=rasterSizes.at(-1),copy=copies.at(-1);assert(grid.w*grid.h<=(viewport===1200?35000:16128));assert(Math.abs(w*grid.h/(h*grid.w)-1)<.02);assert.equal(copy.w,grid.w);assert.equal(copy.h,grid.h);assert.deepEqual(copy.args,[0,0,w,h]);assert.equal($('fluid').width,Math.round(w*1.7));assert.equal($('particles').height,Math.round(h*1.7));}
 if(process.env.FLOW_FIRST_RUN){
  assert(!document.body.classList.contains('panel-hidden'));assert(!document.body.classList.contains('canvas-first'));assert(!ids.has('intentPicker'));assert(!ids.has('beginFlow'));
@@ -26,12 +26,13 @@ if(process.env.FLOW_FIRST_RUN){
  $('togglePanel').onclick();assert.equal(JSON.parse(store.get('chromaflow-layout-v1')).panelHidden,true);$('togglePanel').onclick();
  const voices=[0,1,2,3].map(i=>$('voice'+i).value),progression=$('progression').value;
  $('voice0').value='rhodes';for(const fn of $('voice0').listeners.change)await fn();
- $('driftPace').value='9';for(const fn of $('driftPace').listeners.change)fn();
+ assert(!ids.has('driftEnabled')&&!ids.has('driftWander')&&!ids.has('driftPace')&&!ids.has('renderSource'));
+ assert.equal($('breathStyle').value,'off');
  $('sleepTimer').value='45';for(const fn of $('sleepTimer').listeners.change)fn();
  assert.equal($('voice0').value,'rhodes');assert.equal($('progression').value,progression);assert.equal($('zenSleepTimer').value,'45');
- assert.equal(JSON.parse(store.get('chromaflow-drift-v1')).noteSeconds,9);
+
  $('volume').value='61';for(const fn of $('volume').listeners.input)fn();assert.equal(JSON.parse(store.get('chromaflow-v1')).settings.volume,'61');
- console.log('PASS: empty-storage canvas, delayed first-touch voice plays exactly once at the tapped pitch, saved layout, independent pace preserves custom voices/harmony, sleep timer and manual override.');process.exit(0);
+ console.log('PASS: empty-storage canvas, delayed first-touch voice plays exactly once at the tapped pitch, saved layout, retired controls absent and custom voices/harmony preserved, sleep timer and manual override.');process.exit(0);
 }
 const beforeHidden=rasterSizes.length;surface={width:0,height:0};resizeCallback();assert.equal(rasterSizes.length,beforeHidden);surface={width:1000,height:600};window.innerWidth=1200;window.devicePixelRatio=1;resizeCallback();
 console.log('PASS: real app resizes both canvases and the ink raster through portrait, landscape, fractional DPR and desktop layouts without stretching; zero-size transitions preserve the fluid.');
@@ -221,10 +222,6 @@ try{
  $('recordName').value='Recorded integration';$('recordMode').value='cycles';$('recordCycles').value='4';$('recordAutoLoop').checked=false;$('chordLength').value='4';fire('chordLength');$('autoPour').checked=false;fire('autoPour');$('arpEnabled').checked=true;fire('arpEnabled');
  $('arpSource').value='scale';fire('arpSource');$('arpRootMode').value='chord';fire('arpRootMode');
  await $('recordStart').onclick();assert.equal(captures.length,0,'session recording must not create a PCM capture device');assert($('recordGroup').classList.contains('is-recording'));assert.equal($('recordLabel').textContent,'Finish at bar');clock+=500;tick();
- // Let the real Drift scheduler record while no animation frames run.
- const driftRandom=Math.random;Math.random=()=>.7;
- $('driftEnabled').checked=true;fire('driftEnabled');const driftNotesBefore=notes.filter(n=>!n.target).length;
- document.hidden=true;for(let i=0;i<1800;i++){clock+=25;serviceTimers();await Promise.resolve();}document.hidden=false;tick();assert(notes.filter(n=>!n.target).length>driftNotesBefore,'idle Drift reaches the production synth while recording without animation frames');Math.random=driftRandom;$('driftEnabled').checked=false;fire('driftEnabled');
  $('environmentPreset').value='hearth';fire('environmentPreset');$('environmentActivity').value='72';for(const fn of $('environmentActivity').listeners.input)fn();
  $('arpProbability').value='0';for(const fn of $('arpProbability').listeners.input)fn();for(let i=0;i<150;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}$('arpProbability').value='100';for(const fn of $('arpProbability').listeners.input)fn();
  const beforeSpace=notes.length;for(const fn of canvas.listeners.pointerdown)fn({...event,clientX:930,clientY:30,altKey:true});for(let i=0;i<75;i++){tick();for(const fn of timers.values())fn();await Promise.resolve();}assert.equal($('gestureName').textContent,'Space');assert(notes.slice(beforeSpace).every(n=>n.target),'Space must not paint melodic notes');for(const fn of canvas.listeners.pointerup)fn(event);

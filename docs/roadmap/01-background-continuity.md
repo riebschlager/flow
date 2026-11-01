@@ -18,7 +18,7 @@ Write a short script or test that simulates a hidden tab (no animation frames, t
 
 ## Requirements
 
-1. **Separate musical time from frames.** Everything that creates notes (rain, chord advance used for pitch, Drift once it exists) must run on a scheduler driven by the audio clock, not by `requestAnimationFrame`. `tick` keeps only visual work.
+1. **Separate musical time from frames.** Everything that creates notes (rain, chord advance used for pitch, optional breathing) must run on a scheduler driven by the audio clock, not by `requestAnimationFrame`. `tick` keeps only visual work.
    - Rain scheduling: compute the next rain time on the audio clock. When it is due, call the same `drop()` path so the sound, quantization and recording are unchanged.
    - Use a lookahead long enough to survive 1 s timer throttling while the tab is hidden, so notes are scheduled ahead on the audio clock. Rhythm and arpeggio are **not** to be rewritten. Only widen their lookahead while hidden, if that is safe, and test it.
    - Visual splashes for drops that landed while hidden should not all play at once on return. Skip stale visuals the way background-tab recovery already does for sessions.

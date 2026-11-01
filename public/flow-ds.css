@@ -302,11 +302,8 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .panel .expression-map{height:112px;border-color:var(--line);border-radius:var(--r-2);background:var(--bg-well)}
 .panel .expression-map>.map-air{color:var(--text-2)}
 .panel .range-readout{display:block;margin-top:12px;font:400 11px/1.2 var(--font-mono);color:var(--text-3)}
-.panel .drift-controls .option-row{margin-bottom:6px}
-.drift-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:end;margin-top:12px}
-.drift-selects>.field:first-child{margin-top:0}
-.panel .drift-controls select{margin:0;width:100%}
-.drift-grid>.knob-row{margin:0;grid-template-columns:auto}
+.panel .listening-controls .option-row{margin-bottom:6px}
+.panel .listening-controls select{margin:0;width:100%}
 .panel .gesture-guide{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
 .panel .gesture-guide article{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:0;border:0}
 .panel .gesture-guide article>span{font:400 11px/1.5 var(--font-mono);color:var(--text-3);padding:0}

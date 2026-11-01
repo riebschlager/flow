@@ -1,8 +1,8 @@
 # 06 · Fluid feedback: let the ink play back
 
-**Goal:** The fluid influences the music, not only the other way round. The music grows out of what the ink is doing, so it never sounds canned, especially during Drift.
+**Goal:** The fluid influences the music, not only the other way round. The music grows out of what the ink is doing, so it never sounds canned, especially during automatic droplets.
 
-**Why:** Today sound creates dye, and dye only moves. Closing the loop makes Flow feel alive: when you stop touching it, the piece keeps composing itself as the ink settles. It also gives Drift's long sessions variety that a random generator can't fake.
+**Why:** Today sound creates dye, and dye only moves. Closing the loop makes Flow feel alive: when you stop touching it, the piece keeps composing itself as the ink settles. It also gives long listening sessions more variation.
 
 **Risk:** This is the most experimental brief. Everything in it must be subtle, bounded and easy to turn off. A single switch, **Fluid listens**, default on after QA approval (ship default **off** until the project owner listens and approves).
 
@@ -33,7 +33,6 @@ Implement A and B. C is optional.
 
 ### C. Optional: stillness resolves
 
-- When overall fluid speed falls below a threshold for 10+ s after activity, gently encourage resolution: Drift (if on) favors the chord root and longer notes for the next phrase. This is a hint passed to Drift, not a direct note.
 
 ## Sessions
 

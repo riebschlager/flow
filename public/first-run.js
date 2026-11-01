@@ -7,8 +7,6 @@ export function migrateListeningPreferences(storage,soundscapes){
   const legacy=JSON.parse(raw),saved=JSON.parse(storage.getItem('chromaflow-v1')||'null');
   const overlay=['softhorizon','nightgarden','submergedcinema'].includes(legacy?.voiceOverlay)?soundscapes[legacy.voiceOverlay]:null;
   if(saved&&overlay){saved.voices=[...overlay.voices];saved.settings={...saved.settings,soundscape:legacy.voiceOverlay};storage.setItem('chromaflow-v1',JSON.stringify(saved));}
-  const timing={play:[2,2,1],focus:[3,4,.5],unwind:[3,6,.65],sleep:[4,9,.2]}[legacy?.selected];
-  if(timing){const drift=JSON.parse(storage.getItem('chromaflow-drift-v1')||'{}');const [idleSeconds,noteSeconds,density]=timing;storage.setItem('chromaflow-drift-v1',JSON.stringify({...drift,idleSeconds,noteSeconds,density}));}
   storage.removeItem('chromaflow-intent-v1');
  }catch{} // Keep the old preference available if browser storage is unavailable.
 }

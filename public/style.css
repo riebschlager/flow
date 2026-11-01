@@ -300,7 +300,7 @@ body.session-home::after{
 
 .arp-note.chord-tone{border-color:#c9bcf5;color:#cdd1d7}.arp-chord-mark{display:block;font-size:11px;line-height:5px;margin-top:5px;color:#c9bcf5}.arp-note.active .arp-chord-mark{color:#1e2227}
 
-.sleep-veil{position:absolute;inset:0;background:#08090b;opacity:var(--sleep-dim,0);pointer-events:none;z-index:5}.drift-controls select{margin:8px 0 16px}.drift-controls .option-row{margin-bottom:16px}
+.sleep-veil{position:absolute;inset:0;background:#08090b;opacity:var(--sleep-dim,0);pointer-events:none;z-index:5}.listening-controls select{margin:8px 0 16px}.listening-controls .option-row{margin-bottom:16px}
 
 .sleep-notice{position:absolute;top:20px;left:50%;transform:translateX(-50%);z-index:20;padding:9px 16px;border:1px solid #eef0f224;border-radius:24px;background:#181b20e8;color:#eef0f2;font-size:12px;pointer-events:none}.sleep-notice:empty{display:none}
 body.zen .sleep-notice{top:76px}

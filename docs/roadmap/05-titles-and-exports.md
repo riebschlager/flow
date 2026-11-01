@@ -27,7 +27,7 @@
 
 ## Part C · Long audio renders
 
-1. Extend WAV export with "Render for N minutes" (5, 15, 30, 60): plays the session loop repeatedly, or, with Drift (see [02](02-drift.md)), lets Drift play live from the session's opening setup, and captures the master output to a WAV file using the existing capture worklet.
+1. Extend WAV export with "Render for N minutes" (5, 15, 30, 60): plays the session loop repeatedly and captures the master output to a WAV file using the existing capture worklet.
 2. Memory: 60 minutes of 16-bit stereo audio at 48 kHz is about 690 MB. Stream the WAV in chunks (for example, collect `Blob` parts every few seconds and assemble the file at the end) instead of holding one big buffer. If that isn't feasible in all browsers, cap the length per browser and say so in the UI.
 3. Fades: 3 s fade-in, 6 s fade-out.
 

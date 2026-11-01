@@ -10,8 +10,7 @@ for(const [selected,noteSeconds] of Object.entries({play:2,focus:4,unwind:6,slee
  const storage={getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
  migrateListeningPreferences(storage,soundscapes);
  const saved=JSON.parse(data.get('chromaflow-v1'));assert.deepEqual(saved.voices,soundscapes.submergedcinema.voices);assert.equal(saved.settings.volume,48);assert.equal(saved.settings.energy,10);assert.equal(saved.settings.soundscape,'submergedcinema');
- const drift=JSON.parse(data.get('chromaflow-drift-v1'));assert.equal(drift.noteSeconds,noteSeconds);assert.equal(drift.enabled,false);assert.equal(drift.style,'box');assert(!data.has('chromaflow-intent-v1'));
- storage.setItem('chromaflow-drift-v1',JSON.stringify({...drift,noteSeconds:12}));migrateListeningPreferences(storage,soundscapes);assert.equal(JSON.parse(data.get('chromaflow-drift-v1')).noteSeconds,12,'migration runs once');
+ assert.deepEqual(JSON.parse(data.get('chromaflow-drift-v1')),{enabled:false,style:'box'},'retired preferences are never used or rewritten');assert(!data.has('chromaflow-intent-v1'));
 }
 const custom=new Map([['chromaflow-intent-v1','{"selected":"focus","voiceOverlay":null}'],['chromaflow-v1','{"voices":["rhodes","bells","piano","strings"],"settings":{"soundscape":"custom"}}']]);
 migrateListeningPreferences({getItem:k=>custom.get(k),setItem:(k,v)=>custom.set(k,v),removeItem:k=>custom.delete(k)},soundscapes);assert.equal(JSON.parse(custom.get('chromaflow-v1')).voices[0],'rhodes');

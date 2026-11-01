@@ -27,7 +27,7 @@ If the answer is neither, do not build it. In particular, do not add more instru
 | # | Brief | What it delivers | Size |
 |---|---|---|---|
 | 01 | [Background continuity](01-background-continuity.md) | Sound keeps going in hidden tabs; Wake Lock; Media Session; no rendering when hidden | S |
-| 02 | [Drift and timers](02-drift.md) | Autopilot performer with long-period variation, sleep timer, breath pacing | L |
+| 02 | [Retired performer](02-drift.md) | Removed; explicit breathing and sleep timer retained | Closed |
 | 03 | [Visible sound](03-visible-sound.md) | Echo ripples, note halos, reverb haze, flow-carried light motes, the energy dial | M |
 | 04 | [First run and intents](04-first-run.md) | Full-bleed first impression; Play / Focus / Unwind / Sleep intents; panel hidden by default | M |
 | 05 | [Titles and exports](05-titles-and-exports.md) | Text written in dye; postcard video export; long audio renders | M |

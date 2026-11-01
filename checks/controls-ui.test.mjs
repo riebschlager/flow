@@ -330,7 +330,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=remove-water-93"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-8b/);assert.match(html,/style\.css\?rev=controls-8b/);assert.match(html,/presentation\.css\?rev=controls-8a/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=feature-prune-98"><\/script>/);assert.match(html,/flow-ds\.css\?rev=feature-prune-98/);assert.match(html,/style\.css\?rev=feature-prune-98/);assert.match(html,/presentation\.css\?rev=controls-8a/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -382,7 +382,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const play=html.match(/<div id="performPanel"[^>]*>([\s\S]*?)\n<\/div>/)[1];
  assert.ok(!play.includes('<details'),'Play has no folds');
  for(const gone of ['pitchControls','expressionControls','fluidListens','performance-enable','Gesture guide<'])assert.ok(!play.includes(gone),`${gone} is gone from Play`);
- const order=['for="gestureTool">Canvas tool<','<div class="section-label">Automatic droplets</div>','<div class="section-label">Quantize</div>','<div class="section-label">Pitch range</div>','<div class="section-label">Drift</div>','<h2 class="section-label">Gestures</h2>'].map(t=>{const i=play.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
+ const order=['for="gestureTool">Canvas tool<','<div class="section-label">Automatic droplets</div>','<div class="section-label">Quantize</div>','<div class="section-label">Pitch range</div>','<div class="section-label">Breathing &amp; sleep</div>','<h2 class="section-label">Gestures</h2>'].map(t=>{const i=play.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
  assert.deepEqual([...order].sort((a,b)=>a-b),order,'the six sections follow the target order');
  const section=title=>{const i=play.indexOf(title);return play.slice(play.lastIndexOf('<section',i),play.indexOf('</section>',i));};
  const has=(markup,ids,where)=>{for(const id of ids)assert.ok(markup.includes(`id="${id}"`),`${id} sits in ${where}`);};
@@ -392,18 +392,18 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  has(section('>Quantize<'),['quantizeEnabled','quantizeStatus','quantizeControls','quantizeBeats'],'Quantize');
  has(section('Pitch range'),['octavesDown','octavesUp','pitchRangeValue','expressionDot'],'Pitch range');
  assert.match(section('Pitch range'),/<output id="pitchRangeValue" class="range-readout"/,'the pitch range is a mono readout, not a status paragraph');
- has(section('>Drift<'),['driftEnabled','driftWander','driftStyle','sleepTimer','driftPace','driftStatus'],'Drift');
+ has(section('>Breathing &amp; sleep<'),['breathStyle','sleepTimer','sleepStatus'],'Breathing & sleep');
  has(section('>Gestures<'),['gestureGuide','bloom','conductScene','resetPerformance'],'Gestures');
  assert.match(section('>Gestures<'),/<div class="section-head"><h2 class="section-label">Gestures<\/h2><button id="bloom" class="ghost-button">/,'Release a bloom is the section action');
  assert.match(section('>Gestures<'),/<button id="resetPerformance" class="ghost-button">Let the scene settle<\/button>$/,'Let the scene settle closes the section as a ghost button');
  assert.equal(section('>Gestures<').match(/<article>/g).length,6,'all six gestures stay, unfolded');
- for(const id of ['expressionEnabled','gestureTool','gestureToolHelp','gestureAmount','gestureAmountValue','autoPour','rain','rainValue','quantizeEnabled','quantizeStatus','quantizeBeats','octavesDown','octavesUp','pitchRangeValue','expressionDot','driftEnabled','driftWander','driftStyle','driftPace','driftPaceValue','sleepTimer','driftStatus','bloom','gestureGuide','conductScene','resetPerformance'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
+ for(const id of ['expressionEnabled','gestureTool','gestureToolHelp','gestureAmount','gestureAmountValue','autoPour','rain','rainValue','quantizeEnabled','quantizeStatus','quantizeBeats','octavesDown','octavesUp','pitchRangeValue','expressionDot','breathStyle','sleepTimer','sleepStatus','bloom','gestureGuide','conductScene','resetPerformance'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
  assert.ok(html.includes('id="zenSleepTimer"'),'Zen keeps its sleep mirror');
  assert.deepEqual([...section('>Quantize<').matchAll(/<option value="([^"]*)"/g)].map(m=>Number(m[1])),[1,.5,.25,.125,1/3]);
  for(const [,value] of section('>Quantize<').matchAll(/<option value="([^"]*)"/g))assert.equal(value,String(Number(value)),'grid values round-trip through a saved number');
  for(const id of ['gestureTool','quantizeBeats','octavesDown','octavesUp'])assert.ok(id in SEGMENTED,`${id} is Segmented`);
- assert.ok(KNOBS.driftPace&&!KNOBS.driftPace.sm&&KNOBS.gestureAmount,'driftPace and gestureAmount are knobs');
- assert.deepEqual(LAYERS.quantizeEnabled,{body:'quantizeControls',status:'quantizeStatus'});assert.equal(SWITCH_STATUS.driftEnabled,'driftStatus');
+ assert.ok(!KNOBS.driftPace&&KNOBS.gestureAmount);
+ assert.deepEqual(LAYERS.quantizeEnabled,{body:'quantizeControls',status:'quantizeStatus'});assert.equal(SWITCH_STATUS.driftEnabled,undefined);
 
  // The real Play and Scene markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -429,12 +429,9 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const octaves=log($('octavesUp'));$('octavesUp').nextElementSibling.children[3].click();assert.equal($('octavesUp').value,'3');assert.deepEqual(octaves,['input:3','change:3']);
  assert.equal($('octavesUpLabel').tagName,'LABEL');
  const knobOf=id=>$(id).closest('.knob-cell')?.querySelector('.knob');
- assert.ok(knobOf('gestureAmount')&&knobOf('driftPace'),'gestureAmount and driftPace are knobs');
- assert.ok($('driftPace').closest('.drift-grid'),'the interval knob sits beside the drift selects');
- const paces=log($('driftPace'));key(knobOf('driftPace'),'ArrowUp');assert.equal($('driftPace').value,'4');assert.deepEqual(paces,['input:4','change:4'],'the knob drives driftPace');
- $('driftPace').disabled=true;await flush();assert.ok(knobOf('driftPace').classList.contains('is-disabled'),'drift off disables the knob');
- const dSmall=$('driftEnabled').closest('label').querySelector('small');assert.equal(dSmall.textContent,'Drift gently plays when you leave the canvas alone.');
- $('driftStatus').textContent='Fading to sleep in 30 minutes';await flush();assert.equal(dSmall.textContent,'Fading to sleep in 30 minutes','the drift description shows the sleep status');
+ assert.ok(knobOf('gestureAmount'));
+ assert.equal($('driftEnabled'),null);assert.equal($('driftWander'),null);assert.equal($('driftPace'),null);
+ assert.ok($('breathStyle')&&$('sleepTimer'));
  const visible=n=>{for(;n&&n!==doc.body;n=n.parentElement)if(n.hidden||n.classList.contains('sr-only')||n.classList.contains('help-tip'))return false;return true;};
  assert.deepEqual(panel.querySelectorAll('p.helper').filter(visible).map(p=>p.id||p.textContent),[],'no helper or status paragraph stays visible in Play');
  assert.equal(panel.querySelectorAll('details').length,0);
@@ -593,7 +590,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
 // Phase 7a: the Library is a TrackRow list beside a detail card; rare actions live in an overflow menu.
 {
  const dialog=html.match(/<dialog id="recordDialog"[\s\S]*?<\/dialog>/)[0];
- for(const id of ['closeRecorder','recorderStatus','takeSelect','takeInfo','takePlay','takeOnce','takeStop','takeFork','takeSeam','takeSeamValue','takeSeamLabel','legacySeamInfo','sessionLoopInfo','takeName','takeRename','takeLoad','takeDownload','takeWav','clipExportOptions','clipLength','clipAspect','clipFraming','clipPreview','clipFrameInfo','takeClip','renderMinutes','renderSource','takeRender','takeImport','takeDelete','takeShare','takeFile'])assert.ok(dialog.includes(`id="${id}"`),`${id} keeps its id`);
+ for(const id of ['closeRecorder','recorderStatus','takeSelect','takeInfo','takePlay','takeOnce','takeStop','takeFork','takeSeam','takeSeamValue','takeSeamLabel','legacySeamInfo','sessionLoopInfo','takeName','takeRename','takeLoad','takeDownload','takeWav','clipExportOptions','clipLength','clipAspect','clipFraming','clipPreview','clipFrameInfo','takeClip','renderMinutes','takeRender','takeImport','takeDelete','takeShare','takeFile'])assert.ok(dialog.includes(`id="${id}"`),`${id} keeps its id`);
  assert.match(dialog,/<button id="takeRename"[^>]*hidden>/,'Save name stays in the markup, hidden: the title renames inline');
  const menuStart=dialog.indexOf('<div id="takeMenu"'),menuHtml=dialog.slice(menuStart,dialog.indexOf('</div>',menuStart));
  assert.deepEqual([...menuHtml.matchAll(/<button id="(\w+)"[^>]*role="menuitem"/g)].map(m=>m[1]),['takeLoad','takeFork','takeDownload','takeImport','takeDelete'],'load setup, fork, save file, import and delete are in the overflow menu');
@@ -602,7 +599,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.deepEqual(visible,['takeMenuButton','takePlay','takeOnce','takeShare'],'no more than 4 visible buttons, counting the overflow menu');
  const fold=id=>dialog.slice(dialog.indexOf(`<details id="${id}"`),dialog.indexOf('</details>',dialog.indexOf(`<details id="${id}"`)));
  for(const id of ['clipLength','clipAspect','clipFraming','clipPreview','takeClip','takeWav'])assert.ok(fold('clipExportOptions').includes(`id="${id}"`),`${id} is in the Export fold`);
- for(const id of ['renderMinutes','renderSource','takeRender'])assert.ok(fold('longRenders').includes(`id="${id}"`),`${id} is in the Long renders fold`);
+ for(const id of ['renderMinutes','takeRender'])assert.ok(fold('longRenders').includes(`id="${id}"`),`${id} is in the Long renders fold`);
  assert.ok(!/<details[^>]*>(?:(?!<\/details>)[\s\S])*<details/.test(dialog),'the folds are siblings, never nested');
  assert.deepEqual(POPOVERS.takeMenuButton,{panel:'takeMenu',menu:true});assert.deepEqual(TRACK_LISTS,['takeSelect']);assert.deepEqual(Object.keys(DIALOG_SEGMENTED),['clipLength','clipAspect','clipFraming']);assert.deepEqual(KNOBS.takeSeam,{sm:true});
  assert.ok(!/enhanceTrackList/.test(fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8')),'app.js does not apply components');
@@ -793,4 +790,4 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
 }
 console.log('PASS: Zen and presentation are one glass strip: the row toggles are gone, Zen Play is a round icon, Enter writes the title, auto-advance is a Switch with a minutes Stepper, and the strips hold 4 and 3 buttons.');
 console.log('PASS: Community has chart Tabs with roving focus and a sliding bar, a ⋯ menu for Refresh and the browser library, and TrackRows with a like and a per-row menu whose Remove keeps it open to confirm.');
-console.log('PASS: beat studio is a StepGrid with per-voice tools, mirrored knobs and HelpTips; the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');
+console.log('PASS: beat studio is a StepGrid with per-voice tools, mirrored knobs and HelpTips; the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer with breathing and sleep controls, a knob for intensity, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');

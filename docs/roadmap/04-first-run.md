@@ -4,7 +4,9 @@
 
 **Why:** The first ten seconds decide whether someone stays. A five-tab control panel on first load reads as "complicated tool," and that is where the concept gets diluted. The controls are still valuable; they just shouldn't be the first impression.
 
-**Depends on:** [02](02-drift.md) (Drift, sleep timer) and [03](03-visible-sound.md) (energy dial).
+**Depends on:** explicit breathing/sleep controls and [03](03-visible-sound.md) (energy dial).
+
+**Historical plan:** intent presets have been retired. The automatic performer was also removed on November 1, 2026.
 
 ## Current state
 
@@ -25,12 +27,12 @@
 
 1. Four intents: **Play**, **Focus**, **Unwind**, **Sleep**. Each one is just a bundle of defaults:
 
-   | Intent | Soundscape (suggestion) | Energy | Drift | Rain | Timer | Notes |
-   |---|---|---|---|---|---|---|
-   | Play | current/default | 70 | on, 20 s idle | off | off | panel reachable |
-   | Focus | a steady, low-contrast soundscape | 45 | on, long idle, lower density | light | off | no Blooms above a low rate |
-   | Unwind | a warm, spacious soundscape | 35 | on, Breathe style available | off | off | |
-   | Sleep | the darkest, softest soundscape | 10 | on, very low density | off | 45 min | master a little lower |
+   | Intent | Soundscape (suggestion) | Energy | Rain | Timer | Notes |
+   |---|---|---|---|---|---|
+   | Play | current/default | 70 | off | off | panel reachable |
+   | Focus | a steady, low-contrast soundscape | 45 | light | off | no Blooms above a low rate |
+   | Unwind | a warm, spacious soundscape | 35 | off | off | |
+   | Sleep | the darkest, softest soundscape | 10 | off | 45 min | master a little lower |
 
    Pick the soundscapes from the existing nine by listening to them, and justify each choice in the PR. Do not create new soundscapes.
 2. Choosing an intent applies its defaults **without** overwriting the user's custom voices or progressions. Store it as an overlay: the intent's values apply; if the user changes a control afterwards, their change wins and is saved as usual. Persist the selected intent under `chromaflow-intent-v1`.
