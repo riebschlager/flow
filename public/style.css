@@ -268,15 +268,15 @@ body.zen #sharedPreview:not([hidden]){display:flex;position:relative;flex-shrink
 #intro{right:7%}#intro p{font-size:clamp(28px,3.3vw,50px)}
 @media(max-width:720px){#intro p{font-size:clamp(26px,6.5vw,40px);letter-spacing:-1px}}
 
-/* A slow wash of Original glow colors welcomes listeners to the home page. */
-body.session-home{position:relative;isolation:isolate;background:#0e1013}
+/* A slow wash of neutral charcoal and silver welcomes listeners to the home page. */
+body.session-home{position:relative;isolation:isolate;background:#101010}
 body.session-home::before,body.session-home::after{content:"";position:fixed;inset:-18%;z-index:-1;pointer-events:none;background-repeat:no-repeat;will-change:transform}
 body.session-home::before{
- background-image:radial-gradient(ellipse at 16% 22%,#c9bcf538,transparent 48%),radial-gradient(ellipse at 86% 35%,#73e2d033,transparent 49%),radial-gradient(ellipse at 52% 90%,#ff9e9e2b,transparent 48%);
+ background-image:radial-gradient(ellipse at 16% 22%,#bcbcbc38,transparent 48%),radial-gradient(ellipse at 86% 35%,#85858533,transparent 49%),radial-gradient(ellipse at 52% 90%,#a0a0a02b,transparent 48%);
  animation:home-color-drift 38s ease-in-out infinite alternate;
 }
 body.session-home::after{
- background-image:radial-gradient(ellipse at 82% 82%,#edca8229,transparent 46%),radial-gradient(ellipse at 38% 52%,#c9bcf51c,transparent 45%);
+ background-image:radial-gradient(ellipse at 82% 82%,#92929229,transparent 46%),radial-gradient(ellipse at 38% 52%,#bcbcbc1c,transparent 45%);
  animation:home-color-drift 53s ease-in-out -19s infinite alternate-reverse;
 }
 @keyframes home-color-drift{
