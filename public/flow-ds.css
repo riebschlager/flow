@@ -594,3 +594,75 @@ body.zen #zenHarmonyRow .record-group{padding-left:16px}
  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
 }
 body.zen.listening-invitation.zen-harmony-collapsed .zen-harmony-toggle:after{top:auto;bottom:calc(100% + 10px)}
+
+/* Library: TrackRow list + detail card (enhanceTrackList, overflow menu). */
+.library-dialog{max-width:920px;padding:28px 32px 32px}
+.library-dialog h2{margin:8px 0 6px}
+.library-dialog .record-intro{max-width:620px;margin:0 0 14px;font-size:13px!important;line-height:1.5!important;color:var(--text-2)!important}
+.library-dialog .recorder-status{margin:0 0 20px;padding:0;border:0;background:transparent;font:400 12px/1.4 var(--font-mono)!important;color:var(--text-3)!important}
+.library{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:start}
+.library-list-head{display:flex;align-items:center;gap:8px;margin:4px 0 8px}
+.library-list-head .section-label{margin:0;font:500 11px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.track-list{display:flex;flex-direction:column;gap:2px;max-height:min(58dvh,560px);margin:0 -12px;overflow:auto}
+.track-row{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:12px;padding-left:12px;border-radius:var(--r-3);transition:background var(--dur-1)}
+.track-row:hover{background:rgba(255,255,255,.025)}
+.track-row:has(>.track-select[aria-checked=true]){background:var(--bg-well)}
+.track-play{display:grid;place-items:center;width:32px;height:32px;margin:0;padding:0;border:1px solid var(--line-strong);border-radius:50%;background:transparent;color:var(--text-1);cursor:pointer;transition:background var(--dur-1)}
+.track-row:hover .track-play:not(:disabled){background:var(--bg-hover)}
+.track-row.is-playing .track-play{border-color:transparent;background:var(--n-900);color:var(--n-50)}
+.track-play:disabled{opacity:.35;cursor:default}
+.track-play svg{width:12px;height:12px;fill:currentColor}
+.track-select{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:16px;min-width:0;min-height:54px;margin:0;padding:8px 12px 8px 0;border:0;border-radius:0 var(--r-3) var(--r-3) 0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.track-select:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.track-select:disabled{opacity:1;cursor:default}
+.track-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.track-title{font:500 14px/1.25 var(--font-sans);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-meta{font:400 12px/1.3 var(--font-sans);color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-dots{display:flex;gap:3px}
+.track-dots i{width:6px;height:6px;border-radius:50%;background:var(--swatch)}
+.track-duration{font:400 12px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-3)}
+.track-select.track-empty{display:block;min-height:0;padding:16px 12px;font-size:13px;color:var(--text-3)}
+.library-detail{display:flex;flex-direction:column;gap:16px;padding:20px;border-radius:var(--r-3);background:var(--bg-raised);box-shadow:inset 0 0 0 1px var(--line)}
+.library-title-row{display:flex;align-items:flex-end;gap:8px}
+.record-dialog input.library-title{flex:1;min-width:0;margin:0;padding:4px 0 8px;border:0;border-bottom:1px solid var(--line-strong);border-radius:0;background:transparent;color:var(--text-1);font:400 18px/1.2 var(--font-sans);letter-spacing:-.01em;outline:none;transition:border-color var(--dur-1)}
+.record-dialog input.library-title:hover:not(:disabled){border-bottom-color:var(--text-3)}
+.record-dialog input.library-title:focus{border-bottom-color:var(--accent)}
+.record-dialog input.library-title:disabled{opacity:1}
+.library-title::placeholder{color:var(--text-3)}
+.library-menu{position:relative;flex:none}
+#takeMenuButton svg{width:16px;height:16px;fill:currentColor}
+#takeMenuButton[aria-expanded=true]{background:var(--bg-well);color:var(--text-1)}
+.library-menu .popover{left:auto;right:0;min-width:220px}
+.menu [role=menuitem].menu-danger:not(:disabled){color:var(--rec)}
+.library-meta{margin:-8px 0 0;font-size:12px!important;line-height:1.5!important;color:var(--text-3)!important}
+.library-play,.library-actions{display:flex;gap:8px}
+.library-play>button,.library-actions>button{flex:1;min-height:32px;margin:0;padding:0 12px;font-size:13px}
+.library-play>button[hidden]{display:none}
+.outline-button.library-primary{border-color:transparent;background:var(--n-900);color:var(--n-50)}
+.outline-button.library-primary:hover:not(:disabled){background:var(--n-800)}
+.library-seam{display:flex;align-items:center;gap:16px}
+.library-seam .knob-row{flex:none;display:block;margin:0}
+.library-seam #takeSeamRow[hidden],.library-seam .knob-row:not(:has(>:not([hidden]))){display:none}
+.library-seam>.helper{margin:0;font-size:12px!important;line-height:1.45!important;color:var(--text-3)!important}
+.library-seam>.helper:not(:has(span:not([hidden]))){display:none}
+.library-fold{border-top:1px solid var(--line)}
+.library-fold>summary{display:flex;align-items:center;gap:8px;padding:14px 0 0;list-style:none;cursor:pointer;font:500 11px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.library-fold>summary::-webkit-details-marker{display:none}
+.library-fold>summary:before{content:'';width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform var(--dur-2) var(--ease-out)}
+.library-fold[open]>summary:before{transform:rotate(45deg)}
+.library-fold>summary:hover{color:var(--text-1)}
+.library-fold>summary .help-tip{margin-left:auto}
+.library-fold .fold-content{display:flex;flex-direction:column;gap:8px;padding:12px 0 0}
+.library-fold label{margin:4px 0 0;font-size:12px;color:var(--text-2)}
+.library-fold .clip-preview{margin:4px 0 0;padding:12px}
+.library-fold .clip-preview .helper{margin:8px 0 0;font-size:11px!important}
+.library-fold .library-actions{margin-top:4px}
+.library-share{align-self:flex-start;margin-left:-10px}
+@media(max-width:760px){
+ .library-dialog{padding:58px 18px 24px}
+ .library{grid-template-columns:1fr;gap:20px}
+ .track-list{max-height:none}
+ .track-select{min-height:56px}
+ #takeMenuButton{width:44px;height:44px}
+ .library-play>button,.library-actions>button{min-height:44px}
+}

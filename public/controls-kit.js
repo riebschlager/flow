@@ -1,5 +1,5 @@
 // Flow design system primitives: Segmented, swatch grid, Stepper, Layer,
-// EnvelopeGraph, Popover, ChordStrip and Toast. Like the knobs, each one is a progressive enhancement: the
+// EnvelopeGraph, Popover, ChordStrip, Toast and TrackRow list. Like the knobs, each one is a progressive enhancement: the
 // native input stays the state, the component writes .value and dispatches
 // input/change, and programmatic writes and `disabled` flow back into the view.
 // Nothing here runs on import; a component appears only where it is applied.
@@ -30,7 +30,9 @@ function svg(tag,attrs,parent){const el=document.createElementNS('http://www.w3.
 
 // A radio group mirroring a native select. Arrow keys move and select (radio
 // semantics); options added, removed or disabled later rebuild the group.
-function choiceGroup(select,className,renderOption){
+// renderOption may wrap its radio in a row it returns; `watch` adds option
+// attributes that rebuild, and onRender runs after each render.
+function choiceGroup(select,className,renderOption,{watch=[],onRender}={}){
  const group=make('div',className);group.setAttribute('role','radiogroup');
  const label=labelFor(select);
  // A generated label id must not take an id the app already writes to (rhythmRateLabel).
@@ -41,13 +43,15 @@ function choiceGroup(select,className,renderOption){
   const index=select.selectedIndex,off=select.disabled;
   buttons.forEach((b,i)=>{const on=i===index;b.setAttribute('aria-checked',String(on));b.tabIndex=on||(index<0&&i===0)?0:-1;b.disabled=off||!!select.options[i]?.disabled;});
   group.classList.toggle('is-disabled',off);group.setAttribute('aria-disabled',String(off));
+  onRender?.();
  }
  function build(){
+  const nodes=[];
   buttons=[...select.options].map((option,i)=>{
    const b=make('button');b.type='button';b.setAttribute('role','radio');b.dataset.value=option.value;
-   renderOption(b,option);b.addEventListener('click',()=>choose(i));return b;
+   nodes.push(renderOption(b,option)||b);b.addEventListener('click',()=>choose(i));return b;
   });
-  group.replaceChildren(...buttons);render();
+  group.replaceChildren(...nodes);render();
  }
  function choose(i,focus){
   const option=select.options[i];
@@ -66,7 +70,7 @@ function choiceGroup(select,className,renderOption){
   e.preventDefault();if(to>=0)choose(to,true);
  });
  watchControl(select,render,['value','selectedIndex']);
- new MutationObserver(build).observe(select,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled','label']});
+ new MutationObserver(build).observe(select,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled','label',...watch]});
  document.addEventListener('flow:selects',render);
  select.dataset.enhanced=className;select.tabIndex=-1;select.setAttribute('aria-hidden','true');
  select.after(group);build();
@@ -96,6 +100,37 @@ export function enhanceSwatchGrid(select,palettes=colorPalettes){
   make('span','swatch-name',b).textContent=palette?.name||option.textContent;
   if(palette?.description)b.title=palette.description;
  });
+}
+
+// The kit's TrackRow list over a native select: each option becomes a row with
+// a play button, title, meta line, palette dots and duration. The rows are a
+// radio group like Segmented. Options carry data-title, data-meta, data-palette,
+// data-duration, data-playable and data-playing; an option without a value is
+// the empty state. The play button only reports `flow:trackplay` on the select
+// with the option's value, so the app decides what playing means.
+const PLAY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 12 7-12 7Z"/></svg>',STOP_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7Z"/></svg>';
+export function enhanceTrackList(select,palettes=colorPalettes){
+ if(select.dataset.enhanced)return null;
+ const plays=new Map();
+ const render=()=>{for(const [play,option] of plays)play.disabled=option.dataset.playing!=='true'&&(select.disabled||option.disabled||option.dataset.playable==='false');};
+ return choiceGroup(select,'track-list',(b,option)=>{
+  b.className='track-select';
+  if(option===select.options[0])plays.clear();
+  if(!option.value){b.classList.add('track-empty');b.textContent=option.textContent;return null;}
+  const d=option.dataset,title=d.title||option.textContent,playing=d.playing==='true';
+  const row=make('div','track-row');row.classList.toggle('is-playing',playing);
+  const play=make('button','track-play',row);play.type='button';play.tabIndex=-1;play.innerHTML=playing?STOP_ICON:PLAY_ICON;
+  play.setAttribute('aria-label',`${playing?'Stop':'Play'} ${title}`);
+  play.addEventListener('click',()=>select.dispatchEvent(new CustomEvent('flow:trackplay',{bubbles:true,detail:{value:option.value}})));
+  plays.set(play,option);row.append(b);
+  const text=make('span','track-text',b);
+  make('span','track-title',text).textContent=title;
+  if(d.meta)make('span','track-meta',text).textContent=d.meta;
+  const dots=make('span','track-dots',b);dots.setAttribute('aria-hidden','true');
+  for(const color of palettes[d.palette]?.colors||[])make('i',null,dots).style.setProperty('--swatch',color.hex);
+  make('span','track-duration',b).textContent=d.duration||'';
+  return row;
+ },{watch:['data-playing','data-playable'],onRender:render});
 }
 
 // Tempo-style number: −/+ buttons around a scrubbable value. Drag vertically
@@ -209,7 +244,9 @@ export function enhancePopover(trigger,panel,{menu=false}={}){
   if(isOpen())return;
   panel.hidden=false;trigger.setAttribute('aria-expanded','true');host.classList.add('is-open');
   document.addEventListener('pointerdown',outside,true);
-  const list=items();(focus==='last'?list.at(-1):list[0])?.focus();
+  const list=items();(focus==='last'?list.at(-1):list[0])?.focus({preventScroll:true});
+  // Inside a scrolling dialog on a phone, bring the whole panel into view.
+  panel.scrollIntoView?.({block:'nearest'});
  }
  function close({restore=false}={}){
   if(!isOpen())return;

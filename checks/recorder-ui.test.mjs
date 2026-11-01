@@ -74,3 +74,27 @@ try{
  const hiddenClip=$('takeClip').onclick();for(let i=0;i<15;i++)await Promise.resolve();document.hidden=true;clipTick();await hiddenClip;assert.equal(recorder.phase,'idle');assert($('recorderStatus').textContent.includes('tab was hidden'));document.hidden=false;
 }finally{globalThis.setInterval=oldSetInterval;globalThis.clearInterval=oldClearInterval;document.createElement=oldCreate;globalThis.MediaRecorder=oldMedia;globalThis.MediaStream=oldStream;}
 console.log('PASS: real-time clip controller, audio-clock progress and one end card, completed download, restored scene/setup, cancellation and hidden-tab error cleanup.');
+// Library list + detail card: each option carries its TrackRow data, nothing is auto-selected, the title renames inline, and a row plays its take.
+{
+ await recorder.forkExternal(source);const options=$('takeSelect').innerHTML;
+ assert.match(options,/<option value="[^"]+" data-title="[^"]+" data-meta="[^"]*" data-duration="\d+:\d\d" data-palette="[^"]*" data-playable="true">/,'each option carries its TrackRow data');
+ assert.match(options,/data-meta="Setup draft[^"]*"[^>]*data-playable="false"/,'a setup draft says so and cannot play');
+ assert.ok([...saved.values()].every(t=>takeSummary(t).palette===t.snapshot.main.settings.colorPalette),'the summary keeps the take’s palette');
+ await recorder.selectTake(null);$('recordLauncher').onclick();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(recorder.selectedTake,null,'opening the Library selects nothing, so Play keeps playing what it did');
+ assert.equal($('takeName').value,'');assert.equal($('takeName').disabled,true);assert.equal($('takeSeamRow').hidden,true);assert.equal($('takePlay').disabled,true);
+ assert.equal($('takeSelect').disabled,false,'the list stays usable with nothing selected');assert.equal($('takeImport').disabled,false,'Import stays available');
+ const target=[...saved.values()].find(t=>t.format==='chromaflow-session'&&t.events.length);
+ $('takeSelect').dispatchEvent=e=>{for(const fn of $('takeSelect').listeners[e.type]||[])fn(e);};
+ const press=id=>$('takeSelect').listeners['flow:trackplay'][0]({detail:{value:id}});
+ await recorder.selectTake(target.id);
+ $('takeName').value='  Low tide  ';await $('takeName').listeners.change[0]();
+ assert.equal(saved.get(target.id).name,'Low tide','leaving the title saves it');assert.equal($('takeName').value,'Low tide');assert.equal($('recorderStatus').textContent,'Performance renamed.');
+ const escape={key:'Escape',preventDefault(){this.prevented=true;},stopPropagation(){this.stopped=true;}};$('takeName').value='Half typed';$('takeName').listeners.keydown[0](escape);
+ assert.equal($('takeName').value,'Low tide');assert.ok(escape.prevented&&escape.stopped,'Escape restores the title instead of closing the Library');
+ await recorder.selectTake(null);await press(target.id);
+ assert.equal(recorder.phase,'playing');assert.equal(recorder.selectedTake.id,target.id,'a row’s play button chooses and loops its take');
+ assert.equal($('takeStop').hidden,false);assert.equal($('takePlay').hidden,true,'Stop takes Play loop’s slot while a take plays');
+ await press(target.id);assert.equal(recorder.phase,'idle','pressing it again stops');assert.equal($('takeStop').hidden,true);assert.equal($('takePlay').hidden,false);
+}
+console.log('PASS: Library rows carry title, meta, duration, palette and playability; no auto-selection; inline rename with Escape restore; row play and stop; Stop swaps with Play loop.');

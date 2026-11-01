@@ -180,6 +180,37 @@ Settled before 6b:
 ### Phase 7 · Dialogs and Zen
 Rebuild the Library as list + detail, port beat studio to StepGrid, switch Community to Tabs and TrackRows, and turn Zen and presentation into one glass strip. Update `recorder-ui`, `community-ui`, `presentation-*` and `rhythm-ui`. **Done when:** no dialog has more than 4 visible buttons before the overflow menu.
 
+Settled before 7a:
+- **Split.** 7a is the Library, along with the TrackRow list, the overflow menu and dialog HelpTips. 7b is beat studio (StepGrid, `studioEnabled` as a Switch) plus Community (Tabs, reusing 7a's TrackRow), and it fixes `studioPlay`'s "Play scene" label. 7c is the Zen/presentation glass strip, removes `zenTransportToggle`/`zenHarmonyToggle` and their CSS, and fixes the mobile dock's "Play take" label.
+- **`takeRename` stays in the markup, hidden.** The inline title (`takeName`) renames.
+- **No auto-select.** Opening the Library no longer selects `items[0]`. That selection could be any take in the browser, and through the take chip it silently changed what Play plays. With nothing selected the detail card is empty, and the ⋯ menu offers only Import.
+- **`takeSummary` gains `palette`** for the row dots. The change is additive: older index entries show no dots until they are saved again.
+- **Play still closes the Library**, as before.
+
+*Status: 7a done (`rev=controls-7a`).*
+
+**Layout.** `#recordDialog` is a `.library` grid: the Saved recordings list, then a detail card (one column at ≤760px).
+- **Title row.** The card starts with `takeName` as an inline title and the ⋯ menu button `takeMenuButton`. Enter or blur saves through the same rename path as before. Escape restores the name without closing the dialog. An unchanged name doesn't save.
+- **Meta and Play.** Next come `takeInfo` as the meta line, then Play loop / Play once. While a take plays, `takeStop` takes `takePlay`'s slot.
+- **Seam and folds.** Below that is the seam row (`#takeSeamRow`, an sm knob via `KNOBS.takeSeam`, hidden for session takes), then two sibling folds. Export (`details#clipExportOptions`) holds `clipLength`, `clipAspect` and `clipFraming` as Segmented (`DIALOG_SEGMENTED`), the preview, `takeClip` and `takeWav`. Long renders (`details#longRenders`) holds `renderMinutes`, `renderSource` and `takeRender`. `takeShare` closes the card as a ghost button.
+- **Visible buttons.** With the folds closed: ⋯, Play loop, Play once and Share. A controls-ui check asserts this from the markup.
+
+**Overflow menu.** `takeLoad`, `takeFork`, `takeDownload`, `takeImport` and `takeDelete` are `role=menuitem` buttons in `#takeMenu`. They keep their ids and handlers, and are applied through `POPOVERS.takeMenuButton`. `homeImport`'s `takeImport.click()` still works.
+
+**`enhanceTrackList(select)` (new, in `controls-kit.js`).** It turns `takeSelect` into TrackRows: play button · title · meta · palette dots · duration, applied from `TRACK_LISTS`.
+- **Rows.** The rows are a radio group built on the Segmented `choiceGroup`, which can now wrap each radio in a row, watch extra option attributes and run an `onRender` hook.
+- **Option data.** `recorder-ui.js` writes `data-title`, `data-meta` (date, or "Setup draft"/"Audio take"), `data-duration`, `data-palette` and `data-playable` on each option. `sync()` writes `data-playing`. An option without a value is the empty state.
+- **Play button.** It fires `flow:trackplay` on the select and is not a tab stop. `recorder-ui.js` handles it: it chooses the take (through `change`, so the session listener still sees it) and loops it, or stops it if that take is the one playing.
+
+**Other changes.**
+- `takeSelect` is now disabled only while busy, not whenever nothing is selected.
+- `enhanceHelpTips` also scans `.library`. A container outside a fold or section opts in with `data-help-host`, and `data-help-anchor` names its title. The session-file note is a tip on Saved recordings, and the clip and render notes are tips on their fold summaries. `seamHelp` and `clipFrameInfo` stay visible.
+- `enhancePopover` scrolls an opened panel into view, so the menu fits inside the scrolling dialog at 375px.
+
+**Tests.** `controls-ui` enhances the real Library markup. `recorder-ui` covers row data, the empty selection, inline rename, row play/stop and the Stop swap. `app-smoke`'s fake options gained a `dataset`.
+
+**Left for Phase 8.** `.record-columns`, `.record-actions` and `.export-options` rules remain in `style.css` as orphans.
+
 ### Phase 8 · Mobile, accessibility, dead CSS
 Check the rail at 375px. The mobile dock and `closeMobileControls` must still work, and Segmented controls with 7 options need a scroll fallback. Do a keyboard-only pass on every new component. Delete the CSS for removed structures from `style.css` (`.layer-editor`, `.nested-fold`, `.take-tray`, `.capture-options` and others). Run `benchmark-performance.mjs` to check that rendering cost didn't regress. **Done when:** an axe or keyboard pass is clean and `style.css` contains no orphaned selectors.
 

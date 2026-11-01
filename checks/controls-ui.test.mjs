@@ -79,9 +79,9 @@ const pointer=(el,type,extra)=>{const e=new Event(type,{bubbles:true,cancelable:
 function log(el){const seen=[];el.addEventListener('input',()=>seen.push('input:'+el.value));el.addEventListener('change',()=>seen.push('change:'+el.value));return seen;}
 function select(id,values,label){const wrap=new Node('div');doc.body.append(wrap);if(label){const l=new Node('label');l.attrs.for=id;l.textContent=label;wrap.append(l);}const s=new Select();s.id=id;for(const [v,t] of values)s.append(new Option(v,t));wrap.append(s);return s;}
 
-const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,POPOVERS,STEPPERS,CAPTURE_SEGMENTED,CHORD_STRIPS,TOASTS,enhanceChrome,enhanceChordStrip,enhanceToast,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
+const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,POPOVERS,STEPPERS,CAPTURE_SEGMENTED,CHORD_STRIPS,TOASTS,TRACK_LISTS,DIALOG_SEGMENTED,enhanceChrome,enhanceChordStrip,enhanceToast,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
 const html=fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');
-for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}">`),`${id} has a slider label`);}
+for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}"[^>]*>`),`${id} has a slider label`);}
 for(const level of ['volume','dropletsVolume','arpVolume','rhythmVolume','environmentVolume','rain','energy'])assert.ok(!(level in KNOBS),`${level} stays a slider`);
 const ms={min:'0',max:'2000',step:'5'},pct={min:'0',max:'100',step:''};
 assert.equal(fromNorm(pct,toNorm(pct,65)),65);
@@ -335,7 +335,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-6b"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-6b/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7a"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7a/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -589,4 +589,64 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  toast.dataset.timeout='20';toast.hidden=false;await flush();toast.dispatchEvent(new Event('pointerenter'));await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,false,'hover pauses it');
  toast.dispatchEvent(new Event('pointerleave'));await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,true);
 }
-console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');
+// Phase 7a: the Library is a TrackRow list beside a detail card; rare actions live in an overflow menu.
+{
+ const dialog=html.match(/<dialog id="recordDialog"[\s\S]*?<\/dialog>/)[0];
+ for(const id of ['closeRecorder','recorderStatus','takeSelect','takeInfo','takePlay','takeOnce','takeStop','takeFork','takeSeam','takeSeamValue','takeSeamLabel','legacySeamInfo','sessionLoopInfo','takeName','takeRename','takeLoad','takeDownload','takeWav','clipExportOptions','clipLength','clipAspect','clipFraming','clipPreview','clipFrameInfo','takeClip','renderMinutes','renderSource','takeRender','takeImport','takeDelete','takeShare','takeFile'])assert.ok(dialog.includes(`id="${id}"`),`${id} keeps its id`);
+ assert.match(dialog,/<button id="takeRename"[^>]*hidden>/,'Save name stays in the markup, hidden: the title renames inline');
+ const menuStart=dialog.indexOf('<div id="takeMenu"'),menuHtml=dialog.slice(menuStart,dialog.indexOf('</div>',menuStart));
+ assert.deepEqual([...menuHtml.matchAll(/<button id="(\w+)"[^>]*role="menuitem"/g)].map(m=>m[1]),['takeLoad','takeFork','takeDownload','takeImport','takeDelete'],'load setup, fork, save file, import and delete are in the overflow menu');
+ const shown=dialog.replace(/<details[\s\S]*?<\/details>/g,'').replace(menuHtml,'');
+ const visible=[...shown.matchAll(/<button id="(\w+)"([^>]*)>/g)].filter(m=>!/\bhidden\b/.test(m[2])&&m[1]!=='closeRecorder').map(m=>m[1]);
+ assert.deepEqual(visible,['takeMenuButton','takePlay','takeOnce','takeShare'],'no more than 4 visible buttons, counting the overflow menu');
+ const fold=id=>dialog.slice(dialog.indexOf(`<details id="${id}"`),dialog.indexOf('</details>',dialog.indexOf(`<details id="${id}"`)));
+ for(const id of ['clipLength','clipAspect','clipFraming','clipPreview','takeClip','takeWav'])assert.ok(fold('clipExportOptions').includes(`id="${id}"`),`${id} is in the Export fold`);
+ for(const id of ['renderMinutes','renderSource','takeRender'])assert.ok(fold('longRenders').includes(`id="${id}"`),`${id} is in the Long renders fold`);
+ assert.ok(!/<details[^>]*>(?:(?!<\/details>)[\s\S])*<details/.test(dialog),'the folds are siblings, never nested');
+ assert.deepEqual(POPOVERS.takeMenuButton,{panel:'takeMenu',menu:true});assert.deepEqual(TRACK_LISTS,['takeSelect']);assert.deepEqual(Object.keys(DIALOG_SEGMENTED),['clipLength','clipAspect','clipFraming']);assert.deepEqual(KNOBS.takeSeam,{sm:true});
+ assert.ok(!/enhanceTrackList/.test(fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8')),'app.js does not apply components');
+
+ // The real Library markup, enhanced the way startup does it.
+ doc.body.replaceChildren();
+ const wrap=new Node('div');doc.body.append(wrap);wrap.innerHTML=dialog;
+ const $=id=>doc.getElementById(id);
+ enhanceHelpTips(doc);enhanceKnobs(doc);enhanceChrome(doc);await flush();
+ const s=$('takeSelect'),list=s.nextElementSibling;
+ assert.ok(list.classList.contains('track-list'));assert.equal(list.getAttribute('role'),'radiogroup');assert.equal(s.getAttribute('aria-hidden'),'true');
+ assert.equal(list.querySelector('.track-empty').textContent,'No recorded moments yet','the empty state is a row');assert.equal(list.querySelector('.track-play'),null);
+ s.innerHTML='<option value="a" data-title="Low tide" data-meta="10/31/2026" data-duration="0:12" data-palette="tide" data-playable="true">Low tide · 0:12</option><option value="b" data-title="Low tide — fork" data-meta="Setup draft" data-duration="0:04" data-palette="" data-playable="false">Low tide — fork · 0:04</option>';
+ s.selectedIndex=-1;await flush();
+ const rows=()=>list.querySelectorAll('.track-row'),radio=i=>rows()[i].querySelector('.track-select'),play=i=>rows()[i].querySelector('.track-play');
+ assert.equal(rows().length,2);
+ assert.equal(rows()[0].querySelector('.track-title').textContent,'Low tide');assert.equal(rows()[0].querySelector('.track-meta').textContent,'10/31/2026');assert.equal(rows()[0].querySelector('.track-duration').textContent,'0:12');
+ assert.ok(rows()[0].querySelectorAll('.track-dots i').length>0,'the take’s palette shows as dots');assert.equal(rows()[1].querySelectorAll('.track-dots i').length,0);
+ assert.deepEqual([0,1].map(i=>radio(i).getAttribute('aria-checked')),['false','false'],'nothing is checked until a take is chosen');
+ assert.deepEqual([0,1].map(i=>radio(i).tabIndex),[0,-1],'one tab stop');assert.equal(play(0).tabIndex,-1,'row play buttons are not tab stops');
+ assert.equal(play(0).getAttribute('aria-label'),'Play Low tide');assert.equal(play(1).disabled,true,'a setup draft cannot play');
+ const seen=log(s);radio(1).click();assert.equal(s.value,'b');assert.deepEqual(seen,['input:b','change:b']);
+ radio(1).focus();key(radio(1),'ArrowUp');assert.equal(s.value,'a','arrows choose');assert.equal(doc.activeElement,radio(0));
+ const plays=[];s.addEventListener('flow:trackplay',e=>plays.push(e.detail.value));play(0).click();assert.deepEqual(plays,['a'],'play reports the row’s take');
+ const o=s.options[0];o.dataset.playing='true';o.setAttribute('data-playing','true');s.disabled=true;await flush();
+ assert.ok(rows()[0].classList.contains('is-playing'));assert.equal(play(0).getAttribute('aria-label'),'Stop Low tide');
+ assert.equal(play(0).disabled,false,'the playing row can stop while the list is busy');assert.equal(radio(0).disabled,true);
+ s.disabled=false;await flush();
+ // Overflow menu: arrows skip disabled items, Escape returns to the trigger.
+ const button=$('takeMenuButton'),menu=$('takeMenu');
+ assert.equal(menu.hidden,true);assert.equal(button.getAttribute('aria-haspopup'),'menu');
+ for(const id of ['takeLoad','takeFork','takeDownload','takeDelete'])$(id).disabled=true;
+ key(button,'ArrowDown');assert.equal(menu.hidden,false);assert.equal(doc.activeElement,$('takeImport'),'with no take, Import is the one enabled item');
+ key(doc.activeElement,'Escape');assert.equal(menu.hidden,true);assert.equal(doc.activeElement,button);
+ for(const id of ['takeLoad','takeFork','takeDownload','takeDelete'])$(id).disabled=false;
+ let deleted=0;$('takeDelete').addEventListener('click',()=>deleted++);button.click();key(doc.activeElement,'End');assert.equal(doc.activeElement,$('takeDelete'));$('takeDelete').click();assert.equal(deleted,1);assert.equal(menu.hidden,true);
+ // Clip export is Segmented; the seam blend is an sm knob whose row details() hides.
+ const segments=id=>$(id).nextElementSibling.querySelectorAll('button').map(b=>b.textContent);
+ assert.deepEqual(segments('clipLength'),['15 s','30 s','60 s']);assert.deepEqual(segments('clipAspect'),['9:16','1:1','16:9']);assert.deepEqual(segments('clipFraming'),['Fill','Fit']);
+ assert.equal($('clipFraming').nextElementSibling.querySelectorAll('button')[1].title,'Fit entire canvas · allow borders');
+ assert.ok($('takeSeamRow').classList.contains('knob-cell')&&$('takeSeamRow').querySelector('.knob.knob-sm'),'takeSeam is an sm knob in its own row');
+ // Static helper copy moves into HelpTips; live lines stay.
+ assert.equal($('clipExportOptions').querySelector('summary').querySelector('[role="tooltip"]').children.length,2);
+ assert.equal($('longRenders').querySelector('summary').querySelector('[role="tooltip"]').children.length,1);
+ assert.ok(list.parentElement.querySelector('label').querySelector('.help-tip'),'the session file note is a tip on Saved recordings');
+ assert.ok(!$('seamHelp').parentElement.closest('.help-tip')&&!$('clipFrameInfo').closest('.help-tip'),'the seam note and frame info stay visible');
+}
+console.log('PASS: the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');
