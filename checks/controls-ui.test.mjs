@@ -335,7 +335,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7c"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7c/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7d"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7d/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -501,7 +501,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.deepEqual(order,[...order].sort((a,b)=>a-b),'Community · Library · ? · Zen · rail toggle');
  const menu=top.slice(at('sessionMenu'),top.indexOf('</div>',at('sessionMenu')));
  assert.deepEqual([...menu.matchAll(/<button id="(\w+)"[^>]*role="menuitem"/g)].map(m=>m[1]),['allSessions','backupSession','newSession'],'the session menu holds the way back, download and new');
- assert.match(html.match(/<div id="presentStrip"[\s\S]*?<\/div>/)[0],/<button id="fullscreen"[^>]*>[^<]*<\/button><button id="presentExit">/,'fullscreen moves into the Zen strip');
+ assert.match(html.slice(html.indexOf('<div id="presentStrip"'),html.indexOf('<div class="sleep-veil"')),/<button id="fullscreen"[^>]*>[^<]*<\/button><button id="presentExit"[^>]*>Exit Zen<\/button><\/div>$/,'fullscreen sits in the Zen strip before Exit Zen');
  assert.ok(at('fullscreen')<0);
  const bottom=html.slice(html.indexOf('<div class="canvas-bottom">'),html.indexOf('<button id="performanceHint"'));
  assert.ok(bottom.includes('class="palette-controls"')&&bottom.includes('id="cycleColors"'),'the palette pill stays on the canvas');
@@ -545,7 +545,6 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['quickPlay','quickLive','quickStop','quickRecord','quickUseSetup','quickExport','quickShare','quickLibrary','sessionTakes','quickStatus','quickTime','quickProgress','captureLengthLabel','recordFinish','recordBarStop','recordBar','zenTransportRow','slower','faster','bpmLabel'])assert.ok(!html.includes(`id="${id}"`),`${id} is gone`);
  for(const marker of ['class="take-tray','class="session-capture','class="record-bar'])assert.ok(!html.includes(marker),`${marker} is gone`);
  assert.equal(html.match(/class="play-button"/g).length,1,'one transport Play button');
- assert.match(html,/<button id="zenTransportToggle"[^>]*hidden>/,'the second Zen row toggle is hidden until Phase 7');
  assert.match(html,/<div id="toast" class="toast" role="status" aria-live="polite" hidden>/);
  assert.deepEqual(POPOVERS.captureMenuButton,{panel:'capturePanel'});assert.deepEqual(STEPPERS.bpm,{unit:'BPM'});assert.deepEqual(STEPPERS.recordCycles,{unit:'cycles'});assert.deepEqual(CAPTURE_SEGMENTED,{recordMode:{size:'sm',full:true}});assert.deepEqual(CHORD_STRIPS,['chords']);assert.deepEqual(TOASTS,['toast']);
  assert.ok(!/enhanceStepper|enhanceChordStrip|enhanceToast/.test(app),'app.js does not apply components');
@@ -747,5 +746,48 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const fresh=panel.querySelector('.community-row');assert.equal(fresh.querySelector('.community-rank'),null,'no rank outside the popular charts');
  assert.equal(fresh.querySelector('[data-menu]').getAttribute('aria-haspopup'),'menu','re-rendered rows get their menu');
 }
+// Phase 7d: Zen and presentation are one glass strip component; the Zen row toggles are gone.
+{
+ const {GLASS_STRIPS}=await import('../public/controls-ui.js');
+ const zen=html.slice(html.indexOf('<div id="presentStrip"'),html.indexOf('<div class="sleep-veil"'));
+ const pres=html.slice(html.indexOf('<div id="presentationControls"'),html.indexOf('<p id="presentationNextStatus"'));
+ for(const id of ['zenTransportToggle','zenHarmonyToggle'])assert.ok(!html.includes(`id="${id}"`),`${id} is gone`);
+ for(const marker of ['zen-row-toggle','zen-harmony-collapsed','zen-transport-collapsed','class="present-strip'])assert.ok(!html.includes(marker),`${marker} is gone`);
+ assert.ok(!/zenTransportToggle|zenHarmonyToggle|zen-(harmony|transport)-collapsed/.test(fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8')+fs.readFileSync(new URL('../public/session-workspace.js',import.meta.url),'utf8')),'no JS reads the row toggles');
+ const order=(markup,ids)=>{const at=ids.map(id=>markup.indexOf(`id="${id}"`));at.forEach((i,k)=>assert.ok(i>0&&(!k||i>at[k-1]),`${ids[k]} in order`));};
+ order(zen,['presentPlay','zenEnergy','zenEnergyValue','zenSleepTimer','presentTitle','writeTitle','titleStatus','fullscreen','presentExit']);
+ order(pres,['presentationNext','presentationAutoAdvance','presentationAutoDurationLabel','presentationAutoDuration','presentationSleepTimer','presentationFullscreen','presentationExit']);
+ assert.match(zen,/^<div id="presentStrip" class="glass-strip" role="group" aria-label="Zen controls" data-shown="false" hidden>/);
+ assert.match(pres,/^<div id="presentationControls" class="glass-strip glass-strip-presentation" role="group" aria-label="Presentation controls" data-shown="false" hidden>/);
+ assert.match(zen,/<button id="presentPlay" class="strip-play"[^>]*><svg aria-hidden="true"><use href="#play"\/><\/svg><\/button>/,'Zen Play is a round icon button');
+ assert.match(pres,/<input id="presentationAutoAdvance" type="checkbox" role="switch">/,'Auto-advance is a Switch');
+ // Visible buttons: Zen 4, presentation 3 (the chevrons and the Stepper's −/+ are not counted).
+ const buttons=m=>[...m.matchAll(/<(?:button|a) id="(\w+)"/g)].map(x=>x[1]);
+ assert.deepEqual(buttons(zen),['presentPlay','writeTitle','fullscreen','presentExit']);
+ assert.deepEqual(buttons(pres),['presentationNext','presentationFullscreen','presentationExit']);
+ for(const id of ['zenSleepTimer','presentationSleepTimer'])assert.match(html,new RegExp(`<select id="${id}"[^>]*>(<option value="(0|15|30|45|60|90)">[^<]+</option>){6}</select>`),`${id} keeps its six values`);
+ assert.deepEqual(GLASS_STRIPS,['presentStrip','presentationControls']);assert.deepEqual(STEPPERS.presentationAutoDuration,{unit:'min'});
+ assert.ok(!/enhanceGlassStrip/.test(fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8')),'app.js does not apply components');
+
+ doc.body.replaceChildren();
+ const wrap=new Node('div');doc.body.append(wrap);wrap.innerHTML=zen+pres;
+ const $=id=>doc.getElementById(id);
+ enhanceChrome(doc);await flush();
+ for(const id of GLASS_STRIPS){const strip=$(id);assert.ok(strip.classList.contains('glass-strip'));assert.equal(strip.dataset.enhanced,'glass-strip');assert.equal(strip.getAttribute('role'),'group');}
+ // Enter in the title field writes the title through the same button; other keys and a disabled button do nothing.
+ let writes=0;$('writeTitle').addEventListener('click',()=>writes++);
+ const enter=key($('presentTitle'),'Enter');assert.equal(writes,1,'Enter writes the title');assert.ok(enter.defaultPrevented);
+ key($('presentTitle'),'a');key($('presentTitle'),'Enter',{isComposing:true});assert.equal(writes,1);
+ $('writeTitle').disabled=true;key($('presentTitle'),'Enter');assert.equal(writes,1);$('writeTitle').disabled=false;
+ key($('zenEnergy'),'Enter');assert.equal(writes,1,'only a field that names its button submits');
+ // Minutes per track is a Stepper that follows the auto-advance switch's disabling.
+ const minutes=$('presentationAutoDuration'),stepper=minutes.nextElementSibling,seen=log(minutes);
+ assert.ok(stepper.classList.contains('stepper'));assert.equal(stepper.parentElement,$('presentationAutoDurationLabel'));assert.equal(stepper.querySelector('.stepper-unit').textContent,'min');
+ assert.ok(stepper.classList.contains('is-disabled'),'disabled while auto-advance is off');
+ minutes.disabled=false;await flush();assert.ok(!stepper.classList.contains('is-disabled'));
+ stepper.querySelectorAll('button')[1].click();assert.equal(minutes.value,'3.25');assert.deepEqual(seen,['input:3.25','change:3.25']);
+ minutes.value='0.25';stepper.querySelectorAll('button')[0].click();assert.equal(minutes.value,'0.25','clamped at 15 s');
+}
+console.log('PASS: Zen and presentation are one glass strip: the row toggles are gone, Zen Play is a round icon, Enter writes the title, auto-advance is a Switch with a minutes Stepper, and the strips hold 4 and 3 buttons.');
 console.log('PASS: Community has chart Tabs with roving focus and a sliding bar, a ⋯ menu for Refresh and the browser library, and TrackRows with a like and a per-row menu whose Remove keeps it open to confirm.');
 console.log('PASS: beat studio is a StepGrid with per-voice tools, mirrored knobs and HelpTips; the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');

@@ -173,7 +173,6 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis;white-space:nowrap;over
 .mobile-dock>.listening-hint:after{left:35px}
 @media(prefers-reduced-motion:reduce){.listening-invitation :is(#start,.mobile-play){animation:none}}
 
-
 /* Saved-session loops use the hero area for the piece and composer. */
 .playback-hero[hidden]{display:none}
 body.loop-playback #intro,body.loop-playback #performanceHint,body.loop-playback #gestureHud{display:none}
@@ -249,19 +248,9 @@ body.zen .transport>.tempo>span,body.zen .transport>.tempo>small{display:none}
 body.zen .transport>.tempo>div{gap:3px;margin:0}
 @media(max-width:600px){body.zen .current-note{flex-basis:76px;padding-left:8px}body.zen .transport{gap:6px}body.zen .transport>.tempo{min-width:74px}}
 
-/* Independent zen row handles belong to the canvas, so they remain reachable
-   when either row is removed from the grid. Audio and recording keep running. */
-.zen-row-toggle{display:none}
-body.zen .zen-row-toggle{position:absolute;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;justify-content:center;gap:8px;min-height:36px;max-width:calc(100% - 280px);padding:7px 12px;border:1px solid #eef0f225;background:#13161aeb;color:#cdd1d7;font-size:11px;line-height:1.4;white-space:nowrap;touch-action:manipulation}
-body.zen .zen-row-toggle:hover{background:#252a30;color:#eef0f2;border-color:#c9bcf566}
-body.zen .zen-row-toggle span{font-size:16px;line-height:1}
-body.zen .zen-transport-toggle{top:0;border-top:0;border-radius:0 0 8px 8px}
-body.zen .zen-harmony-toggle{bottom:0;border-bottom:0;border-radius:8px 8px 0 0}
-body.zen.zen-transport-collapsed .session-capture{display:none}
-body.zen.zen-harmony-collapsed .transport{display:none}
 /* Leave the palette and Clear canvas a separate lane above the bottom handle. */
 body.zen .palette-controls,body.zen #clear{bottom:46px}
-@media(max-width:600px){body.zen .zen-row-toggle{max-width:calc(100% - 32px);min-height:44px;padding:9px 12px}body.zen .zen-transport-toggle{left:12px;transform:none;max-width:calc(100% - 130px)}body.zen .gesture-hud{top:52px}body.zen .palette-controls,body.zen #clear{bottom:52px}}
+@media(max-width:600px){body.zen .gesture-hud{top:52px}body.zen .palette-controls,body.zen #clear{bottom:52px}}
 
 .share-sign-in{padding:18px;border:1px solid #59606a;border-radius:8px;background:#c9bcf50a;margin:12px 0}.share-sign-in h4{font-size:16px;font-weight:500;color:#cdd1d7;margin:0 0 8px}.share-sign-in .outline-button{display:inline-block;width:auto;margin:10px 10px 0 0;text-decoration:none}.community-dialog button:disabled{cursor:default}
 
@@ -359,12 +348,10 @@ body.session-home::after{
 .listening-play-control{position:relative;display:inline-flex;flex-shrink:0}
 .listening-play-control>.listening-hint{top:calc(100% + 12px);bottom:auto;left:0;width:225px;max-width:calc(100vw - 40px);text-align:left;white-space:normal}
 .listening-play-control>.listening-hint:after{top:-5px;bottom:auto;left:18px;transform:rotate(225deg)}
-body.zen.listening-invitation.zen-harmony-collapsed .zen-harmony-toggle{animation:listening-halo 2.8s ease-out 3;border-color:var(--mint)}
-body.zen.listening-invitation.zen-harmony-collapsed .zen-harmony-toggle:after{content:'Show transport, then press Play to hear your flow';position:absolute;top:calc(100% + 10px);left:0;padding:10px 14px;max-width:calc(100vw - 40px);border:1px solid #c9bcf54d;border-radius:8px;background:#1e2227f5;color:#eef0f2;white-space:normal;pointer-events:none}
+
 @media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){
  body:not(.zen) .listening-play-control>.listening-hint{display:none}
 }
-@media(prefers-reduced-motion:reduce){body.zen.listening-invitation.zen-harmony-collapsed .zen-harmony-toggle{animation:none;box-shadow:0 0 0 3px #c9bcf533}}
 
 .arp-note.chord-tone{border-color:#c9bcf5;color:#cdd1d7}.arp-chord-mark{display:block;font-size:11px;line-height:5px;margin-top:5px;color:#c9bcf5}.arp-note.active .arp-chord-mark{color:#1e2227}
 
@@ -376,7 +363,7 @@ body.zen .zen-sleep{position:absolute;right:12px;bottom:116px;pointer-events:aut
 .zen-energy{display:none;align-items:center;gap:8px;font-size:11px;color:var(--muted)}body.zen .zen-energy{display:flex;position:absolute;right:12px;bottom:160px;pointer-events:auto;padding:7px 10px;border:1px solid #eef0f224;border-radius:8px;background:#13161aeb}.zen-energy input[type=range]{width:94px;margin:0}.zen-energy output{width:28px}
 
 /* Focused workspace and Zen controls. */
-#togglePanel{display:flex;align-items:center;gap:7px;width:auto;padding:9px 12px;font-size:12px}.present-strip{display:none}body.zen .artwork{display:block;padding:0;position:relative}body.zen .canvas-wrap{height:100dvh}body.zen .session-capture,body.zen .transport,body.zen .zen-row-toggle,body.zen .canvas-bottom,body.zen .gesture-hud{display:none!important}body.zen .present-strip{display:flex;position:absolute;z-index:15;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);gap:16px;align-items:center;max-width:calc(100% - 24px);padding:10px 14px;border:1px solid #cdd1d72b;border-radius:12px;background:#181b20e8;backdrop-filter:blur(16px);transition:opacity .5s;opacity:1}body.zen .present-strip label,body.zen .present-strip .zen-energy,body.zen .present-strip .zen-sleep{position:static;display:flex;align-items:center;gap:7px;padding:0;border:0;background:none;color:#cdd1d7;font-size:11px;white-space:nowrap;pointer-events:auto}body.zen .present-strip button{min-height:44px;padding:8px 12px;border:1px solid #cdd1d72b;border-radius:7px;font-size:12px;white-space:nowrap}body.zen .present-strip select{width:auto;min-width:75px;font-size:12px;margin:0;padding:7px;background:#181b20}body.zen.present-idle{cursor:none}body.zen.present-idle #fluid{cursor:none}body.zen.present-idle #cursor{display:none!important}.present-strip :focus-visible{outline:2px solid #cdd1d7;outline-offset:4px}@media(max-width:720px){.canvas-first .topbar{padding:14px 16px;gap:8px}.canvas-first .brand{font-size:24px}.canvas-first .header-actions{gap:6px}#togglePanel{padding:9px;font-size:11px}body.zen .present-strip{flex-wrap:wrap;justify-content:center;gap:8px 12px;width:max-content}body.zen .present-strip .zen-energy input{width:70px}}@media(prefers-reduced-motion:reduce){body.zen .present-strip{transition:none}}
+#togglePanel{display:flex;align-items:center;gap:7px;width:auto;padding:9px 12px;font-size:12px}.present-strip{display:none}body.zen .artwork{display:block;padding:0;position:relative}body.zen .canvas-wrap{height:100dvh}body.zen .session-capture,body.zen .transport,body.zen .canvas-bottom,body.zen .gesture-hud{display:none!important}body.zen .present-strip{display:flex;position:absolute;z-index:15;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);gap:16px;align-items:center;max-width:calc(100% - 24px);padding:10px 14px;border:1px solid #cdd1d72b;border-radius:12px;background:#181b20e8;backdrop-filter:blur(16px);transition:opacity .5s;opacity:1}body.zen .present-strip label,body.zen .present-strip .zen-energy,body.zen .present-strip .zen-sleep{position:static;display:flex;align-items:center;gap:7px;padding:0;border:0;background:none;color:#cdd1d7;font-size:11px;white-space:nowrap;pointer-events:auto}body.zen .present-strip button{min-height:44px;padding:8px 12px;border:1px solid #cdd1d72b;border-radius:7px;font-size:12px;white-space:nowrap}body.zen .present-strip select{width:auto;min-width:75px;font-size:12px;margin:0;padding:7px;background:#181b20}body.zen.present-idle{cursor:none}body.zen.present-idle #fluid{cursor:none}body.zen.present-idle #cursor{display:none!important}.present-strip :focus-visible{outline:2px solid #cdd1d7;outline-offset:4px}@media(max-width:720px){.canvas-first .topbar{padding:14px 16px;gap:8px}.canvas-first .brand{font-size:24px}.canvas-first .header-actions{gap:6px}#togglePanel{padding:9px;font-size:11px}body.zen .present-strip{flex-wrap:wrap;justify-content:center;gap:8px 12px;width:max-content}body.zen .present-strip .zen-energy input{width:70px}}@media(prefers-reduced-motion:reduce){body.zen .present-strip{transition:none}}
 
 .canvas-first.mobile-controls-open .control-rail{display:block}body.zen.present-idle .cursor{display:none!important}.canvas-first .artwork{overflow:hidden}
 

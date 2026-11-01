@@ -569,11 +569,6 @@ body.zen .topbar:has(#sharedPreview:not([hidden]))>:not(#sharedPreview){display:
 .toast-close:hover{background:var(--bg-hover);color:var(--text-1)}
 @media(prefers-reduced-motion:reduce){.toast.is-visible,.record-group.is-recording .record-dot{animation:none}}
 
-/* Zen: the strip has Play; the row keeps chords, note, tempo and Record. */
-body.zen #zenHarmonyRow{max-width:980px;min-height:0;padding:8px 16px;gap:16px}
-body.zen #zenHarmonyRow .record-group{padding-left:16px}
-.zen-row-toggle[hidden]{display:none!important}
-
 /* Phones: the dock has Play; chords take the first line, tempo and Record the second. */
 @media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){
  #zenHarmonyRow{flex-wrap:wrap;gap:10px 12px;min-height:0;padding:10px 12px}
@@ -593,7 +588,6 @@ body.zen #zenHarmonyRow .record-group{padding-left:16px}
  .capture-popover{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));width:auto;max-height:70dvh;overflow:auto}
  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
 }
-body.zen.listening-invitation.zen-harmony-collapsed .zen-harmony-toggle:after{top:auto;bottom:calc(100% + 10px)}
 
 /* Library: TrackRow list + detail card (enhanceTrackList, overflow menu). */
 .library-dialog{max-width:920px;padding:28px 32px 32px}
@@ -790,4 +784,55 @@ body.zen.listening-invitation.zen-harmony-collapsed .zen-harmony-toggle:after{to
  .community-row .track-play{width:44px;height:44px}
  .track-like{min-width:44px;height:44px}
  .row-menu>.icon-button,#communityMenuButton{width:44px;height:44px}
+}
+
+/* Zen and presentation: one glass strip (controls-kit.js enhanceGlassStrip). presentation-controls.js
+   owns data-shown: hidden means faded and click-through but still in the tab order, so focus reveals it.
+   Zen: Play · Energy · Sleep · Title · Fullscreen · Exit. Presentation: Next · Auto-advance · Sleep · Fullscreen · Exit. */
+.glass-strip{position:absolute;z-index:15;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:18px;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;margin:0;padding:8px 10px 8px 8px;border:0;border-radius:999px;background:var(--bg-glass);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);box-shadow:0 0 0 1px var(--line),0 12px 40px rgba(0,0,0,.4);color:var(--text-1);font:400 12px/1.2 var(--font-sans);transform:translate(-50%,0);opacity:1;transition:opacity var(--dur-3) var(--ease-out),transform var(--dur-3) var(--ease-out)}
+.glass-strip[hidden],body:not(.zen) #presentStrip{display:none}
+.glass-strip[data-shown=false]{opacity:0;transform:translate(-50%,8px);pointer-events:none}
+.glass-strip :focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.strip-play{display:grid;place-items:center;flex:none;width:40px;height:40px;min-height:0;margin:0;padding:0;border:0;border-radius:50%;background:var(--n-900);color:var(--n-50);transition:background var(--dur-1),transform var(--dur-1)}
+.strip-play:hover{background:var(--n-800)}.strip-play:active{transform:scale(.94)}
+.strip-play svg{width:16px;height:16px;stroke-width:2.5}.strip-play use[href="#play"]{fill:currentColor;stroke-width:0}
+.strip-energy{display:flex;align-items:center;gap:10px;margin:0;color:var(--text-2);white-space:nowrap}
+.strip-energy input[type=range]{width:120px;margin:0}
+.strip-energy output{min-width:30px;font:400 11px/1 var(--font-mono);color:var(--text-3);font-variant-numeric:tabular-nums}
+.glass-strip .strip-sleep{width:auto;min-width:0;height:28px;min-height:0;margin:0;padding:0 26px 0 10px;font-size:12px;background-color:var(--bg-well)}
+.strip-title{display:flex;align-items:center;gap:6px}
+.strip-title input{width:170px;height:28px;min-width:0;margin:0;padding:0 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-well);color:var(--text-1);font:400 12px/1 var(--font-sans)}
+.strip-title input::placeholder{color:var(--text-3)}
+.strip-button,.strip-ghost{display:inline-flex;align-items:center;justify-content:center;width:auto;height:28px;min-height:0;margin:0;padding:0 12px;border-radius:var(--r-2);font:500 12px/1 var(--font-sans);white-space:nowrap;text-decoration:none;transition:background var(--dur-1),color var(--dur-1),transform var(--dur-1)}
+.strip-button{border:1px solid var(--line-strong);background:var(--bg-raised);color:var(--text-1)}
+.strip-button:hover:not(:disabled){background:var(--bg-hover)}.strip-button:active:not(:disabled){transform:scale(.98)}
+.strip-button:disabled{opacity:.5;cursor:default}
+.strip-ghost{border:0;background:transparent;color:var(--text-2)}
+.strip-ghost:hover{background:var(--bg-hover);color:var(--text-1)}
+.glass-strip-presentation{padding-left:10px}
+.strip-auto{display:flex;align-items:center;gap:14px}
+.strip-switch{display:flex;align-items:center;gap:8px;margin:0;color:var(--text-2);white-space:nowrap;cursor:pointer}
+.strip-duration{display:flex;align-items:center;gap:6px;color:var(--text-2);white-space:nowrap}
+.strip-duration[hidden]{display:none}
+.strip-duration .stepper{flex-direction:row;gap:4px}
+.strip-duration .stepper-value{min-width:32px;font-size:13px}
+.glass-strip .presentation-next-status{position:absolute;top:auto;right:auto;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);width:max-content;max-width:min(420px,calc(100vw - 32px));margin:0;text-align:center}
+/* The first-visit hint names the chevron once the strip has faded, never on top of it. */
+.presentation-controls-toggle:has(+.glass-strip[data-shown=true]) .presentation-controls-hint{display:none}
+@media(prefers-reduced-motion:reduce){.glass-strip{transition:none}}
+/* Phones: a glass card in short rows with 44px targets.
+   Zen: Play · Energy · Sleep / title · Write title / Fullscreen · Exit. Presentation: Next · Fullscreen · Exit / Auto-advance · Sleep. */
+@media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){
+ .glass-strip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px 12px;width:calc(100% - 24px);max-width:440px;padding:10px 12px;border-radius:var(--r-3)}
+ #presentStrip>.strip-title{grid-column:1/-1}
+ .strip-title input{flex:1;width:auto}
+ #fullscreen{grid-column:1/3;justify-self:end}
+ #fullscreen[hidden]+#presentExit{grid-column:1/-1}
+ #presentExit{justify-self:end}
+ .strip-play{width:44px;height:44px}
+ .strip-energy{min-width:0}.strip-energy input[type=range]{width:auto;flex:1;min-width:0}
+ .glass-strip .strip-sleep,.strip-title input,.strip-button,.strip-ghost{height:44px}
+ .glass-strip-presentation{display:flex;flex-wrap:wrap;justify-content:center}
+ .glass-strip-presentation>.strip-auto{order:1}.glass-strip-presentation>.strip-sleep{order:2}
+ .strip-duration .stepper-button{width:44px;height:44px}
 }

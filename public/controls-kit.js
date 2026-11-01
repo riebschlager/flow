@@ -1,5 +1,5 @@
 // Flow design system primitives: Segmented, swatch grid, Stepper, Layer,
-// EnvelopeGraph, Popover, row menus, Tabs, ChordStrip, StepGrid, Toast and TrackRow list. Like the knobs, each one is a progressive enhancement: the
+// EnvelopeGraph, Popover, row menus, Tabs, ChordStrip, StepGrid, Toast, TrackRow list and glass strip. Like the knobs, each one is a progressive enhancement: the
 // native input stays the state, the component writes .value and dispatches
 // input/change, and programmatic writes and `disabled` flow back into the view.
 // Nothing here runs on import; a component appears only where it is applied.
@@ -415,6 +415,24 @@ export function enhanceToast(host,{timeout=6000}={}){
  new MutationObserver(render).observe(host,{attributes:true,attributeFilter:['hidden','data-timeout']});
  render();
  return {hide};
+}
+
+// The kit's glass strip for Zen and presentation: a pill of controls over the
+// scene. presentation-controls.js owns when it shows (data-shown); the strip
+// itself is a labelled group, and a text field with data-submit="<button id>"
+// sends Enter to that button, like the kit's title form, without a <form>.
+export function enhanceGlassStrip(strip){
+ if(strip.dataset.enhanced)return null;
+ strip.dataset.enhanced='glass-strip';strip.classList.add('glass-strip');
+ if(!strip.getAttribute('role'))strip.setAttribute('role','group');
+ strip.addEventListener('keydown',e=>{
+  const id=e.key==='Enter'&&!e.isComposing&&e.target.dataset?.submit;
+  if(!id)return;
+  const button=document.getElementById(id);
+  if(!button||button.disabled)return;
+  e.preventDefault();button.click();
+ });
+ return strip;
 }
 
 // ADSR preview drawn from the arpeggiator's note-shape ranges. The segment of

@@ -285,6 +285,56 @@ Settled before 7c:
 
 **Left for Phase 8.** `.community-tabs`, `.community-track`, `.track-cover`, `.track-artist`, `.track-actions` and `.track-rank` rules in `style.css`, and `.community-tabs`/`.community-track`/`.track-rank` in `flow-ds.css`, are orphans (`.home-track` in the shared `flow-ds.css` rule is still used). `--font-mono` names Geist Mono, but no `@font-face` loads it, so every mono readout falls back to the system mono.
 
+Settled before 7d:
+- **One pass, one component, two fillings.** Zen: Play · Energy · Sleep · Title · Fullscreen · Exit Zen. Presentation: Next · Auto-advance · Sleep · Fullscreen · Exit presentation. Presentation gets no Play, Energy or Title: it replays someone else's recording, where Play would stop the replay and `writeTitle` does nothing while the recorder is busy.
+- **The transport stays hidden in Zen.** It already was: `style.css`'s `body.zen .transport{display:none!important}` beat the `flow-ds.css` `#zenHarmonyRow` rules, so "Hide transport" had been unreachable since 6b, and 6b's "one row in every posture" was not true for Zen. The kit renders no Transport in Zen either. The collapse was never stored, so no storage key goes away. Chords, tempo, Record and the take chip are not shown in Zen; the `r` key still records.
+- **Show and hide.** A resting mouse in the bottom 120px shows the strip, and it hides 2.6 s after the pointer leaves. Painting (a pointer move with a button down), moves elsewhere and touches stay quiet. While hidden, the strip is faded and lets clicks through but stays in the tab order, so focus inside shows it, and it never hides while hovered or focused. The chevron stays for touch and opens it for 6 s. Entering Zen or a presentation shows it briefly, as the kit does.
+- **Escape order.** First an open popover, HelpTip, select or toast; then a dialog; then a pinned strip (focus inside, or opened with the chevron) hides and focus returns to the chevron; then Zen exits. A strip shown only by hover doesn't hold Escape. Presentation never ends on Escape. In fullscreen the browser takes Escape first, and leaving fullscreen leaves Zen.
+- **Play labels.** `presentPlay` and the dock use `#start`'s word: Stop, Pause, Play take or Play. The take chip is hidden in Zen, so the Zen Play's label and tooltip name the take ("Play take · <name>"). Clearing a take stays outside Zen.
+- **Mirrors.** `zenEnergy` and `zenSleepTimer` are reused, and one state already writes both. `presentationSleepTimer` keeps its own timer on the presentation player.
+- **Counting.** Zen shows 4 buttons and presentation 3. The chevrons and the Stepper's −/+ don't count.
+
+*Status: 7d done (`rev=controls-7d`).*
+
+**Component.** `enhanceGlassStrip(strip)` in `controls-kit.js`, applied from `GLASS_STRIPS` (`presentStrip`, `presentationControls`) in `enhanceChrome()`. It marks the strip as a labelled group, and a text field with `data-submit="<button id>"` sends Enter to that button. That gives the kit's title form without a `<form>`, so nothing can navigate. `STEPPERS.presentationAutoDuration` (unit min) turns minutes per track into a Stepper.
+
+**Show and hide.** These stay in `presentation-controls.js`, which `first-run.js` (Zen) and `presentation.js` already share and drive (`reveal()` on status messages, `close()` once a track plays).
+- **State.** It is now `data-shown`. `hidden` only means the strip is off, outside Zen and presentation. It is never `inert` while on.
+- **Exports.** `HOVER_HIDE_MS` 2600, `OPEN_HIDE_MS` 6000 and `HOVER_ZONE_PX` 120. The controller adds `shown` and `pinned`. `createPresentControls` exposes `open` (now meaning shown) and `pinned`, and the cursor hides only while the strip isn't shown.
+- **First-visit hint.** It now waits until the strip has faded, so it never sits on top of it.
+
+**Markup.**
+- **Zen.** `#presentStrip.glass-strip` holds:
+  - `presentPlay`, a round primary icon button (`.strip-play`) whose `aria-label`/`title` and `#play`/`#pause` icon come from `updateTransport()`;
+  - the Energy label with `zenEnergy`/`zenEnergyValue`;
+  - `zenSleepTimer`, an sm select with options "Sleep off · 15 min …" and the values unchanged;
+  - `.strip-title`, with `presentTitle` (visible label now screen-reader only, `data-submit="writeTitle"`) and `writeTitle`;
+  - `titleStatus`, `fullscreen` and `presentExit` (ghost).
+- **Presentation.** `#presentationControls.glass-strip.glass-strip-presentation` holds:
+  - `presentationNext`;
+  - `.strip-auto` with `presentationAutoAdvance`, now `role=switch`, and `presentationAutoDurationLabel`, now a `span`, holding the minutes Stepper;
+  - `presentationSleepTimer`;
+  - `presentationFullscreen`, labelled "Fullscreen"/"Exit fullscreen" with "Fullscreen unavailable" kept;
+  - `presentationExit`, still a link to `/recordings/<id>`.
+
+  `presentationNextStatus` sits above the pill.
+- **Ids and keys.** Every id, route, storage key and handler is unchanged.
+
+**Removed.** `zenTransportToggle`, `zenHarmonyToggle` and their loop in `app.js`. The `zen-transport-collapsed`/`zen-harmony-collapsed` classes, including the line in `session-workspace.js`. Every `.zen-row-toggle`, `.zen-transport-toggle`, `.zen-harmony-toggle`, collapsed and listening-invitation "Show transport" rule in `style.css` and `flow-ds.css`. The unused `body.zen #zenHarmonyRow` rules.
+
+**Dock fix.** `syncMobilePlay()` already ran from `updateTransport()`, but it wrote its own Stop/Pause/Play and only followed `state.playing` for the icon. It now writes the shared `playAction` (so "Play take" follows the chip), keeps "Preparing…" while busy, and shows the pause icon during a replay too.
+
+**Phones.** The pill becomes a glass card with 44px targets. Zen takes three short rows (Play · Energy · Sleep / title · Write title / Fullscreen · Exit), because the two-row plan didn't fit the title field beside Write title, Fullscreen and Exit at 375px. Presentation wraps Next · Fullscreen · Exit / Auto-advance · Sleep.
+
+**Tests.** `presentation-controls` covers the new model: shown on entry, faded but reachable, the band and its 2.6 s hide, quiet painting and touch, the chevron's 6 s and pin, focus showing and holding it, Escape only when pinned, and cleanup. `first-run` and `app-smoke` cover the Zen wrapper and the Escape order, the gone toggles, and every Play mirror naming the same action, including "Play take · <name>". `controls-ui` enhances both real strips: order, the 4/3 visible buttons, the switch, Enter writing the title, the minutes Stepper and its disabled state.
+
+**Left for Phase 8.** These are orphans:
+- in `style.css`: `.present-strip`, `.zen-energy`, `.zen-sleep` and `.title-card`
+- in `presentation.css`: `.presentation-controls` (but not `.presentation-controls-toggle`/`-hint`/`-hover`), `.presentation-auto*` and `.presentation-sleep`
+- in `flow-ds.css`: the old shared `.present-strip,.presentation-controls` glass rule
+
+**Known, not new.** On iPhone, Safari has no fullscreen for the page, so Fullscreen hides there as it did. In portrait presentation on a wide screen, the pill sits over the composition's lower edge while shown, as the old controls did.
+
 ### Phase 8 · Mobile, accessibility, dead CSS
 Check the rail at 375px. The mobile dock and `closeMobileControls` must still work, and Segmented controls with 7 options need a scroll fallback. Do a keyboard-only pass on every new component. Delete the CSS for removed structures from `style.css` (`.layer-editor`, `.nested-fold`, `.take-tray`, `.capture-options` and others). Run `benchmark-performance.mjs` to check that rendering cost didn't regress. **Done when:** an axe or keyboard pass is clean and `style.css` contains no orphaned selectors.
 

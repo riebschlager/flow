@@ -1,11 +1,11 @@
 import {FluidListen,shimmerNote} from './fluid-listen.js?rev=fluid-feedback-82';
 import {writeInDye,normalizeDyeTitle} from './dye-text.js?rev=clip-framing-89';
-import {migrateListeningPreferences,normalizeLayout,PerformerTrail,createPresentControls} from './first-run.js?rev=session-entry-90';
+import {migrateListeningPreferences,normalizeLayout,PerformerTrail,createPresentControls} from './first-run.js?rev=controls-7d';
 import {VisibleSound,normalizeEnergy} from './visible-sound.js?rev=fluid-feedback-82';
 import {delaySeconds} from './timing.js?rev=gestures-32-echo52';
 import {createDriftController} from './drift-ui.js?rev=session-entry-90';
 import {RainClock,schedulingLookahead,createBackgroundContinuity} from './background-continuity.js?rev=continuity-76';
-import {createSessionWorkspace} from './session-workspace.js?rev=controls-6b';
+import {createSessionWorkspace} from './session-workspace.js?rev=controls-7d';
 import {WaterSurface} from './water-surface.js?rev=water-49';
 import {fluidGridSize,resampleFluidState} from './fluid-viewport.js?rev=aspect-36';
 import {createEnvironmentController} from './environment-ui.js?rev=session-entry-90';
@@ -13,7 +13,7 @@ import {GPUFluidRenderer} from './gpu-fluid-renderer.js?rev=gpu-84';
 import {createFluidColorizer,renderFluidPixels} from './fluid-renderer.js?rev=performance-39';
 import {getPalette,normalizePalette} from './palettes.js?rev=gestures-32';
 import {createCommunityController} from './community-ui.js?rev=controls-7c';
-import {createPresentationController} from './presentation.js?rev=zen-controls-88';
+import {createPresentationController} from './presentation.js?rev=controls-7d';
 import {createRecorderController} from './recorder-ui.js?rev=controls-7a';
 import {isSetupDraft} from './recorder-core.js?rev=titles-81';
 import {sanitizeSnapshot,sanitizeTake} from './recording-state.js?rev=chaos-86';
@@ -77,7 +77,9 @@ function selectedTake(){const take=recorder?.selectedTake;return take&&!isSetupD
 // The one Play dispatcher: start, mobilePlay, presentPlay and studioPlay all call it. It acts on a
 // shared recording, else the selected take, else the live scene; whatever is sounding stops first.
 async function togglePlay({canvasStart=false}={}){if(recorder?.phase!=='idle'&&recorder){if(recorder.recording)recorder.finish();else if(recorder.replaying)recorder.stopPlayback();return;}if(busy)return;if(sessionWorkspace?.previewing){await community.playPreview();return;}if(document.body.classList.contains('session-home'))return;if(!state.playing&&!canvasStart&&selectedTake()){await recorder.play($('quickLoop').checked);return;}if(state.playing){state.elapsed=Math.max(0,audio.ctx.currentTime-clockOrigin);state.playing=false;rhythmUI.stop();arpUI.stop();environmentUI.stop();audio.setPlaying(false);syncDropScheduler();updateTransport();return;}busy=true;startingFromCanvas=canvasStart;hideListeningHint();$('start').disabled=true;$('audioState').style.color='';$('audioState').textContent='Getting your scene ready…';try{await audio.initialize();driftUI?.resume();await Promise.all([...effectiveVoices(),...(arpUI.requiredVoice?[arpUI.requiredVoice]:[])].map(v=>audio.load(v)));environmentUI.prepare();clockOrigin=audio.ctx.currentTime-state.elapsed;state.playing=true;audio.setPlaying(true);rhythmUI.start();arpUI.start();environmentUI.start();rainTimer=0;rainClock.reset();syncDropScheduler();updateTransport();$('intro').classList.add('faded');const touches=pendingTouches;pendingTouches=[];for(const args of touches)drop(...args);if(!canvasStart&&!touches.length)drop(.4+Math.random()*.2,.5+Math.random()*.12,0);}catch(e){pendingTouches=[];loadFail(e);}finally{busy=false;startingFromCanvas=false;$('start').disabled=false;syncMobilePlay();}}
-function updateTransport(){$('presentPlay').textContent=recorder?.replaying?'Stop':state.playing?'Pause':'Play';$('presentPlay').setAttribute('aria-label',$('presentPlay').textContent);continuity?.sync();syncListeningHint();const replay=!!recorder?.replaying;const take=!replay&&!state.playing&&!$('takeChip').hidden?selectedTake():null;$('start').querySelector('use').setAttribute('href',state.playing||replay?'#pause':'#play');const playAction=replay?'Stop':state.playing?'Pause':take?'Play take':'Play';$('start').setAttribute('aria-label',playAction);$('studioPlay').textContent=playAction;$('playLabel').textContent=replay?'Recorded moment':state.playing?'In the flow':take?'Play take':'Play';$('audioState').textContent=replay?'A favorite moment, on repeat':state.playing?`${activeChords()[state.chordIndex]} · ${$('soundscape').selectedOptions[0].textContent}`:take?'Listen back to your take':'Play your session when you’re ready';$('sessionState').textContent=replay?'A FAVORITE MOMENT, RETURNING':state.playing?'LET THE MUSIC KEEP YOU COMPANY':'TAKE YOUR TIME';document.querySelector('.transport').classList.toggle('paused',!state.playing&&!replay);rhythmUI.transportChanged();arpUI.transportChanged();environmentUI.transportChanged();syncMobilePlay();}
+// Every Play mirror says the same word as #start. The take chip is hidden in Zen, so the Zen Play names the take.
+let playAction='Play';
+function updateTransport(){continuity?.sync();syncListeningHint();const replay=!!recorder?.replaying;const take=!replay&&!state.playing&&!$('takeChip').hidden?selectedTake():null;$('start').querySelector('use').setAttribute('href',state.playing||replay?'#pause':'#play');playAction=replay?'Stop':state.playing?'Pause':take?'Play take':'Play';$('start').setAttribute('aria-label',playAction);const zenPlay=take?`${playAction} · ${take.name}`:playAction;$('presentPlay').setAttribute('aria-label',zenPlay);$('presentPlay').title=zenPlay;$('presentPlay').querySelector('use').setAttribute('href',state.playing||replay?'#pause':'#play');$('studioPlay').textContent=playAction;$('playLabel').textContent=replay?'Recorded moment':state.playing?'In the flow':take?'Play take':'Play';$('audioState').textContent=replay?'A favorite moment, on repeat':state.playing?`${activeChords()[state.chordIndex]} · ${$('soundscape').selectedOptions[0].textContent}`:take?'Listen back to your take':'Play your session when you’re ready';$('sessionState').textContent=replay?'A FAVORITE MOMENT, RETURNING':state.playing?'LET THE MUSIC KEEP YOU COMPANY':'TAKE YOUR TIME';document.querySelector('.transport').classList.toggle('paused',!state.playing&&!replay);rhythmUI.transportChanged();arpUI.transportChanged();environmentUI.transportChanged();syncMobilePlay();}
 // Offer one quiet invitation after a visitor starts painting in silence.
 let listeningHintShown=false,listeningHintUntil=0,listeningDiscovered=false;
 try{listeningDiscovered=localStorage.getItem('flow-listening-discovered')==='1';}catch{}
@@ -125,9 +127,9 @@ const mobileLayout=window.matchMedia('(max-width: 720px), (max-width: 1000px) an
 let mobileReturnFocus=null;
 function syncMobilePlay(){
  $('mobilePlay').disabled=busy;
- $('mobilePlayLabel').textContent=busy?'Preparing…':recorder?.replaying?'Stop':state.playing?'Pause':'Play';
+ $('mobilePlayLabel').textContent=busy?'Preparing…':playAction;
  $('mobilePlay').setAttribute('aria-label',$('mobilePlayLabel').textContent);
- $('mobilePlay').querySelector('use').setAttribute('href',state.playing?'#pause':'#play');
+ $('mobilePlay').querySelector('use').setAttribute('href',state.playing||recorder?.replaying?'#pause':'#play');
 }
 function setMobileControls(open,restore=true){
  open=!!open&&mobileLayout.matches;
@@ -164,21 +166,7 @@ $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await docume
 document.addEventListener('fullscreenchange',syncFullscreen);syncFullscreen();
 function toggleZen(force){if(typeof force==='boolean')document.body.classList.toggle('zen',force);else document.body.classList.toggle('zen');continuity?.sync();const entered=document.body.classList.contains('zen');if(entered){driftUI?.zen();presentControls.start();presentControls.syncWake();try{Promise.resolve(document.documentElement?.requestFullscreen?.()).catch(()=>{});}catch{}}else{presentControls.stop();presentControls.syncWake();try{if(document.fullscreenElement)Promise.resolve(document.exitFullscreen()).catch(()=>{});}catch{}}const zenLabel=entered?'Exit Zen':'Zen view';$('zen').setAttribute('aria-pressed',String(entered));$('zen').setAttribute('aria-label',zenLabel);$('zen').title=zenLabel;}
 $('zen').onclick=()=>toggleZen();
-// Each zen edge folds independently; the handles stay on the growing canvas.
-for(const [id,collapsedClass,label,collapseArrow,expandArrow] of [
- ['zenTransportToggle','zen-transport-collapsed','transport','⌃','⌄'],
- ['zenHarmonyToggle','zen-harmony-collapsed','transport','⌄','⌃']
-]){
- const button=$(id);
- button.onclick=()=>{
-  const collapsed=!document.body.classList.contains(collapsedClass);
-  document.body.classList.toggle(collapsedClass,collapsed);
-  button.setAttribute('aria-expanded',String(!collapsed));
-  button.innerHTML=`${collapsed?'Show':'Hide'} ${label} <span aria-hidden="true">${collapsed?expandArrow:collapseArrow}</span>`;
- };
-}
-
-document.addEventListener('keydown',e=>{if(document.body.classList.contains('presentation-mode'))return;if(e.key==='Escape'&&document.body.classList.contains('zen')){if(presentControls.open){e.preventDefault();presentControls.close();}else toggleZen(false);return;}if(recorder?.blocked||$('recordDialog').open||$('communityDialog').open)return;if(/^(INPUT|SELECT|TEXTAREA|BUTTON|SUMMARY|A)$/.test(document.activeElement.tagName)||$('beatDialog').open)return;if(performanceUI.key(e))return;if(e.code==='Space'&&!e.repeat){e.preventDefault();togglePlay();}if(/^[1-4]$/.test(e.key))selectColor(Number(e.key)-1);if(e.key==='Escape')toggleZen(false);});
+document.addEventListener('keydown',e=>{if(document.body.classList.contains('presentation-mode'))return;if(e.key==='Escape'&&document.body.classList.contains('zen')){if(presentControls.pinned){e.preventDefault();presentControls.close();}else toggleZen(false);return;}if(recorder?.blocked||$('recordDialog').open||$('communityDialog').open)return;if(/^(INPUT|SELECT|TEXTAREA|BUTTON|SUMMARY|A)$/.test(document.activeElement.tagName)||$('beatDialog').open)return;if(performanceUI.key(e))return;if(e.code==='Space'&&!e.repeat){e.preventDefault();togglePlay();}if(/^[1-4]$/.test(e.key))selectColor(Number(e.key)-1);if(e.key==='Escape')toggleZen(false);});
 // Fluid rendering and the droplet/impact lifecycle.
 const canvas=$('fluid'),ctx=canvas.getContext('2d',{alpha:false});const overlay=$('particles'),fx=overlay.getContext('2d');const stage=$('stage');
 const atmosphere=new ChordAtmosphere({reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false});

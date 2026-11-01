@@ -1,4 +1,4 @@
-import {createPresentationControls} from './presentation-controls.js?rev=zen-controls-88';
+import {createPresentationControls} from './presentation-controls.js?rev=controls-7d';
 import {PresentationSleep} from './presentation-sleep.js?rev=listening-85';
 import {PresentationAutoAdvance} from './presentation-auto.js?rev=auto-63';
 const $=id=>document.getElementById(id);
@@ -76,7 +76,7 @@ export function createPresentationController(recorder){
  };
  $('presentationBegin').onclick=()=>play(take);
  $('presentationFullscreen').onclick=e=>{void fullscreen();if(e.detail)e.currentTarget.blur();reveal();};
- document.addEventListener('fullscreenchange',()=>{$('presentationFullscreen').textContent=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen';});
+ document.addEventListener('fullscreenchange',()=>{$('presentationFullscreen').textContent=document.fullscreenElement?'Exit fullscreen':'Fullscreen';});
  shell.addEventListener('pointerdown',e=>{if(!e.target.closest('button,a,input,select,label')&&sleep.input()){sleepSelect.value='0';nextStatus.textContent='Sleep timer cancelled · welcome back';}});
  document.addEventListener('keydown',e=>{if(!active)return;if(e.key==='Escape'&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});});
  return {choose,enter,play,fail,exit,setQueue,get active(){return active;}};

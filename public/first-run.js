@@ -1,4 +1,4 @@
-import {createPresentationControls} from './presentation-controls.js?rev=zen-controls-88';
+import {createPresentationControls} from './presentation-controls.js?rev=controls-7d';
 const clamp=(n,lo=0,hi=1)=>Math.max(lo,Math.min(hi,n));
 // Convert retired listening presets once; working sessions already contain concrete settings.
 export function migrateListeningPreferences(storage,soundscapes){
@@ -26,5 +26,5 @@ export function createPresentControls({doc=globalThis.document,strip,trigger,hin
  function activity(){touched=clock();doc.body.classList.remove('present-idle');}
  for(const type of ['pointermove','pointerdown','keydown'])doc.addEventListener(type,activity);
  doc.addEventListener('fullscreenchange',()=>{if(active()&&!doc.fullscreenElement)exit();});
- return {start(){activity();chrome.start();},stop(){chrome.stop();doc.body.classList.remove('present-idle');},close(){chrome.close({restoreFocus:true});},get open(){return !strip.hidden;},syncWake,frame(){doc.body.classList.toggle('present-idle',active()&&strip.hidden&&clock()-touched>=3);},move(x,y){if(active())trail.move(x,y,clock());}};
+ return {start(){activity();chrome.start();},stop(){chrome.stop();doc.body.classList.remove('present-idle');},close(){chrome.close({restoreFocus:true});},get open(){return chrome.shown;},get pinned(){return chrome.pinned;},syncWake,frame(){doc.body.classList.toggle('present-idle',active()&&!chrome.shown&&clock()-touched>=3);},move(x,y){if(active())trail.move(x,y,clock());}};
 }
