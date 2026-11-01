@@ -14,9 +14,11 @@ const store={remove:async id=>{if(quota)throw Error('Storage full');sessions.del
 const recorder={phase:'idle',replaying:false,selectedTake:null,listTakes:async()=>[],getTake:async id=>takes.get(id),selectTake:async id=>recorder.selectedTake=takes.get(id)||null,record:async()=>recorder.phase='recording',stopPlayback(){this.phase='idle';this.replaying=false;},setLoop(){}};
 const bridge={snapshot:()=>structuredClone(snapshot),scene:()=>structuredClone(scene),applySnapshot:s=>snapshot=structuredClone(s),restoreScene:s=>scene=structuredClone(s),stopLive:()=>stops++};
 const workspace=createSessionWorkspace({bridge,recorder,store,community:{openRoute:async()=>{},open:async()=>{}}});
-await workspace.init();await workspace.newSession();const first=sessionRoute(location.pathname);assert(first);assert.equal(sessions.get(first).name,'Untitled session');
+await workspace.init();await workspace.newSession();const first=sessionRoute(location.pathname);assert(first);assert.match(sessions.get(first).name,/^[A-Z][a-z]+ [A-Z][a-z]+$/);
+const initialName=sessions.get(first).name;await el('shuffleSessionName').onclick();assert.notEqual(sessions.get(first).name,initialName);assert.equal(el('sessionTitle').value,sessions.get(first).name);assert.equal(document.title,sessions.get(first).name+' · Flow');
+recorder.phase='recording';intervals.at(-1)();assert.equal(el('shuffleSessionName').disabled,true);const heldName=sessions.get(first).name;await el('shuffleSessionName').onclick();assert.equal(sessions.get(first).name,heldName);recorder.phase='idle';intervals.at(-1)();assert.equal(el('shuffleSessionName').disabled,false);
 el('sessionTitle').value='First idea';el('sessionTitle').listeners.input();snapshot.main.bpm=83;await workspace.save();assert.equal(sessions.get(first).name,'First idea');assert.equal(sessions.get(first).snapshot.main.bpm,83);
-await workspace.newSession();const second=sessionRoute(location.pathname);assert.notEqual(first,second);assert.equal(snapshot.main.bpm,56);assert.equal(sessions.get(first).snapshot.main.bpm,83);
+await workspace.newSession();const second=sessionRoute(location.pathname);assert.notEqual(first,second);assert.notEqual(sessions.get(second).name,sessions.get(first).name);assert.equal(snapshot.main.bpm,56);assert.equal(sessions.get(first).snapshot.main.bpm,83);
 location.pathname='/sessions/'+first;await workspace.route();assert.equal(snapshot.main.bpm,83);assert.equal(document.title,'First idea · Flow');
 // Reuse must never persist a source's settings over the previous document.
 await workspace.beforeFork();const child=structuredClone(snapshot);child.main.bpm=41;snapshot=child;

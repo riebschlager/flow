@@ -448,7 +448,7 @@ dialog label{font-size:12px;color:var(--text-2)}
 #sessionTitle:disabled{color:var(--text-2);border-color:transparent;background:transparent}
 #sessionSave,#previewStatus{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:400 11px/1 var(--font-mono);color:var(--text-3)}
 #previewTitle{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 13px/1.2 var(--font-sans);color:var(--text-1)}
-#zen svg,#sessionMenuButton svg,.canvas-clear svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#shuffleSessionName svg,#zen svg,#sessionMenuButton svg,.canvas-clear svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .session-home #zen{display:none}
 
 /* Popover and menu (enhancePopover) */
@@ -477,7 +477,7 @@ body.zen .topbar:has(#sharedPreview:not([hidden]))>:not(#sharedPreview){display:
  .header-actions #zen{grid-column:2;grid-row:1;justify-self:end}
  .topbar-session{grid-column:1/-1;grid-row:3;gap:8px}
  #sessionTitle{max-width:none;flex:1 1 auto;font-size:15px;min-height:44px}
- #sessionMenuButton{width:44px;height:44px}
+ #sessionMenuButton,#shuffleSessionName{width:44px;height:44px}
  .popover{left:auto;right:0}
  .canvas-bottom{flex-wrap:nowrap;align-items:center;gap:8px}
  .palette-controls{flex:1 1 auto;width:auto;padding:0 10px 0 2px}
@@ -891,3 +891,8 @@ body.zen .topbar:has(#sharedPreview:not([hidden]))>:not(#sharedPreview){display:
 @media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){.presentation-dialog .close-dialog{margin:0}}
 /* In coarse landscape the dialog's × floats in the header's corner, so the header leaves it room. */
 @media(min-width:721px) and (max-width:1000px) and (max-height:500px) and (pointer:coarse){.studio-header{padding-right:56px}}
+
+#shuffleSessionName{flex:none}
+@media(max-width:1000px){
+ #sessionSave{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+}

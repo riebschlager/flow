@@ -26,7 +26,7 @@
 <meta name="twitter:image" content="https://flow.the816.com/social/flow-ambient.jpg">
 <meta name="twitter:image:alt" content="Flow — infinite ambient music in your browser. authored by humans. Colorful ribbons on a dark canvas.">
 <link rel="stylesheet" href="/presentation.css?rev=controls-8a">
-<link rel="stylesheet" href="/flow-ds.css?rev=home-captions-96">
+<link rel="stylesheet" href="/flow-ds.css?rev=fun-names-97">
 <script>if(/^\/recordings\//.test(location.pathname)&&["portrait","landscape"].includes(new URLSearchParams(location.search).get("present")))document.documentElement.classList.add("presentation-pending");</script>
 </head>
 <body class="session-loading">
@@ -43,7 +43,7 @@
 </defs></svg>
 <header class="topbar">
 <a class="brand" href="./" aria-label="Flow · your sessions" title="Back to your sessions"><span class="brandmark"><svg><use href="#drop"/></svg></span>Flow<span class="edition">INFINITE AMBIENT MUSIC</span></a>
-<div id="sessionHeader" class="topbar-session" hidden><span class="topbar-divider" aria-hidden="true"></span><input id="sessionTitle" maxlength="80" value="Untitled session" aria-label="Session name" aria-describedby="sessionOrigin"><div class="session-menu"><button id="sessionMenuButton" class="icon-button" type="button" aria-label="Session menu"><svg><use href="#chevronDown"/></svg></button><div id="sessionMenu" class="popover menu" role="menu" aria-label="Session" hidden><p id="sessionOrigin" class="menu-note" role="none">YOUR SESSION</p><button id="allSessions" type="button" role="menuitem" title="Return to your sessions">All sessions</button><button id="backupSession" type="button" role="menuitem" title="Download this working session and all its takes">Download session</button><button id="newSession" type="button" role="menuitem">＋ New session</button></div></div><span id="sessionSave" role="status">Saving…</span></div>
+<div id="sessionHeader" class="topbar-session" hidden><span class="topbar-divider" aria-hidden="true"></span><input id="sessionTitle" maxlength="80" value="Untitled session" aria-label="Session name" aria-describedby="sessionOrigin"><button id="shuffleSessionName" class="icon-button" type="button" aria-label="Shuffle session name" title="Shuffle session name"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m17 3 4 4-4 4M3 17h3c5 0 7-10 12-10h3M17 13l4 4-4 4M3 7h3c1.8 0 3.2 1.3 4.5 3M13.5 14c1.3 1.7 2.7 3 4.5 3h3"/></svg></button><div class="session-menu"><button id="sessionMenuButton" class="icon-button" type="button" aria-label="Session menu"><svg><use href="#chevronDown"/></svg></button><div id="sessionMenu" class="popover menu" role="menu" aria-label="Session" hidden><p id="sessionOrigin" class="menu-note" role="none">YOUR SESSION</p><button id="allSessions" type="button" role="menuitem" title="Return to your sessions">All sessions</button><button id="backupSession" type="button" role="menuitem" title="Download this working session and all its takes">Download session</button><button id="newSession" type="button" role="menuitem">＋ New session</button></div></div><span id="sessionSave" role="status">Saving…</span></div>
 <div id="sharedPreview" class="topbar-session" hidden><span class="topbar-divider" aria-hidden="true"></span><button id="previewBack" class="ghost-button" type="button">← Community</button><span class="sr-only">Shared recording · listening</span><strong id="previewTitle"></strong><span id="previewStatus" role="status" aria-live="polite"></span></div>
 <div class="header-actions"><button id="communityLauncher" class="record-launcher">Community</button><button id="recordLauncher" class="record-launcher">Library</button><span class="topbar-divider" aria-hidden="true"></span><a id="help" class="icon-button help-link" href="about.html" target="_blank" rel="noopener" aria-label="About Flow and getting started (opens in a new tab)" title="About Flow & getting started">?</a><button id="zen" class="icon-button" type="button" aria-pressed="false" aria-label="Zen view" title="Zen view"><svg><use href="#expand"/></svg></button><button id="togglePanel" class="icon-button" aria-label="Toggle controls" aria-controls="panel" aria-expanded="true"><svg><use href="#sliders"/></svg><span>Controls</span></button></div>
 </header>
@@ -130,7 +130,7 @@
 <p id="presentationNextStatus" class="presentation-next-status" role="status" aria-live="polite"></p>
 <div id="presentationGate" class="presentation-gate" hidden><p id="presentationStatus" role="status" aria-live="polite">Preparing your moment…</p><button id="presentationBegin" hidden>Tap to begin</button></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden><span id="toastMessage"></span><button id="toastAction" class="toast-action" type="button" hidden></button></div>
-<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=home-captions-96"></script>
+<script src="vendor/WebAudioFontPlayer.js"></script><script type="module" src="app.js?rev=fun-names-97"></script>
 <script type="module" src="select-ui.js?rev=controls-4"></script>
 <script type="module" src="controls-ui.js?rev=remove-water-93"></script>
 </body></html>

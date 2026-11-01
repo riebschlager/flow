@@ -1,4 +1,5 @@
 import {SessionStore,sessionRoute} from './session-store.js?rev=delete-70';
+import {generateSessionName} from './session-names.js?rev=fun-names-97';
 import {mainDefaults,sanitizeSnapshot} from './recording-state.js?rev=remove-water-93';
 import {isSetupDraft,encodePerformance,decodePerformance} from './recorder-core.js?rev=titles-81';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -32,9 +33,11 @@ export function createSessionWorkspace({bridge,recorder,community,store=new Sess
  }
  const savedToast=()=>toast('Saved',{label:'Open in library',action:()=>$('recordLauncher').click()});
  async function open(session,{navigate=true}={}){restoring=true;try{bridge.stopLive();current=session;bridge.applySnapshot(session.snapshot);bridge.restoreScene(session.scene);await recorder.selectTake(session.selectedTake||null);shell();if(navigate)url(path()+(session.selectedTake?'?take='+encodeURIComponent(session.selectedTake):''));notice('Saved on this device');renderChip();}finally{restoring=false;}}
- async function newSession({snapshot=fresh(),scene=null,name='Untitled session',origin=null,takeIds=[],saveCurrent=true}={}){
+ async function suggestName(){return generateSessionName((await store.list()).map(s=>s.name).concat(current?.name||[]));}
+ async function newSession({snapshot=fresh(),scene=null,name,origin=null,takeIds=[],saveCurrent=true}={}){
   if(recorder.unsaved&&saveCurrent)throw new Error('Save or download your unsaved take from Library before starting over.');if(recorder.phase!=='idle')throw new Error('Stop playback or finish your take before opening a session.');
   if(saveCurrent)await save();bridge.stopLive();if(!scene){const old=bridge.scene();scene={w:old.w,h:old.h,...Object.fromEntries(['u','v','r','g','b'].map(k=>[k,Array(old.w*old.h).fill(0)]))};}
+  name??=await suggestName();
   await open({id:crypto.randomUUID(),name,snapshot,scene,origin,takeIds,selectedTake:null,updated:new Date().toISOString()});await save();$('sessionNotice').hidden=true;
  }
  async function renderSessions(){const sessions=await store.list();if(current)return;$('recentSessions').innerHTML=sessions.map(s=>`<article class="recent-session"><button class="recent-session-open" data-session="${esc(s.id)}"><strong>${esc(s.name)}</strong><span>${s.takeIds.length} ${s.takeIds.length===1?'take':'takes'} · ${new Date(s.updated).toLocaleDateString()}</span><small>Open session ↗</small></button><button class="recent-session-delete" data-delete-session="${esc(s.id)}" aria-label="Delete ${esc(s.name)}" title="Delete session"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button></article>`).join('')||'<p class="helper">Your sessions will appear here. No account needed.</p>';}
@@ -65,6 +68,7 @@ export function createSessionWorkspace({bridge,recorder,community,store=new Sess
  $('newSession').onclick=$('homeNewSession').onclick=run(()=>newSession());$('allSessions').onclick=run(()=>home());
  document.querySelector('.brand').onclick=run(async e=>{e.preventDefault();await home();});
  $('sessionTitle').addEventListener('input',()=>{if(current){current.name=$('sessionTitle').value.trim().slice(0,80)||'Untitled session';document.title=current.name+' · Flow';mark();}});
+ $('shuffleSessionName').onclick=run(async()=>{if(!current||recorder.phase!=='idle')return;const session=current,name=await suggestName();if(current!==session||recorder.phase!=='idle')return;current.name=name;shell();mark();await save();notice('Saved on this device · '+name);});
  $('recentSessions').onclick=run(async e=>{const deleteId=e.target.closest('[data-delete-session]')?.dataset.deleteSession;if(deleteId){await deleteSession(deleteId);return;}if(deleting)return;const id=e.target.closest('[data-session]')?.dataset.session;if(id){await save();const session=await store.get(id);if(session)await open(session);}});
  // × on the take chip clears the selection, so Play returns to the live scene.
  $('takeChipClear').onclick=run(async()=>{if(recorder.replaying)recorder.stopPlayback();if(recorder.phase!=='idle')return;await recorder.selectTake(null);if(current){current.selectedTake=null;url(path());mark();}renderChip();});
@@ -84,7 +88,7 @@ export function createSessionWorkspace({bridge,recorder,community,store=new Sess
  document.addEventListener('visibilitychange',()=>{if(document.hidden)save().catch(report);});
  // Scene snapshots are checkpointed without writing every animation frame.
  setInterval(()=>{if(current&&!restoring&&recorder.phase==='idle')save().catch(report);},10000);
- setInterval(()=>{const active=recorder.phase!=='idle';$('newSession').disabled=$('allSessions').disabled=active;$('sessionTitle').disabled=active;if(current)$('recordName').placeholder=current.name+' · Take '+(current.takeIds.length+1);renderChip();},250);
+ setInterval(()=>{const active=recorder.phase!=='idle';$('newSession').disabled=$('allSessions').disabled=active;$('sessionTitle').disabled=$('shuffleSessionName').disabled=active;if(current)$('recordName').placeholder=current.name+' · Take '+(current.takeIds.length+1);renderChip();},250);
  return {get previewing(){return !$('sharedPreview').hidden;},error:report,mark,save,path,route,newSession,
   preview(take,{navigate=true}={}){document.body.classList.remove('session-home');$('sessionHome').hidden=true;$('sessionHeader').hidden=true;$('sharedPreview').hidden=false;$('intro').classList.add('faded');document.title=take.name+' · Flow';$('previewTitle').textContent=take.name+' · by '+(take.artist||'Community');if(navigate)url('/recordings/'+take.communityId);},
   // Record names an unnamed take after the session. Without one (a shared track), kept() makes a session from the take.
