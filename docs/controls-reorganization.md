@@ -4,7 +4,22 @@ A phased plan for cleaning up and regrouping the instrument's controls so the ap
 
 **Reference implementation:** `.claude/skills/flow-design-system/ui_kits/flow-app/` (`ControlRail.jsx`, `Transport.jsx`, `TopBar.jsx`, `Dialogs.jsx`). Control rules: `guidelines/control-choice.html` and `guidelines/interaction-model.html`. Component specs: `components/*/*.prompt.md`.
 
+## Close-out
+
+*Status: all phases are done.* The last rev is `controls-8b`, and the last code commit is `6756ea4` ("Controls reorganization phase 8b: mobile and accessibility"). Components are applied only from the `controls-ui.js` tables, through `enhanceRail()` and `enhanceChrome()`. 8a closed every "Left for Phase 8" list, and 8b closed the "Settled for 8b" list. All five open decisions are settled. "Where we are" below is the starting point, kept as a record.
+
+### Known limitations carried forward
+Each was recorded in the phase named, which has the details.
+- **iPhone fullscreen.** Safari has no page fullscreen, so Fullscreen hides there. See 7d, *Known, not new* ([Phase 7](#phase-7--dialogs-and-zen)).
+- **Portrait presentation.** On a wide screen, the glass strip covers the composition's lower edge while shown. See 7d, *Known, not new* ([Phase 7](#phase-7--dialogs-and-zen)).
+- **Touch-target exceptions.** Palette dots are 26px wide on a 26px pitch (44px tall). The 16-step grid and lane rows outside phones are about 33–42px. Inline text links are exempt. See 8b, *Checks → Targets* ([Phase 8](#phase-8--mobile-accessibility-dead-css)).
+- **axe `region`.** A moderate item in the presentation shell. See 8b, *Checks → axe-core* ([Phase 8](#phase-8--mobile-accessibility-dead-css)).
+- **Coarse-pointer style cost.** About 0.3 ms of extra style recalculation per interaction, from the hit-area pseudo-elements. See 8b, *Checks → Benchmark* ([Phase 8](#phase-8--mobile-accessibility-dead-css)).
+- **Deployment.** Phases 2–8b are on GitHub but have not been published through Sites. Earlier checkouts had no Sites remote and no Sites skill. The first Sites publish ships them together.
+
 ## Where we are
+
+This was the starting point, before Phase 1.
 
 Commit `532ef71` changed the look but not the layout. It applied tokens and type, turned 26 ranges into knobs through `public/controls-ui.js`, and moved helper paragraphs into `?` tips. The markup, grouping and control types are unchanged. The rail still holds about 35 ranges, 13 switches and 32 selects, and the Layers tab alone has 6 folds and 21 helper lines.
 
@@ -452,8 +467,8 @@ Fixed along the way:
 
 Settle these before the phase that needs them.
 
-1. **Layer editing while off (Phase 3).** The kit shows a layer's controls only when it's on. Today you can edit a layer while it's off. *Recommendation:* follow the kit. A layer you are tuning should be audible.
+1. **Layer editing while off (Phase 3).** The kit shows a layer's controls only when it's on. Today you can edit a layer while it's off. *Recommendation:* follow the kit. A layer you are tuning should be audible. *Settled:* as recommended, in Phase 3. A layer's controls show only while it's on (`enhanceLayer`, the `LAYERS` table).
 2. **Live vs take playback (Phase 6).** `start` plays the live scene, and `quickPlay` plays a selected take or the live scene. *Recommendation:* one Play button. When a take is selected, a chip by the ChordStrip says "Take · Morning, glass house ×" and clearing it returns to live. *Settled:* as recommended. The mobile, Zen and beat studio mirrors call the same dispatcher (see Phase 6).
-3. **Fluid listens (Phase 4).** It is experimental and missing from the kit. *Recommendation:* a Switch in Scene → The fluid, with its helper text in a HelpTip.
-4. **Glide (Phase 3).** The kit shows Glide as a main knob, but the source has a separate portamento switch and an amount control. *Recommendation:* keep all three inside the Note shape fold so the meaning of saved sessions doesn't change.
+3. **Fluid listens (Phase 4).** It is experimental and missing from the kit. *Recommendation:* a Switch in Scene → The fluid, with its helper text in a HelpTip. *Settled:* as recommended, in Phase 4. `fluidListens` is a switch in Scene → The fluid, and its helper is in that section's HelpTip.
+4. **Glide (Phase 3).** The kit shows Glide as a main knob, but the source has a separate portamento switch and an amount control. *Recommendation:* keep all three inside the Note shape fold so the meaning of saved sessions doesn't change. *Settled:* as recommended, in Phase 3. Glide stays as a row inside the Note shape fold (`details#arpShape`), so the meaning of saved sessions doesn't change.
 5. **Sessions home and new session (Phase 6).** Is the brand the right way back to the sessions list, or should the top bar keep an explicit "← Sessions"? *Settled:* the brand goes home, and "All sessions" (`allSessions`) is the first item in the session menu.
