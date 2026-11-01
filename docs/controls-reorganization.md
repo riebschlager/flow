@@ -338,6 +338,50 @@ Settled before 7d:
 ### Phase 8 · Mobile, accessibility, dead CSS
 Check the rail at 375px. The mobile dock and `closeMobileControls` must still work, and Segmented controls with 7 options need a scroll fallback. Do a keyboard-only pass on every new component. Delete the CSS for removed structures from `style.css` (`.layer-editor`, `.nested-fold`, `.take-tray`, `.capture-options` and others). Run `benchmark-performance.mjs` to check that rendering cost didn't regress. **Done when:** an axe or keyboard pass is clean and `style.css` contains no orphaned selectors.
 
+Settled before 8a:
+- **Split.** 8a deletes dead CSS and nothing else, so its check is "nothing changed". 8b is mobile and accessibility.
+- **Orphans are found mechanically, not from memory.** Every selector in the three stylesheets (through `document.styleSheets`, inside `@media`, `@supports` and `@starting-style`) is tested with `querySelector` in every posture: home, a session, the five rail tabs with every layer on, a HelpTip, the session and capture menus, playing, recording, the toast, the Library empty and with a take (menu and both folds open), the take chip, beat studio and a lane menu, Community with its chart and row menus, the presentation chooser, Zen and its strip, a shared recording, presentation landscape and portrait, and `about.html`, which also loads `style.css` and `flow-ds.css`. Each posture runs at 1440×900, 375×812 (including the phone sheet) and 900×420 with a coarse pointer. A selector is tried as written, then without state pseudo-classes, then without any. An unmatched selector is an orphan when one of its classes or ids appears nowhere in the markup, in `public/*.js` or in a trace of every class and id the session set. The rest were checked by driving the state (rail hidden, a knob mid-drag, the Chaos voice's detail line, `.color.selected`, an open HelpTip, the community empty state) or by finding the line of JS that sets them.
+- **Kept although unused today:** `.stepper-label` (the Stepper's `{label}` option) and the coarse-pointer rule for vertical ranges in dialogs. Both are kit options a table can turn on.
+- **Kept although unmatched in every posture:** state that JS sets: `body.panel-hidden`, `.canvas-first`, `.listening-invitation`, `.performance-finishing`, `.exporting-media`, `.session-loading`, `body.zen.present-idle` (including its two `!important` cursor rules), `.arp-note.chord-tone`, `.arp-chord-mark`, `.gesture-hud.active`, `.presentation-outgoing`, `.presentation-pending`, `.community-empty` (including an `!important` rule) and the kit's `.is-live`, `.is-dragging`, `.is-disabled`, `.muted` and `[aria-busy]` states.
+
+*Status: 8a done (`rev=controls-8a`).*
+
+**Deleted.**
+
+| File | Orphan selectors | Whole rules | Rules that lost a selector |
+|---|---|---|---|
+| `style.css` | 422 | 406 | 17 |
+| `flow-ds.css` | 60 | 37 | 14 |
+| `presentation.css` | 27 | 30 | 0 |
+
+- **What went.** Everything the "Left for Phase 8" notes named: `.layer-card`, `.layer-editor`, `.arp-shape`, `.performance-enable`, `.auto-title`, the old `.gesture-guide` card, `.session-capture`, `.take-tray`, `.capture-options`, `.record-bar`, `.record-columns`, `.record-actions`, `.export-options`, the old beat studio (`.beat-studio-header` … `.legend-*`, both `flow-ds.css` `.drum-step` rules), `.community-tabs`, `.community-track`, `.track-cover`, `.track-artist`, `.track-actions`, `.track-rank`, `.present-strip`, `.zen-energy`, `.zen-sleep`, `.title-card`, `presentation.css`'s `.presentation-controls`, `.presentation-auto*` and `.presentation-sleep`, and the shared `flow-ds.css` glass rule.
+- **Also found by the scan.** The old session header (`.session-header`, `.session-identity`, `.session-take`, `#sessionTakes`), `.live-label`, `.mini-row`, `.rhythm-enable`, `.section-link`, `.text-button`, `.range-chip`, `#bpmLabel`, `#quickTime`, `#quickLive` and `#quickUseSetup`. Also the `.tempo` children from before the Stepper (`.tempo > span`, `strong`, `small`), `.header-actions #fullscreen` (6a moved it into the Zen strip), `.canvas-header .eyebrow`, `.palette-hint span`, `.arpeggiator .section-label`, `.community-share > .outline-button`, `.presentation-credit h1 em`, `.control-fold .control-fold`, `.knob-cell > .slider-label > span`, `.step-grid` (the kit uses `step-grid` only as a `data-enhanced` value), `.effects`, `.keyboard`, `kbd`, and the Firefox-only `.lane-level input::-moz-range-thumb`, which Chrome never parses.
+- **`!important`.** Three orphans were `!important` (`.legend-ghost`, `.studio-tip`, `.record-columns .helper`). They matched nothing, so none did live work.
+- **Cleanup.** No `@keyframes` or custom property lost its last use; `--layer` was set only in dead rules and nothing reads it. Comments left over nothing were removed, and "Session header" now reads "Home buttons", which is all its rule styles.
+
+**Checks.**
+- **Computed styles.** Each posture's computed style (every element, plus `::before`/`::after`) was snapshotted before and after, with transitions finished. There were zero differences in all 110 posture snapshots across the three viewports. The only elements excluded were the ones that differ between two runs of the same build anyway: the gesture HUD, the chord progress line, the expression dot and the cursor. Chrome lists custom properties in an unstable order, so the snapshot sorts them.
+- **Screenshots.** Screenshots of every posture with the canvases hidden differ only where two runs of the same build also differ: live readouts, the note and the HUD.
+- **Benchmark and style cost.** `benchmark-performance.mjs` times only the fluid simulation and raster, so it can't see CSS: 7.72/1.73 ms desktop and 3.49/0.84 ms portrait before, 7.59/1.71 and 3.39/0.82 after. Chrome's style-recalc time over the same tab, dialog and Zen sequence went from a median of about 53 ms to about 51 ms, which is within run-to-run noise. Layout stayed around 30 ms.
+- **Revs.** `style.css`, `presentation.css` (from `design-system-1`) and `flow-ds.css` are at `controls-8a`, in `instrument.html` and in `controls-ui.test.mjs`'s pins. `about.html` links them without a rev and is unchanged.
+
+**Correction to 7c.** Geist Mono does load: `style.css` imports it from Google Fonts on line 1, `document.fonts` reports 400 and 500 as loaded, and the mono readouts render in it. `--font-mono` stays.
+
+**The "Left for Phase 8" orphan lists in 3, 4, 6b, 7a, 7b, 7c and 7d are closed.** What remains for 8b is the mobile and accessibility work below.
+
+Settled for 8b (from the 8a survey):
+- **Touch targets.** Under `(pointer:coarse)`, hit areas are at least 44px without changing the visuals. Tabs, segments, menu items, steppers and the dialog, toast and take-chip × get a 44px min-height or min-width. Dots, the HelpTip `?` and switches get an invisible padded hit area. This also covers coarse landscape (900×420), which today gets desktop sizes because the phone rules are keyed to `max-width:720px`.
+- **Contrast.** `--text-3` on the raised surface (`#1e2227`) is 4.17:1. Those rules (unselected segments, track meta and duration, `.map-air`) use `--text-2`, and the tokens stay as the design system defines them.
+- **Found and still open:**
+  - The session menu runs off the left edge on phones (−25px at 375).
+  - The fold HelpTips sit inside `<summary>`, which axe reports as nested interactive controls (`arpShape`, `clipExportOptions`, `longRenders`).
+  - `role=dialog` isn't allowed on `<aside id="panel">`.
+  - There is no `<main>`, the phone session has no `h1`, and the gesture guide's `h3` is out of order.
+  - `arpRate` fits at 320px with no room to spare and has no scroll fallback.
+  - The dialog × issue carried over from 7b.
+  - `flow-ds.css`'s `.panel input[type=range]::-webkit-slider-thumb,.panel input[type=range]::-moz-range-thumb` puts a `-moz-` selector in the same list, so Chrome drops the whole rule and the rail's thumb styling has never applied there.
+- **Already fine.** The phone sheet's focus trap holds Tab ×150 and Shift+Tab ×40, and Escape and `closeMobileControls` both close it and return focus to the dock button. No posture scrolls the page sideways.
+
 ---
 
 ## Open decisions

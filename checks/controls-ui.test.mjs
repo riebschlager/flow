@@ -335,7 +335,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7d"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7d/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7d"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-8a/);assert.match(html,/style\.css\?rev=controls-8a/);assert.match(html,/presentation\.css\?rev=controls-8a/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
