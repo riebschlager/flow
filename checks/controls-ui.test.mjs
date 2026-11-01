@@ -79,7 +79,7 @@ const pointer=(el,type,extra)=>{const e=new Event(type,{bubbles:true,cancelable:
 function log(el){const seen=[];el.addEventListener('input',()=>seen.push('input:'+el.value));el.addEventListener('change',()=>seen.push('change:'+el.value));return seen;}
 function select(id,values,label){const wrap=new Node('div');doc.body.append(wrap);if(label){const l=new Node('label');l.attrs.for=id;l.textContent=label;wrap.append(l);}const s=new Select();s.id=id;for(const [v,t] of values)s.append(new Option(v,t));wrap.append(s);return s;}
 
-const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,POPOVERS,STEPPERS,CAPTURE_SEGMENTED,CHORD_STRIPS,TOASTS,TRACK_LISTS,DIALOG_SEGMENTED,enhanceChrome,enhanceChordStrip,enhanceToast,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
+const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,POPOVERS,STEPPERS,CAPTURE_SEGMENTED,CHORD_STRIPS,TOASTS,TRACK_LISTS,DIALOG_SEGMENTED,STEP_GRIDS,enhanceChrome,enhanceChordStrip,enhanceToast,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
 const html=fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');
 for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}"[^>]*>`),`${id} has a slider label`);}
 for(const level of ['volume','dropletsVolume','arpVolume','rhythmVolume','environmentVolume','rain','energy'])assert.ok(!(level in KNOBS),`${level} stays a slider`);
@@ -335,7 +335,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7a"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7a/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7b"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-7b/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -547,7 +547,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.equal(html.match(/class="play-button"/g).length,1,'one transport Play button');
  assert.match(html,/<button id="zenTransportToggle"[^>]*hidden>/,'the second Zen row toggle is hidden until Phase 7');
  assert.match(html,/<div id="toast" class="toast" role="status" aria-live="polite" hidden>/);
- assert.deepEqual(POPOVERS.captureMenuButton,{panel:'capturePanel'});assert.deepEqual(Object.keys(STEPPERS),['bpm','recordCycles']);assert.deepEqual(CAPTURE_SEGMENTED,{recordMode:{size:'sm',full:true}});assert.deepEqual(CHORD_STRIPS,['chords']);assert.deepEqual(TOASTS,['toast']);
+ assert.deepEqual(POPOVERS.captureMenuButton,{panel:'capturePanel'});assert.deepEqual(STEPPERS.bpm,{unit:'BPM'});assert.deepEqual(STEPPERS.recordCycles,{unit:'cycles'});assert.deepEqual(CAPTURE_SEGMENTED,{recordMode:{size:'sm',full:true}});assert.deepEqual(CHORD_STRIPS,['chords']);assert.deepEqual(TOASTS,['toast']);
  assert.ok(!/enhanceStepper|enhanceChordStrip|enhanceToast/.test(app),'app.js does not apply components');
 
  doc.body.replaceChildren();
@@ -649,4 +649,52 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.ok(list.parentElement.querySelector('label').querySelector('.help-tip'),'the session file note is a tip on Saved recordings');
  assert.ok(!$('seamHelp').parentElement.closest('.help-tip')&&!$('clipFrameInfo').closest('.help-tip'),'the seam note and frame info stay visible');
 }
-console.log('PASS: the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');
+// Phase 7b: beat studio is a header, a StepGrid and a footer with the kit and four knobs.
+{
+ const dialog=html.match(/<dialog id="beatDialog"[\s\S]*?<\/dialog>/)[0];
+ for(const id of ['closeBeats','studioBpm','studioPlay','studioEnabled','studioGroove','studioVary','studioClear','studioGrooveDescription','beatLanes','studioKit','studioKitDescription','studioSwing','studioHumanize','studioReverb','studioDelay','doneBeats'])assert.ok(dialog.includes(`id="${id}"`),`${id} keeps its id`);
+ assert.match(dialog,/<button id="doneBeats"[^>]*hidden>/,'Back to your scene stays in the markup, hidden: × and Escape close');
+ const visible=[...dialog.matchAll(/<button id="(\w+)"([^>]*)>/g)].filter(m=>!/\bhidden\b/.test(m[2])&&m[1]!=='closeBeats').map(m=>m[1]);
+ assert.deepEqual(visible,['studioPlay','studioVary','studioClear'],'no more than 4 visible buttons; each voice’s tools sit behind its ⋯');
+ assert.match(dialog,/<div class="studio-actions">[^]*?<input id="studioEnabled" type="checkbox" role="switch">/,'Percussion is a Switch in the header actions');
+ assert.ok(!dialog.includes('studio-tip')&&!dialog.includes('studio-effects'),'the old tip lines and effects box are gone');
+ assert.deepEqual(STEP_GRIDS,['beatLanes']);assert.deepEqual(KNOBS.studioSwing,{});assert.deepEqual(KNOBS.studioHumanize,{});
+ for(const i of [0,1,2,3]){assert.deepEqual(POPOVERS['laneMenuButton'+i],{panel:'laneMenu'+i});assert.deepEqual(STEPPERS['laneHits'+i],{});}
+ for(const id of ['studioSwing','studioHumanize'])assert.equal(html.match(new RegExp(`id="${id}"`,'g')).length,1,`${id} is beat studio’s mirror of the rail`);
+
+ // The real dialog, with lanes shaped the way rhythm-ui.js renders them.
+ doc.body.replaceChildren();
+ const wrap=new Node('div');doc.body.append(wrap);wrap.innerHTML=dialog;
+ const $=id=>doc.getElementById(id);
+ $('beatLanes').innerHTML=[0,1,2,3].map(i=>`<section id="beatLane${i}" class="step-lane"><div class="step-lane-head"><button id="laneMute${i}" class="step-mute" type="button" data-mute="${i}" aria-pressed="false"></button><select id="drumVoice${i}" data-voice="${i}"><option value="off">No voice</option></select><div class="lane-menu"><button id="laneMenuButton${i}" class="icon-button" type="button"></button><div id="laneMenu${i}" class="popover lane-tools" role="dialog" hidden><label class="slider-label" for="laneLevel${i}">Level</label><input id="laneLevel${i}" type="range" min="0" max="100" value="80"><label for="laneHits${i}">Evenly spread hits</label><input id="laneHits${i}" type="number" min="0" max="16" step="1" value="3" aria-label="Evenly spaced hits for voice ${i+1}"><div class="lane-tool-actions"><button id="laneRotate${i}" type="button">Rotate ↻</button><button id="laneVary${i}" type="button">Vary ↗</button><button id="laneClear${i}" type="button">Clear</button></div></div></div></div><div class="step-cells" role="group">${Array.from({length:16},(_,j)=>`<button id="beatStep${i}_${j}" class="step-cell" type="button" data-lane="${i}" data-step="${j}"></button>`).join('')}</div></section>`).join('');
+ enhanceHelpTips(doc);enhanceKnobs(doc);enhanceChrome(doc);await flush();
+ const cell=(i,j)=>$(`beatStep${i}_${j}`);
+ // StepGrid: steps in fours, one tab stop, arrows across lanes, playhead column.
+ const quarters=$('beatLane0').querySelector('.step-cells').children;
+ assert.equal(quarters.length,4);assert.ok(quarters.every(q=>q.classList.contains('step-quarter')&&q.children.length===4),'each lane groups its steps in fours');
+ assert.equal(cell(0,4).parentElement,quarters[1]);
+ assert.equal($('beatLanes').querySelectorAll('[data-step]').filter(c=>c.tabIndex===0).length,1,'one tab stop for the grid');assert.equal(cell(0,0).tabIndex,0);
+ cell(0,0).focus();key(cell(0,0),'ArrowRight');assert.equal(doc.activeElement,cell(0,1));key(cell(0,1),'ArrowDown');assert.equal(doc.activeElement,cell(1,1));
+ key(cell(1,1),'ArrowUp');key(cell(0,1),'ArrowUp');assert.equal(doc.activeElement,cell(3,1),'up from the first lane wraps');
+ key(cell(3,1),'End');assert.equal(doc.activeElement,cell(3,15));key(cell(3,15),'ArrowRight');assert.equal(doc.activeElement,cell(3,0),'right from the last step wraps');key(cell(3,0),'Home');assert.equal(doc.activeElement,cell(3,0));
+ assert.equal(cell(3,0).tabIndex,0);assert.equal(cell(0,0).tabIndex,-1,'the tab stop follows focus');
+ $('beatLanes').dataset.playhead='5';$('beatLanes').setAttribute('data-playhead','5');await flush();
+ assert.deepEqual([0,1,2,3].map(i=>cell(i,5).classList.contains('is-playhead')),[true,true,true,true]);assert.ok(!cell(0,4).classList.contains('is-playhead'));
+ $('beatLanes').dataset.playhead='';$('beatLanes').setAttribute('data-playhead','');await flush();assert.ok(!cell(0,5).classList.contains('is-playhead'),'stopping clears the playhead');
+ // Each voice's ⋯ opens its tools; Escape returns to it. Hits is a Stepper.
+ const button=$('laneMenuButton2'),menu=$('laneMenu2');
+ assert.equal(menu.hidden,true);assert.equal(button.getAttribute('aria-haspopup'),'dialog');
+ button.click();assert.equal(menu.hidden,false);assert.equal(doc.activeElement,$('laneLevel2'),'the level is first');
+ assert.ok(menu.querySelector('.stepper'),'the hit count is a Stepper');assert.equal($('laneHits2').dataset.enhanced,'stepper');
+ const seen=log($('laneHits2'));const plus=menu.querySelectorAll('.stepper-button')[1];assert.equal(plus.getAttribute('aria-label'),'Increase evenly spaced hits for voice 3');plus.click();assert.equal($('laneHits2').value,'4');assert.deepEqual(seen,['input:4','change:4']);
+ key($('laneRotate2'),'Escape');assert.equal(menu.hidden,true);assert.equal(doc.activeElement,button);
+ // Footer: four knobs in one row; the kit and pattern notes are HelpTips.
+ const row=$('studioSwing').closest('.knob-row');assert.ok(row?.parentElement.classList.contains('studio-knobs'));
+ assert.deepEqual(row.children.map(c=>c.querySelector('input').id),['studioSwing','studioHumanize','studioReverb','studioDelay']);
+ const tools=$('studioGroove').parentElement.querySelector('[role="tooltip"]');assert.equal(tools.children.length,3);assert.ok(tools.contains($('studioGrooveDescription')),'the live groove description is in the tools HelpTip');
+ // Escape closes an open tip without closing the dialog; a second Escape reaches the dialog.
+ const tipButton=$('studioGroove').parentElement.querySelector('.help-tip').querySelector('button');tipButton.click();assert.equal(tipButton.getAttribute('aria-expanded'),'true');
+ assert.equal(key(tipButton,'Escape').defaultPrevented,true,'the dialog stays open');assert.equal(tipButton.getAttribute('aria-expanded'),'false');assert.equal(key(tipButton,'Escape').defaultPrevented,false,'a closed tip lets Escape close the dialog');
+ const kit=$('studioKit').parentElement.querySelector('[role="tooltip"]');assert.equal(kit.children.length,3);assert.ok(kit.contains($('studioKitDescription')));assert.equal($('studioKit').getAttribute('aria-describedby'),'studioKitDescription');
+}
+console.log('PASS: beat studio is a StepGrid with per-voice tools, mirrored knobs and HelpTips; the Library is a TrackRow list with a detail card, an overflow menu, Segmented clip export, a seam knob and dialog HelpTips; knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon; the transport is one row with one Play, a ChordStrip with roving focus, the take chip, a tempo Stepper and one Record with a capture popover, and a toast that hides itself');

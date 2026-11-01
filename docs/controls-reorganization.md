@@ -21,7 +21,7 @@ Commit `532ef71` changed the look but not the layout. It applied tokens and type
 ## Principles for every phase
 
 - **Native inputs stay the state.** Keep every `id`, storage key, session field and event. New components are progressive enhancements, as in `controls-ui.js`: hide the native input, write `.value`, and dispatch `input` and `change`. Sessions, presets, `app.js` and the 14 checks that load `instrument.html` keep working. Moving an element to a new place is fine. Renaming or removing an `id` needs a matching JS and test change in the same phase.
-- **Each control has one home.** A second copy is allowed only when it appears in a different posture, and then it mirrors the same state rather than holding its own. Allowed mirrors are Zen energy and sleep, and beat studio drum reverb and delay. Everything else gets one home.
+- **Each control has one home.** A second copy is allowed only when it appears in a different posture, and then it mirrors the same state rather than holding its own. Allowed mirrors are Zen energy and sleep, and beat studio's swing, humanize, drum reverb and drum delay. Everything else gets one home.
 - **The control type comes from `control-choice`.** Knob for character, Slider for levels and proportions, Segmented for 2–7 values, Select for long or named lists, Stepper for tempo.
 - **One fold level.** A layer's switch is its disclosure (the kit's `Layer` pattern). A Fold is only for the secondary detail inside a section, never a fold inside a fold.
 - **Copy rules.** Helper copy goes in HelpTips, kept verbatim. Live status goes in the Switch description. Each panel gets one short line at the top.
@@ -178,7 +178,7 @@ Settled before 6b:
 **Left for Phase 8.** `.session-capture`, `.take-tray`, `.capture-options` and `.record-bar` rules remain in `style.css` as orphans.
 
 ### Phase 7 · Dialogs and Zen
-Rebuild the Library as list + detail, port beat studio to StepGrid, switch Community to Tabs and TrackRows, and turn Zen and presentation into one glass strip. Update `recorder-ui`, `community-ui`, `presentation-*` and `rhythm-ui`. **Done when:** no dialog has more than 4 visible buttons before the overflow menu.
+Rebuild the Library as list + detail (7a), port beat studio to StepGrid (7b), switch Community to Tabs and TrackRows (7c), and turn Zen and presentation into one glass strip (7d). Update `recorder-ui`, `community-ui`, `presentation-*` and `rhythm-ui`. **Done when:** no dialog has more than 4 visible buttons before the overflow menu.
 
 Settled before 7a:
 - **Split.** 7a is the Library, along with the TrackRow list, the overflow menu and dialog HelpTips. 7b is beat studio (StepGrid, `studioEnabled` as a Switch) plus Community (Tabs, reusing 7a's TrackRow), and it fixes `studioPlay`'s "Play scene" label. 7c is the Zen/presentation glass strip, removes `zenTransportToggle`/`zenHarmonyToggle` and their CSS, and fixes the mobile dock's "Play take" label.
@@ -210,6 +210,42 @@ Settled before 7a:
 **Tests.** `controls-ui` enhances the real Library markup. `recorder-ui` covers row data, the empty selection, inline rename, row play/stop and the Stop swap. `app-smoke`'s fake options gained a `dataset`.
 
 **Left for Phase 8.** `.record-columns`, `.record-actions` and `.export-options` rules remain in `style.css` as orphans.
+
+Settled before 7b:
+- **Split again.** 7b is beat studio only. 7c is Community (Tabs, TrackRows with a like button and a per-row overflow menu). 7d is the Zen/presentation glass strip, removing `zenTransportToggle`/`zenHarmonyToggle`, and the mobile dock's "Play take" label.
+- **Per-voice tools.** Each lane head is the mute dot, the voice Select and a ⋯ that opens a popover with the level, the even-spread hit count (a Stepper), Rotate, Vary and Clear. The dots and ⋯ count as part of the grid, like the steps, not against the 4-button limit.
+- **`doneBeats` stays in the markup, hidden.** It duplicated ×; × and Escape close the dialog.
+- **Swing and Humanize get new mirror inputs**, `studioSwing` and `studioHumanize`, because the rail keeps its own in Layers → Percussion.
+- **Phones keep the 4×4 wrap.** Each lane's quarters stack, with 44px steps.
+
+*Status: 7b done (`rev=controls-7b`).*
+
+**Layout.** `#beatDialog` reads header · tools · StepGrid · footer.
+- **Header.** Title block, then `studioBpm`, `studioPlay` and `studioEnabled` (the global switch style, labeled "Percussion", no description) in `.studio-actions`.
+- **Tools.** `studioGroove`, `studioVary`, `studioClear` (now a ghost button), the legend and a HelpTip. The tip holds the live `studioGrooveDescription` (`data-help-tip`), the "Tap a step…" copy verbatim, and one new line about the dot and ⋯.
+- **Footer.** `studioKit` with a HelpTip (the live `studioKitDescription`, still its `aria-describedby`, plus the kits note and the "Leave a voice empty…" line), the mono "One loop · 16 steps · follows the scene’s tempo", then the Swing, Humanize, Drum reverb and Drum delay knobs in one row.
+- **Visible buttons.** `studioPlay`, Vary and Clear all, besides ×. A controls-ui check asserts this from the markup.
+
+**Lanes render once.** `rhythm-ui.js` builds `#beatLanes` at startup (`buildLanes()`) and every edit, restore, kit, groove and `setColors` updates it in place (`syncLanes()`). Before, most edits rebuilt the lanes with `innerHTML`, which would have dropped the kit's popovers and Steppers and lost focus.
+- A step is `button.step-cell#beatStep{i}_{j}` with `data-lane`, `data-step`, `data-state` (off · ghost · hit · accent, replacing the state classes), `aria-pressed` and its label. Clicking still cycles through `rhythm-ui.js`.
+- A lane is `section#beatLane{i}.step-lane` (`.muted` while muted or voiceless, `--lane` color). Its head has `laneMute{i}` (now the dot, `aria-pressed` = muted as before), `drumVoice{i}`, and `laneMenuButton{i}` → `laneMenu{i}`, which holds `laneLevel{i}`, `laneHits{i}`, `laneRotate{i}`, `laneVary{i}` and `laneClear{i}`. Every id and delegated handler is unchanged.
+- The playhead is `#beatLanes[data-playhead]`; rhythm-ui writes it instead of toggling a class on four steps.
+
+**`enhanceStepGrid(host)` (new, in `controls-kit.js`)**, applied from `STEP_GRIDS`. It decorates the `[data-step]` buttons an app renders: each lane's steps are grouped into `.step-quarter`s, the grid has one tab stop with arrows across lanes (wrapping), Home and End, and the column named by `data-playhead` gets `.is-playhead`. The arrow-key handler moved here from `rhythm-ui.js`.
+
+**Tables in `controls-ui.js`.** `POPOVERS` gains `laneMenuButton0–3` (non-menu popovers, because they hold inputs), `STEPPERS` gains `laneHits0–3`, `KNOBS` gains `studioSwing` and `studioHumanize`, and `enhanceHelpTips` also scans `.beat-dialog`.
+
+**Mirrors.** `config.swing`/`config.humanize` stay the single state; `syncControls()` writes the rail and studio copies from one `effects` table that also covers volume, visual, reverb and delay.
+
+**`studioPlay`'s label** now comes from `updateTransport()` in `app.js`, the same word as `#start`'s: Stop, Pause, "Play take" (while the take chip shows), else Play. `rhythm-ui.js` no longer writes "Play scene"/"Pause scene".
+
+**Fix.** Escape on an open HelpTip used only `stopPropagation`, so inside a modal it also closed the dialog (the 7a Library tips too). It now also prevents the default while the tip is open, so a second Escape closes the dialog.
+
+**Tests.** `rhythm-ui` covers in-place updates (no re-render, nodes kept), the hit count following the pattern, lane colors, both new mirrors, the playhead attribute, and that rhythm-ui leaves `studioPlay` alone. `controls-ui` enhances the real dialog with lanes shaped like rhythm-ui's: quarters, one tab stop, arrow wrap, Home/End, the playhead column, the ⋯ popover and its Stepper, the knob row, the HelpTips and the Escape fix. `app-smoke` checks `studioPlay` reads Stop while a take plays and matches `#start` after.
+
+**Known, not new.** On phones the dialog's × stays pinned at the top, so a control scrolled exactly under it can't be tapped. The Library behaves the same; Phase 8's mobile pass can give dialog content a top scroll margin.
+
+**Left for Phase 8.** The old beat studio rules in `style.css` (`.beat-studio-header`, `.studio-transport`, `.studio-toolbar`, `.studio-effects`, `.studio-bottom`, `.studio-tip`, `.beat-lane*`, `.lane-*`, `.step-grid`, `.drum-step`, `.step-legend`, `.legend-*`) are orphans, as are `flow-ds.css`'s two `.drum-step` rules. `.studio-kit`'s old box is overridden in `flow-ds.css`.
 
 ### Phase 8 · Mobile, accessibility, dead CSS
 Check the rail at 375px. The mobile dock and `closeMobileControls` must still work, and Segmented controls with 7 options need a scroll fallback. Do a keyboard-only pass on every new component. Delete the CSS for removed structures from `style.css` (`.layer-editor`, `.nested-fold`, `.take-tray`, `.capture-options` and others). Run `benchmark-performance.mjs` to check that rendering cost didn't regress. **Done when:** an axe or keyboard pass is clean and `style.css` contains no orphaned selectors.

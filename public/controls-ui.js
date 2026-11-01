@@ -4,12 +4,12 @@
 // unchanged: the knob writes .value and dispatches the same input/change events.
 // Static helper copy moves into a "?" tip beside its section title.
 // Segmented, swatch grid, Stepper, Layer, EnvelopeGraph, Popover, ChordStrip,
-// Toast and the TrackRow list live in controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
-import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover,enhanceChordStrip,enhanceToast,enhanceTrackList} from './controls-kit.js?rev=controls-7a';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover,enhanceChordStrip,enhanceToast,enhanceTrackList} from './controls-kit.js?rev=controls-7a';
+// StepGrid, Toast and the TrackRow list live in controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList} from './controls-kit.js?rev=controls-7b';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList} from './controls-kit.js?rev=controls-7b';
 
 export const KNOBS={
- reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
+ reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioSwing:{},studioHumanize:{},studioReverb:{},studioDelay:{},
  swirl:{},persistence:{},dropSize:{},chordAtmosphere:{},
  waterSwell:{sm:true},waterSpeed:{sm:true},waterRefraction:{sm:true},waterCaustics:{sm:true},waterReflection:{sm:true},
  arpProbability:{},arpCount:{},
@@ -169,9 +169,9 @@ function helpAnchor(container){
  return label;
 }
 let tipCount=0;
-// The rail and the Library dialog. A container outside a fold or section opts in
+// The rail, the Library and beat studio. A container outside a fold or section opts in
 // with data-help-host and names its title with data-help-anchor.
-const HELP_SCOPES='.panel-content .helper,.library .helper';
+const HELP_SCOPES='.panel-content .helper,.library .helper,.beat-dialog .helper';
 export function enhanceHelpTips(root=document){
  const groups=new Map();
  for(const helper of root.querySelectorAll(HELP_SCOPES)){
@@ -196,7 +196,8 @@ export function enhanceHelpTips(root=document){
   tip.addEventListener('mouseleave',()=>{timer=setTimeout(()=>set(false),80);});
   button.addEventListener('focus',()=>set(true));button.addEventListener('blur',()=>set(false));
   button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();set(!tip.classList.contains('open'));});
-  button.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();set(false);}});
+  // Escape closes an open tip without closing the dialog around it; a second Escape reaches the dialog.
+  button.addEventListener('keydown',e=>{if(e.key==='Escape'&&tip.classList.contains('open')){e.preventDefault();e.stopPropagation();set(false);}});
   tip.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();});
   if(anchor.matches('.section-label')){anchor.classList.add('has-help');anchor.append(tip);}else anchor.after(tip);
  }
@@ -236,11 +237,16 @@ export function enhanceRail(root=document){
 // Top bar, transport and dialog components outside the rail.
 // The capture popover opens from the chevron beside Record; its settings keep their ids.
 // The Library's overflow menu holds the rarely used take actions, also with their ids.
-export const POPOVERS={sessionMenuButton:{panel:'sessionMenu',menu:true},captureMenuButton:{panel:'capturePanel'},takeMenuButton:{panel:'takeMenu',menu:true}};
-export const STEPPERS={bpm:{unit:'BPM'},recordCycles:{unit:'cycles'}};
+// Beat studio: each voice's ⋯ opens its tools (level, even spread, rotate, vary, clear).
+const LANES=[0,1,2,3];
+export const POPOVERS={sessionMenuButton:{panel:'sessionMenu',menu:true},captureMenuButton:{panel:'capturePanel'},takeMenuButton:{panel:'takeMenu',menu:true},
+ ...Object.fromEntries(LANES.map(i=>['laneMenuButton'+i,{panel:'laneMenu'+i}]))};
+export const STEPPERS={bpm:{unit:'BPM'},recordCycles:{unit:'cycles'},...Object.fromEntries(LANES.map(i=>['laneHits'+i,{}]))};
 export const CAPTURE_SEGMENTED={recordMode:{size:'sm',full:true}};
 export const CHORD_STRIPS=['chords'];
 export const TOASTS=['toast'];
+// Beat studio's sequencer over the step buttons rhythm-ui.js renders.
+export const STEP_GRIDS=['beatLanes'];
 // Library: the saved recordings are TrackRows over takeSelect; clip export is Segmented.
 export const TRACK_LISTS=['takeSelect'];
 export const DIALOG_SEGMENTED={clipLength:{size:'sm',full:true},clipAspect:{size:'sm',full:true},clipFraming:{size:'sm',full:true}};
@@ -249,6 +255,7 @@ export function enhanceChrome(root=document){
  for(const [id,opts] of Object.entries(STEPPERS)){const input=byId(id);if(input)enhanceStepper(input,opts);}
  for(const [id,opts] of Object.entries(CAPTURE_SEGMENTED)){const select=byId(id);if(select)enhanceSegmented(select,opts);}
  for(const id of CHORD_STRIPS){const host=byId(id);if(host)enhanceChordStrip(host);}
+ for(const id of STEP_GRIDS){const host=byId(id);if(host)enhanceStepGrid(host);}
  for(const id of TOASTS){const host=byId(id);if(host)enhanceToast(host);}
  for(const id of TRACK_LISTS){const select=byId(id);if(select)enhanceTrackList(select);}
  for(const [id,opts] of Object.entries(DIALOG_SEGMENTED)){const select=byId(id);if(select)enhanceSegmented(select,opts);}

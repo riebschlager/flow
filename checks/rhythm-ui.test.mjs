@@ -9,11 +9,28 @@ assert.equal($('rhythmEnabled').checked,false);assert.equal($('rhythmBadge').hid
 $('openBeats').onclick();assert.equal($('beatDialog').open,true);$('studioPlay').onclick();assert.equal(played,1);
 $('rhythmEnabled').checked=true;fire($('rhythmEnabled'),'change');assert.equal($('studioEnabled').checked,true);assert.equal(stored.enabled,true);assert.equal($('rhythmBadge').hidden,false);
 $('drumVoice3').value='off';fire($('beatLanes'),'change',$('drumVoice3'));assert.equal(stored.lanes[3].voice,'off');
-let step=$('beatStep0_0');fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],0);fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],.3);assert(step.classList.contains('ghost'));fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],.65);fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],1);
+let step=$('beatStep0_0');fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],0);fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],.3);assert.equal(step.dataset.state,'ghost');assert.equal(step['aria-pressed'],'true');fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],.65);fire($('beatLanes'),'click',step);assert.equal(stored.lanes[0].steps[0],1);
 $('studioGroove').value='woven';fire($('studioGroove'),'change');assert.equal(stored.preset,'woven');assert.deepEqual(stored.lanes.map(l=>l.steps.filter(Boolean).length),[3,5,7,4]);assert.equal(stored.lanes[3].voice,'off');
 fire($('beatLanes'),'click',$('laneMute1'));assert.equal(stored.lanes[1].muted,true);$('laneHits0').value='6';fire($('beatLanes'),'change',$('laneHits0'));assert.equal(stored.lanes[0].steps.filter(Boolean).length,6);const old=stored.lanes[0].steps;fire($('beatLanes'),'click',$('laneRotate0'));assert.equal(stored.lanes[0].rotation,1);assert.notDeepEqual(stored.lanes[0].steps,old);
 $('laneLevel2').value='22';fire($('beatLanes'),'input',$('laneLevel2'));assert.equal(stored.lanes[2].level,22);$('rhythmSwing').value='32';fire($('rhythmSwing'),'input');assert.equal(stored.swing,32);$('rhythmReverb').value='72';fire($('rhythmReverb'),'input');assert.equal(stored.reverb,72);assert.equal(Number($('studioReverb').value),72);$('studioDelay').value='100';fire($('studioDelay'),'input');assert.equal(stored.delay,100);assert.equal(Number($('rhythmDelay').value),100);assert(!elements.has('studioDelayBeats'),'beat studio has no spacing menu of its own');assert.equal($('echoSyncLabel').textContent,'804 ms at 56 BPM');$('voiceDelayBeats').value='1';fire($('voiceDelayBeats'),'change');assert.equal(stored.delayBeats,1);assert.equal(audio.delayBeats,1);assert.equal($('echoSyncLabel').textContent,'1.07 s at 56 BPM','the readout follows spacing');$('rhythmRate').value='2';fire($('rhythmRate'),'change');assert.equal(audio.rhythmRate,2);assert.equal($('echoSyncLabel').textContent,'536 ms at 56 BPM · 2×','the readout follows rhythm speed');audio.bpm=100;ui.transportChanged();assert.equal($('echoSyncLabel').textContent,'300 ms at 100 BPM · 2×','the readout follows tempo');$('studioClear').onclick();assert(stored.lanes.every(l=>l.steps.every(v=>v===0)));
 $('studioEnabled').checked=false;fire($('studioEnabled'),'change');assert.equal($('rhythmEnabled').checked,false);assert.equal(stored.enabled,false);$('doneBeats').onclick();assert.equal($('beatDialog').open,false);ui.stop();
+// Phase 7b: lanes render once and update in place; the StepGrid, popovers and Steppers keep their nodes.
+{
+ const cell=$('beatStep2_5'),hits=$('laneHits2'),before=$('beatLanes').html;
+ fire($('beatLanes'),'click',cell);assert.equal(cell.dataset.state,'ghost');assert.equal(cell['aria-label'],'Voice 3, step 6: ghost');assert.equal($('beatStep2_5'),cell,'a step edit keeps the node');
+ fire($('beatLanes'),'click',$('laneRotate2'));fire($('beatLanes'),'click',$('laneVary2'));fire($('beatLanes'),'click',$('laneMute2'));$('studioGroove').value='woven';fire($('studioGroove'),'change');
+ assert.equal($('beatLanes').html,before,'lanes are never re-rendered');assert.equal($('laneHits2'),hits);assert.equal(hits.value,stored.lanes[2].steps.filter(Boolean).length,'the hit count follows the pattern');assert.equal($('laneMute2')['aria-pressed'],'true');assert($('beatLane2').classList.contains('muted'));
+ fire($('beatLanes'),'click',$('laneMute2'));assert(!$('beatLane2').classList.contains('muted'));
+ ui.setColors(['#111111','#222222','#333333','#444444']);assert.equal($('beatLane3').style['--lane'],'#444444','lane colors update in place');
+ for(const id of ['laneMenuButton0','laneMenu3','laneLevel3','laneHits3','laneRotate3','laneVary3','laneClear3'])assert(elements.has(id),id+' is rendered');
+ // Swing and Humanize mirror the rail; config holds the one value.
+ $('studioSwing').value='40';fire($('studioSwing'),'input');assert.equal(stored.swing,40);assert.equal(Number($('rhythmSwing').value),40);assert.equal($('rhythmSwingValue').textContent,'40%');
+ $('rhythmHumanize').value='70';fire($('rhythmHumanize'),'input');assert.equal(stored.humanize,70);assert.equal(Number($('studioHumanize').value),70);assert.equal($('studioHumanizeValue').textContent,'70%');
+ // The playhead is the host's data-playhead, which the kit's StepGrid draws.
+ ui.stop();assert.equal($('beatLanes').dataset.playhead,'');
+ // app.js names studioPlay's action; rhythm-ui no longer writes "Play scene".
+ $('studioPlay').textContent='Play take';ui.transportChanged();assert.equal($('studioPlay').textContent,'Play take');
+}
 console.log('PASS: UI initialization, studio open/close, optional enable, voice removal, all four step states, preset selection, mute, Euclidean density, rotation, lane levels, swing, clear, and settings persistence.');
 // Beat studio is the kit's and voices' only home; patterns stay editable from both panels.
 const {drumKits,grooveDetails,grooves,drumVoices,applyDrumKit}=await import('../public/rhythm.js');

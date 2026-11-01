@@ -1,5 +1,5 @@
 // Flow design system primitives: Segmented, swatch grid, Stepper, Layer,
-// EnvelopeGraph, Popover, ChordStrip, Toast and TrackRow list. Like the knobs, each one is a progressive enhancement: the
+// EnvelopeGraph, Popover, ChordStrip, StepGrid, Toast and TrackRow list. Like the knobs, each one is a progressive enhancement: the
 // native input stays the state, the component writes .value and dispatches
 // input/change, and programmatic writes and `disabled` flow back into the view.
 // Nothing here runs on import; a component appears only where it is applied.
@@ -292,6 +292,49 @@ export function enhanceChordStrip(host){
  });
  new MutationObserver(render).observe(host,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  render();
+ return host;
+}
+
+// The kit's StepGrid over the step buttons an app renders into a host: each
+// [data-step] button carries data-lane, and the app owns its data-state,
+// aria-pressed and click. The grid groups each lane's steps in fours, keeps one
+// tab stop with arrow, Home and End navigation across lanes, and outlines the
+// column named by the host's data-playhead.
+export function enhanceStepGrid(host){
+ if(host.dataset.enhanced)return null;
+ host.dataset.enhanced='step-grid';
+ const cells=()=>[...host.querySelectorAll('[data-step]')];
+ let stop=null;
+ function move(cell,focus){if(stop&&stop!==cell)stop.tabIndex=-1;stop=cell;cell.tabIndex=0;if(focus)cell.focus();}
+ function render(){
+  const head=host.dataset.playhead??'';
+  for(const c of cells())c.classList.toggle('is-playhead',head!==''&&c.dataset.step===head);
+ }
+ function decorate(){
+  const list=cells();
+  for(const row of new Set(list.map(c=>c.parentElement))){
+   if(row.classList.contains('step-quarter'))continue;
+   const steps=[...row.children].filter(c=>c.dataset.step!==undefined);
+   for(let i=0;i<steps.length;i+=4){const q=make('span','step-quarter');steps[i].before(q);q.append(...steps.slice(i,i+4));}
+  }
+  for(const c of list)c.tabIndex=-1;
+  if(list.length)move(list.includes(stop)?stop:list[0]);
+  render();
+ }
+ host.addEventListener('focusin',e=>{const cell=e.target.closest?.('[data-step]');if(cell)move(cell);});
+ host.addEventListener('keydown',e=>{
+  const cell=e.target.closest?.('[data-step]');if(!cell)return;
+  const list=cells(),lanes=[...new Set(list.map(c=>c.dataset.lane))],lane=lanes.indexOf(cell.dataset.lane),step=+cell.dataset.step;
+  const n=list.filter(c=>c.dataset.lane===cell.dataset.lane).length,m=lanes.length;
+  const to={ArrowRight:[lane,(step+1)%n],ArrowLeft:[lane,(step-1+n)%n],ArrowDown:[(lane+1)%m,step],ArrowUp:[(lane-1+m)%m,step],Home:[lane,0],End:[lane,n-1]}[e.key];
+  if(!to)return;
+  e.preventDefault();
+  const next=list.find(c=>c.dataset.lane===lanes[to[0]]&&+c.dataset.step===to[1]);
+  if(next)move(next,true);
+ });
+ new MutationObserver(decorate).observe(host,{childList:true});
+ new MutationObserver(render).observe(host,{attributes:true,attributeFilter:['data-playhead']});
+ decorate();
  return host;
 }
 
