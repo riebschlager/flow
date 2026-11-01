@@ -5,8 +5,8 @@
 // Static helper copy moves into a "?" tip beside its section title.
 // Segmented, swatch grid, Stepper, Layer, EnvelopeGraph, Popover, row menus, Tabs,
 // ChordStrip, StepGrid, Toast, the TrackRow list and the glass strip live in controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
-import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList,enhanceTabs,enhanceRowMenus,enhanceGlassStrip} from './controls-kit.js?rev=controls-7d';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList,enhanceTabs,enhanceRowMenus,enhanceGlassStrip} from './controls-kit.js?rev=controls-7d';
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList,enhanceTabs,enhanceRowMenus,enhanceGlassStrip} from './controls-kit.js?rev=controls-8b';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover,enhanceChordStrip,enhanceStepGrid,enhanceToast,enhanceTrackList,enhanceTabs,enhanceRowMenus,enhanceGlassStrip} from './controls-kit.js?rev=controls-8b';
 
 export const KNOBS={
  reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioSwing:{},studioHumanize:{},studioReverb:{},studioDelay:{},
@@ -199,7 +199,11 @@ export function enhanceHelpTips(root=document){
   // Escape closes an open tip without closing the dialog around it; a second Escape reaches the dialog.
   button.addEventListener('keydown',e=>{if(e.key==='Escape'&&tip.classList.contains('open')){e.preventDefault();e.stopPropagation();set(false);}});
   tip.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();});
-  if(anchor.matches('.section-label')){anchor.classList.add('has-help');anchor.append(tip);}else anchor.after(tip);
+  // A button can't sit inside <summary>, so a fold's tip goes just before its <details>
+  // in a wrapper and is positioned on the summary row, visible while the fold is closed.
+  const summary=anchor.closest('summary');
+  if(summary){const fold=summary.parentElement,wrap=document.createElement('div');wrap.className='fold-help';fold.before(wrap);wrap.append(tip,fold);}
+  else if(anchor.matches('.section-label')){anchor.classList.add('has-help');anchor.append(tip);}else anchor.after(tip);
  }
 }
 

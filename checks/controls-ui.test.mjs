@@ -39,7 +39,7 @@ class Node{
  querySelector(sel){return this.querySelectorAll(sel)[0]||null;}
  addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);}
  dispatchEvent(e){Object.defineProperty(e,'target',{value:this,configurable:true});const path=[];for(let n=this.parentElement;n;n=n.parentElement)path.push(n);for(const n of [this,...path]){for(const fn of n.listeners[e.type]||[])fn(e);if(!e.bubbles)return !e.defaultPrevented;}if(this===doc.body||doc.body.contains(this))doc.dispatchEvent(e);return !e.defaultPrevented;}
- focus(){if(this.disabled||!('tabindex' in this.attrs)&&!['INPUT','SELECT','BUTTON'].includes(this.tagName))return;const prev=doc.activeElement;if(prev===this)return;doc.activeElement=this;prev?.dispatchEvent?.(new Event('focusout',{bubbles:true}));this.dispatchEvent(new Event('focusin',{bubbles:true}));}
+ focus(){if(this.disabled||!('tabindex' in this.attrs)&&!['INPUT','SELECT','BUTTON'].includes(this.tagName))return;const prev=doc.activeElement;if(prev===this)return;doc.activeElement=this;prev?.dispatchEvent?.(new Event('focusout',{bubbles:true}));this.dispatchEvent(Object.assign(new Event('focusin',{bubbles:true}),{relatedTarget:prev||null}));}
  setPointerCapture(){}
  // Enough HTML for the rail's markup: text, bare attributes, void elements, data-* and selected options.
  set innerHTML(html){const stack=[this];this.replaceChildren();for(const [,close,tag,raw,self,text] of html.matchAll(/<(\/)?([\w-]+)([^>]*?)(\/)?>|([^<]+)/g)){if(text!==undefined){stack.at(-1).text+=text.replace(/&amp;/g,'&');continue;}if(close){stack.pop();continue;}const n=doc.createElement(tag);for(const [,k,v=''] of raw.matchAll(/([\w-]+)(?:="([^"]*)")?/g)){k==='class'?n.className=v:n.attrs[k]=v;if(k.startsWith('data-'))n.dataset[k.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=v;}if(n instanceof Input)n.raw=n.attrs.value||'';const parent=stack.at(-1);parent.append(n);if(n instanceof Option&&'selected' in n.attrs&&parent instanceof Select)parent.index=parent.options.length-1;if(!self&&!VOID.has(n.tagName))stack.push(n);}}
@@ -335,7 +335,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-7d"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-8a/);assert.match(html,/style\.css\?rev=controls-8a/);assert.match(html,/presentation\.css\?rev=controls-8a/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-8b"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-8b/);assert.match(html,/style\.css\?rev=controls-8b/);assert.match(html,/presentation\.css\?rev=controls-8a/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -359,7 +359,9 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const visible=n=>{for(;n&&n!==doc.body;n=n.parentElement)if(n.hidden||n.classList.contains('sr-only')||n.classList.contains('help-tip'))return false;return true;};
  assert.deepEqual(panel.querySelectorAll('p.helper').filter(visible).map(p=>p.id||p.textContent),[],'no helper or status paragraph stays visible');
  assert.equal(panel.querySelectorAll('details').length,1);
- const shapeTip=$('arpShape').querySelector('summary').querySelector('.help-tip');
+ assert.equal($('arpShape').querySelector('.help-tip'),null,'no HelpTip inside the fold\'s summary');
+ assert.ok($('arpShape').parentElement.classList.contains('fold-help'),'the fold sits in a HelpTip wrapper');
+ const shapeTip=$('arpShape').parentElement.children[0];assert.ok(shapeTip.classList.contains('help-tip'),'the tip comes before the fold');
  assert.ok(shapeTip.textContent.includes('Length follows the note rate')&&shapeTip.textContent.includes('Slides from the previous note'),'the Note shape fold carries the envelope and glide help');
  for(const id of ['arpSourceHelp','arpProbabilityHelp','grooveDescription','environmentDescription','environmentActivityHelp'])assert.ok($(id).closest('.help-tip'),`${id} moves into its layer's HelpTip`);
  const rate=$('arpRate'),rateGroup=rate.nextElementSibling;
@@ -385,7 +387,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  const play=html.match(/<div id="performPanel"[^>]*>([\s\S]*?)\n<\/div>/)[1];
  assert.ok(!play.includes('<details'),'Play has no folds');
  for(const gone of ['pitchControls','expressionControls','fluidListens','performance-enable','Gesture guide<'])assert.ok(!play.includes(gone),`${gone} is gone from Play`);
- const order=['for="gestureTool">Canvas tool<','<div class="section-label">Automatic droplets</div>','<div class="section-label">Quantize</div>','<div class="section-label">Pitch range</div>','<div class="section-label">Drift</div>','<div class="section-label">Gestures</div>'].map(t=>{const i=play.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
+ const order=['for="gestureTool">Canvas tool<','<div class="section-label">Automatic droplets</div>','<div class="section-label">Quantize</div>','<div class="section-label">Pitch range</div>','<div class="section-label">Drift</div>','<h2 class="section-label">Gestures</h2>'].map(t=>{const i=play.indexOf(t);assert.ok(i>=0,`${t} is present`);return i;});
  assert.deepEqual([...order].sort((a,b)=>a-b),order,'the six sections follow the target order');
  const section=title=>{const i=play.indexOf(title);return play.slice(play.lastIndexOf('<section',i),play.indexOf('</section>',i));};
  const has=(markup,ids,where)=>{for(const id of ids)assert.ok(markup.includes(`id="${id}"`),`${id} sits in ${where}`);};
@@ -397,7 +399,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.match(section('Pitch range'),/<output id="pitchRangeValue" class="range-readout"/,'the pitch range is a mono readout, not a status paragraph');
  has(section('>Drift<'),['driftEnabled','driftWander','driftStyle','sleepTimer','driftPace','driftStatus'],'Drift');
  has(section('>Gestures<'),['gestureGuide','bloom','conductScene','resetPerformance'],'Gestures');
- assert.match(section('>Gestures<'),/<div class="section-head"><div class="section-label">Gestures<\/div><button id="bloom" class="ghost-button">/,'Release a bloom is the section action');
+ assert.match(section('>Gestures<'),/<div class="section-head"><h2 class="section-label">Gestures<\/h2><button id="bloom" class="ghost-button">/,'Release a bloom is the section action');
  assert.match(section('>Gestures<'),/<button id="resetPerformance" class="ghost-button">Let the scene settle<\/button>$/,'Let the scene settle closes the section as a ghost button');
  assert.equal(section('>Gestures<').match(/<article>/g).length,6,'all six gestures stay, unfolded');
  for(const id of ['expressionEnabled','gestureTool','gestureToolHelp','gestureAmount','gestureAmountValue','autoPour','rain','rainValue','quantizeEnabled','quantizeStatus','quantizeBeats','octavesDown','octavesUp','pitchRangeValue','expressionDot','driftEnabled','driftWander','driftStyle','driftPace','driftPaceValue','sleepTimer','driftStatus','bloom','gestureGuide','conductScene','resetPerformance'])assert.equal(html.match(new RegExp(`id="${id}"`,'g'))?.length,1,`${id} keeps exactly one home`);
@@ -585,6 +587,11 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  toast.hidden=false;await flush();await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,true,'it hides after data-timeout');
  toast.dataset.timeout='0';toast.hidden=false;await flush();await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,false,'0 keeps it');
  toast.querySelector('.toast-close').click();assert.equal(toast.hidden,true);
+ // Focus that came from elsewhere goes back there when the toast hides under it.
+ const origin=doc.createElement('button');doc.body.append(origin);origin.focus();toast.hidden=false;await flush();
+ toast.querySelector('.toast-close').focus();const esc=new Event('keydown',{bubbles:true});esc.key='Escape';toast.querySelector('.toast-close').dispatchEvent(esc);
+ assert.equal(toast.hidden,true);assert.equal(doc.activeElement,origin,'Escape returns focus to where it came from');
+ origin.focus();toast.hidden=false;await flush();$('toastAction').focus();$('toastAction').click();assert.equal(doc.activeElement,origin,'the action returns focus too');
  toast.dataset.timeout='20';toast.hidden=false;await flush();toast.dispatchEvent(new Event('pointerenter'));await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,false,'hover pauses it');
  toast.dispatchEvent(new Event('pointerleave'));await new Promise(r=>setTimeout(r,40));assert.equal(toast.hidden,true);
 }
@@ -643,8 +650,9 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  assert.equal($('clipFraming').nextElementSibling.querySelectorAll('button')[1].title,'Fit entire canvas · allow borders');
  assert.ok($('takeSeamRow').classList.contains('knob-cell')&&$('takeSeamRow').querySelector('.knob.knob-sm'),'takeSeam is an sm knob in its own row');
  // Static helper copy moves into HelpTips; live lines stay.
- assert.equal($('clipExportOptions').querySelector('summary').querySelector('[role="tooltip"]').children.length,2);
- assert.equal($('longRenders').querySelector('summary').querySelector('[role="tooltip"]').children.length,1);
+ for(const id of ['clipExportOptions','longRenders'])assert.equal($(id).querySelector('.help-tip'),null,`${id}'s summary holds no button`);
+ assert.equal($('clipExportOptions').parentElement.children[0].querySelector('[role="tooltip"]').children.length,2);
+ assert.equal($('longRenders').parentElement.children[0].querySelector('[role="tooltip"]').children.length,1);
  assert.ok(list.parentElement.querySelector('label').querySelector('.help-tip'),'the session file note is a tip on Saved recordings');
  assert.ok(!$('seamHelp').parentElement.closest('.help-tip')&&!$('clipFrameInfo').closest('.help-tip'),'the seam note and frame info stay visible');
 }

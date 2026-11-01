@@ -41,7 +41,7 @@ output,#studioBpm,#recordBarTime,.arp-note,#arpCurrent,.note-pitch{font-family:v
 /* Type */
 .eyebrow,.section-label,.session-tag,.panel-heading .eyebrow,.edition{font:500 11px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
 .section-label{color:var(--text-3)}
-.intro p,.session-home-panel h1,dialog h2,.panel-heading h1{font-family:var(--font-sans);letter-spacing:-.03em}
+.intro p,.session-home-panel h1,dialog h2,.panel-heading h2{font-family:var(--font-sans);letter-spacing:-.03em}
 .intro em,.session-home-panel h1 em{font-family:var(--font-serif);font-style:italic;font-weight:400;letter-spacing:-.01em;color:var(--text-1)}
 .intro p{font-weight:400;line-height:1.08}
 .intro>span{font-size:15px;color:var(--text-2)}
@@ -124,12 +124,14 @@ progress::-moz-progress-bar{background:var(--accent)}
 .control-rail{border-left:1px solid var(--line)}
 .panel-navigation{padding:20px 24px 0;border-bottom:1px solid var(--line)}
 .panel-heading{margin-bottom:16px}
-.panel-heading h1{font-size:18px;font-weight:500;letter-spacing:-.02em;margin-top:6px}
+.panel-heading h2{font-size:18px;font-weight:500;letter-spacing:-.02em;margin-top:6px}
 .panel-icon{color:var(--text-3)}
 .panel .tabs{display:flex;gap:20px;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0;position:relative}
 .panel .tabs button{flex:none;min-height:0;padding:0 0 10px;font-size:14px;border-radius:0;background:transparent;color:var(--text-3);box-shadow:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--dur-1),border-color var(--dur-3) var(--ease-out)}
 .panel .tabs button:hover{background:transparent;color:var(--text-1)}
 .panel .tabs button[aria-selected=true]{background:transparent;color:var(--text-1);box-shadow:none;border-bottom-color:var(--accent)}
+/* Tab rows scroll sideways, which would clip an outer ring, so a focused tab draws it inside. */
+.panel .tabs button:focus-visible,.tabs [role=tab]:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent-ring)}
 .panel-description{font-size:13px;color:var(--text-2);margin:14px 0 16px;min-height:0}
 .panel-content{padding:6px 24px 8px}
 .panel-content .control-section,.control-section{border-bottom:1px solid var(--line);padding:18px 0;margin:0}
@@ -186,7 +188,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--shadow-th
 input[type=range].is-live::-webkit-slider-thumb{transform:scale(1.1);box-shadow:var(--shadow-thumb),0 0 0 6px var(--accent-dim)}
 input[type=range]:disabled{opacity:.4;cursor:default}
 .panel input[type=range]{height:20px;margin:0}
-.panel input[type=range]::-webkit-slider-thumb,.panel input[type=range]::-moz-range-thumb{width:14px;height:14px}
+.panel input[type=range]::-webkit-slider-thumb{width:14px;height:14px}
+.panel input[type=range]::-moz-range-thumb{width:14px;height:14px}
 
 @media(pointer:coarse){
  .panel input[type=range],dialog input[type=range]{height:44px}
@@ -207,9 +210,9 @@ input[type=range][data-orientation=vertical],.panel input[type=range][data-orien
 
 /* Segmented and swatch grid (controls-kit.js over a native select) */
 select[data-enhanced],input[data-enhanced]{display:none!important}
-.segmented{display:inline-flex;gap:2px;padding:2px;max-width:100%;background:var(--bg-well);border:1px solid var(--line);border-radius:var(--r-2)}
+.segmented{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;max-width:100%;background:var(--bg-well);border:1px solid var(--line);border-radius:var(--r-2)}
 .segmented-full{display:flex}
-.segmented>button{flex:none;height:28px;padding:0 10px;border:0;border-radius:4px;background:transparent;color:var(--text-3);font:500 12px/1 var(--font-sans);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer;transition:background var(--dur-2) var(--ease-out),color var(--dur-1)}
+.segmented>button{flex:none;height:28px;padding:0 10px;border:0;border-radius:4px;background:transparent;color:var(--text-2);font:500 12px/1 var(--font-sans);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer;transition:background var(--dur-2) var(--ease-out),color var(--dur-1)}
 .segmented-full>button{flex:1}
 .segmented-sm>button{height:24px;font-size:11px}
 .segmented>button:hover{color:var(--text-1)}
@@ -276,7 +279,7 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .select-action>.compact-button svg{width:14px;height:14px}
 .layer-controls>.layer-action{width:100%;margin-top:18px;display:flex;justify-content:center;gap:6px}
 .layer-controls>select{margin-top:4px;width:100%}
-.layer-controls>.note-shape{margin-top:14px;border-top:1px solid var(--line);border-bottom:0}
+.layer-controls .note-shape{margin-top:14px;border-top:1px solid var(--line);border-bottom:0}
 .envelope-host{padding:4px 0 2px}
 .glide-row{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 .note-shape .knob-row{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 4px}
@@ -297,6 +300,7 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .panel .autopour .rain-rate label{font:500 12px/1.2 var(--font-sans);color:var(--text-2)}
 .panel .autopour .rain-rate input{margin-top:8px}
 .panel .expression-map{height:112px;border-color:var(--line);border-radius:var(--r-2);background:var(--bg-well)}
+.panel .expression-map>.map-air{color:var(--text-2)}
 .panel .range-readout{display:block;margin-top:12px;font:400 11px/1.2 var(--font-mono);color:var(--text-3)}
 .panel .drift-controls .option-row{margin-bottom:6px}
 .drift-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:end;margin-top:12px}
@@ -355,6 +359,12 @@ select[data-enhanced],input[data-enhanced]{display:none!important}
 .help-tip.open>[role=tooltip]{opacity:1;transform:none;pointer-events:auto}
 .help-tip>[role=tooltip] .helper{display:block;margin:0;font-size:12px;color:var(--text-2)}
 .help-tip>[role=tooltip] .helper+.helper{margin-top:8px}
+/* A fold's tip sits just before its <details> (a button can't live in <summary>) and is placed on the summary row. */
+.fold-help{position:relative}
+.fold-help>.help-tip{position:absolute;z-index:1;top:28.5px;right:24px}
+.fold-help>.control-fold>summary>span{margin-right:28px}
+.fold-help:has(>.library-fold)>.help-tip{top:15px;right:0}
+.fold-help>.library-fold>summary{min-height:30px;padding-right:28px}
 .has-help{display:flex;align-items:center;gap:8px}
 
 /* Buttons */
@@ -401,6 +411,7 @@ dialog label{font-size:12px;color:var(--text-2)}
 /* About */
 .about-brand{font-weight:500!important;letter-spacing:-.03em!important}
 .about-page{background:var(--bg-app);color:var(--text-1)}
+.about-nav .tab-number{color:var(--text-3)}
 
 /* Top bar: brand · session title + saved state + session menu · launchers · ? · Zen · rail */
 .topbar{position:relative;z-index:30;justify-content:flex-start;gap:14px}
@@ -451,6 +462,12 @@ body.zen .topbar:has(#sharedPreview:not([hidden]))>:not(#sharedPreview){display:
  .palette-controls{flex:1 1 auto;width:auto;padding:0 10px 0 2px}
  .canvas-tools{width:auto;padding:0;flex:none}
  .canvas-clear{width:44px;height:44px}
+}
+/* The session menu button sits mid-row on phones, so the menu hangs from the whole row instead, left-aligned with the title. */
+@media(max-width:720px){
+ .topbar-session{position:relative}
+ .session-menu{position:static}
+ #sessionMenu{left:0;right:auto;max-width:100%}
 }
 @media(max-width:720px) and (orientation:landscape),(max-width:1000px) and (max-height:500px) and (pointer:coarse){
  .topbar-session{grid-column:auto;grid-row:auto}
@@ -584,10 +601,10 @@ body.zen .topbar:has(#sharedPreview:not([hidden]))>:not(#sharedPreview){display:
 .track-select:disabled{opacity:1;cursor:default}
 .track-text{display:flex;flex-direction:column;gap:3px;min-width:0}
 .track-title{font:500 14px/1.25 var(--font-sans);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.track-meta{font:400 12px/1.3 var(--font-sans);color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-meta{font:400 12px/1.3 var(--font-sans);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .track-dots{display:flex;gap:3px}
 .track-dots i{width:6px;height:6px;border-radius:50%;background:var(--swatch)}
-.track-duration{font:400 12px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-3)}
+.track-duration{font:400 12px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-2)}
 .track-select.track-empty{display:block;min-height:0;padding:16px 12px;font-size:13px;color:var(--text-3)}
 .library-detail{display:flex;flex-direction:column;gap:16px;padding:20px;border-radius:var(--r-3);background:var(--bg-raised);box-shadow:inset 0 0 0 1px var(--line)}
 .library-title-row{display:flex;align-items:flex-end;gap:8px}
@@ -618,7 +635,6 @@ body.zen .topbar:has(#sharedPreview:not([hidden]))>:not(#sharedPreview){display:
 .library-fold>summary:before{content:'';width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform var(--dur-2) var(--ease-out)}
 .library-fold[open]>summary:before{transform:rotate(45deg)}
 .library-fold>summary:hover{color:var(--text-1)}
-.library-fold>summary .help-tip{margin-left:auto}
 .library-fold .fold-content{display:flex;flex-direction:column;gap:8px;padding:12px 0 0}
 .library-fold label{margin:4px 0 0;font-size:12px;color:var(--text-2)}
 .library-fold .clip-preview{margin:4px 0 0;padding:12px}
@@ -809,3 +825,48 @@ body.zen .topbar:has(#sharedPreview:not([hidden]))>:not(#sharedPreview){display:
  .glass-strip-presentation>.strip-auto{order:1}.glass-strip-presentation>.strip-sleep{order:2}
  .strip-duration .stepper-button{width:44px;height:44px}
 }
+
+/* Home and the workspace share one <main>; where the body is a full-height column, main passes it on so the workspace still fills the viewport. */
+@media(min-width:721px) and (min-height:501px),(min-width:1001px),(min-width:721px) and (pointer:fine){body:not(.zen):not(.session-home)>main{display:flex;flex-direction:column;flex:1;min-height:0}}
+
+/* Touch targets. Under a coarse pointer every control takes at least 44px. Buttons, tabs,
+   segments, switches, fold summaries and standalone links grow an invisible area around
+   themselves; lists and steppers too tight for that grow visibly, as do selects and text
+   fields, which can't hold a pseudo-element. Palette dots, 26px apart, grow only in height;
+   the 16-step grid outside phones keeps its cells. */
+@media(pointer:coarse){
+ :where(button:not(.chord-chip,.step-mute,.step-cell,.presentation-controls-toggle),.library-fold>summary,.art-footer a,#communitySignOut,.about-header a,.about-footer a,.flow-cta){position:relative}
+ :where(button:not(.chord-chip,.step-mute,.step-cell,.color,.presentation-controls-toggle),.library-fold>summary,.art-footer a,#communitySignOut,.about-header a,.about-footer a,.flow-cta)::after,
+ input[type=checkbox]::before{content:'';position:absolute;inset:min(0px,calc(50% - 22px))}
+ .color::after{content:'';position:absolute;inset:min(0px,calc(50% - 22px)) 0}
+ /* A switch inside a label already takes the row's width; it only grows in height. A HelpTip beside one keeps 14px clear. */
+ label input[type=checkbox]::before{left:0;right:0}
+ .split-row>.help-tip{margin-right:2px}
+ .help-tip>button{z-index:1}
+ /* A switch ending a section head grows rightward, clear of the HelpTip before it. */
+ .section-head>input[type=checkbox]::before{left:0;right:-14px}
+ /* Chord chips clip their own content, so they grow instead. */
+ #chords.chord-strip .chord-chip{height:44px}
+ .step-mute:after{inset:-18px}
+ /* The rail's five tabs always fit, so their row needn't clip the hit areas; the community chart scrolls, so its tabs grow. */
+ .panel .tabs{overflow:visible}
+ .community-chart-tabs [role=tab]{min-width:44px;min-height:44px}
+ /* Hit areas lift the rail's buttons into their own layer; the sticky tabs stay above them. */
+ .panel-navigation{z-index:5}
+ .menu [role=menuitem],.swatch-grid>button{min-height:44px}
+ .stepper-button{min-width:44px;min-height:44px}
+ .stepper-value{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
+ /* The transport's row has no room to spare, so its tempo keeps its width: narrower −/+ reach outward instead. */
+ #zenHarmonyRow .stepper-button{width:33px;min-width:0;min-height:0}
+ #zenHarmonyRow .stepper-button:first-child::after{inset:min(0px,calc(50% - 22px)) 0 min(0px,calc(50% - 22px)) -11px}
+ #zenHarmonyRow .stepper-button:last-child::after{inset:min(0px,calc(50% - 22px)) -11px min(0px,calc(50% - 22px)) 0}
+ #zenHarmonyRow .stepper-value{position:relative;min-height:0}
+ #zenHarmonyRow .stepper-value::after{content:'';position:absolute;inset:min(0px,calc(50% - 22px)) 0}
+ select,.panel select,.step-lane-head>select,.studio-tools>select,.studio-kit>select,textarea,input:is([type=text],[type=search],[type=email],[type=url]),.capture-popover input[type=text]{min-height:44px}
+ .glass-strip input[type=range]{height:44px;margin-block:-12px}
+ .footer-credits{gap:20px}
+}
+/* The presentation chooser's × is positioned, so the phone dialogs' sticky offset would lift it out of view. */
+@media(max-width:720px),(max-width:1000px) and (max-height:500px) and (pointer:coarse){.presentation-dialog .close-dialog{margin:0}}
+/* In coarse landscape the dialog's × floats in the header's corner, so the header leaves it room. */
+@media(min-width:721px) and (max-width:1000px) and (max-height:500px) and (pointer:coarse){.studio-header{padding-right:56px}}

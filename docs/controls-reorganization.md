@@ -382,6 +382,70 @@ Settled for 8b (from the 8a survey):
   - `flow-ds.css`'s `.panel input[type=range]::-webkit-slider-thumb,.panel input[type=range]::-moz-range-thumb` puts a `-moz-` selector in the same list, so Chrome drops the whole rule and the rail's thumb styling has never applied there.
 - **Already fine.** The phone sheet's focus trap holds Tab ×150 and Shift+Tab ×40, and Escape and `closeMobileControls` both close it and return focus to the dock button. No posture scrolls the page sideways.
 
+Settled before 8b (the list above is closed by these):
+- **Dialog ×.** Phones already had `scroll-padding:58px 0 24px`, and the pinned × sits inside it, so no control takes focus under it; it needs no backdrop. In coarse landscape the beat studio header gets room for the ×.
+- **Rail sheet.** `<aside id="panel">` is a `<section>`, so it can take `role=dialog`.
+- **Fold HelpTips.** The tip moves out of `<summary>` into a wrapper just before the `<details>`, positioned on the summary row, so `?` comes before the summary in the tab order and stays visible while the fold is closed.
+- **Page structure.** One `<main>` holds home, the notice and the workspace. The workspace starts with an sr-only `h1` ("Flow session"), the rail's "Find your vibe." is an `h2`, and the gesture guide's "Gestures" label is an `h2`.
+- **Thumb rule.** Split in two.
+- **Segmented fallback.** It wraps instead of scrolling: `overflow-x:auto` would have clipped the 4px focus ring on every Segmented and hidden options.
+- **Session menu.** On phones it hangs from the session row, left-aligned with the title (the top bar's 12px gutter).
+- **Also settled:** the rail is `inert` while a recording replays (it was already dimmed and `pointer-events:none`); about.html's tab numbers use `--text-3`; selects and text fields grow to 44px visibly under a coarse pointer, everything else gets an invisible hit area; dismissing the toast and leaving Zen return focus instead of dropping it to `<body>`.
+
+*Status: 8b done (`rev=controls-8b`).*
+
+**Structure.** `app/instrument.html`: the `<main>` wrapper, `.workspace` is now a `div`, the sr-only `h1`, the two `h2`s and `<section id="panel">`. Where the body is a full-height column (`flow-ds.css`, the same query as `style.css`'s), `main` is a flex column with `min-height:0`, so the workspace fills the viewport and shrinks exactly as before. `.layer-controls .note-shape` is a descendant selector now that the fold sits in its wrapper.
+
+**HelpTips.** `enhanceHelpTips` places a fold's tip in `div.fold-help` before the `<details>`. `flow-ds.css` positions it where it sat inside the summary (Note shape 28.5px from the top, 24px from the right; the Library folds 15px/0), the summary keeps 28px clear for it, and the Library fold summaries keep their 31px height.
+
+**Contrast.** Unselected segments, `.track-meta` and `.track-duration` use `--text-2`, and so does `.map-air`. `.about-nav .tab-number` uses `--text-3`.
+
+**Touch targets** (`flow-ds.css`, under `(pointer:coarse)`):
+- **Invisible.** Every button (except chord chips, steps, mute dots and the presentation toggles), the Library fold summaries and standalone links get an `::after` that grows them to 44px. Switches use `::before`, because `::after` is their thumb. Inside a label, a switch grows only in height, since the label already gives it the row's width; one ending a section head grows to the right. Rail tabs reach into their gaps, and their row stops clipping. Palette dots grow in height only.
+- **Visible.** Menu items and swatch-grid rows, steppers (the capture popover and lane tools), chart tabs (`min-width`/`min-height`), chord chips (40→44px, because they clip their own content), selects and text fields grow to 44px, and the Zen Energy range is 44px tall with −12px margins. The footer credit links stack 20px apart.
+- **Transport tempo.** Its row has no room to spare, so the Stepper keeps 114px: −/+ are 33px and reach 11px outward, and the value is 44px wide.
+- **Layering.** `.panel-navigation` keeps `z-index:5` on every coarse screen, because the hit areas lift buttons into their own layer, and each HelpTip `?` sits one layer up.
+
+**Keyboard.** A real-Chrome walk (109 checks) covers:
+- Tab stops, focus rings and focus that never lands on `<body>` or an invisible element, from home through every dialog, Zen, presentation, the shared recording, about.html and a phone session;
+- arrows, Home/End and one tab stop in every Segmented, the swatch grid, rail and chart Tabs, ChordStrip, StepGrid and TrackRow list;
+- knob and Stepper keys;
+- the Layer switch and its inert body, and the EnvelopeGraph following focus;
+- Enter/ArrowDown, End/Home and Escape with focus return in the session, capture, take, community, lane and row menus;
+- the toast, both glass strips and the phone sheet's trap on the `<section>` (Tab ×150, Shift+Tab ×40, no escapes).
+
+Fixed along the way:
+- Rail tabs had no focus ring (`.panel .tabs button{box-shadow:none}`), and the chart tabs' ring was clipped by their scrolling row. Both now draw an inset ring.
+- **Toast.** `enhanceToast` returns focus to where it came from when it hides under it.
+- **Zen.** `toggleZen` moves focus to `#zen` when leaving from the strip, the chevron or Exit Zen.
+- **Presentation chooser ×.** On phones it was positioned outside its dialog and clipped away. It now shows.
+
+**Checks.**
+- **axe-core 4.11.4.** No serious or critical violations in any posture at 1440×900, 375×812 and 900×420 coarse. Left as moderate: `region` in the presentation shell (the credit overlay and the strip sit outside landmarks by design). The `aria-hidden` note readout is sometimes read mid-crossfade while playing; it is clean when re-run.
+- **Targets.** Every visible control is at least 44px at 375×812 and 900×420 coarse, measured as the contiguous hit run through its centre. Exceptions:
+  - palette dots, 26px wide on a 26px pitch (44px tall);
+  - the 16-step grid and lane rows in coarse landscape, ~33–42px (phones keep their 44px 4×4 wrap);
+  - inline text links.
+- **Computed styles and screenshots** of every posture, before and after. Every difference is one of the changes above, apart from what also differs between two runs of the same build: live readouts, the note and Geist Mono's load timing.
+  - **Desktop:** only the colour changes, the Library fold summary padding and the HelpTip `?` moved out of its summary.
+  - **Narrow fine-pointer windows (≤720px):** rail thumbs drop from 24px, which `style.css`'s phone rule had been supplying, to the intended 14px.
+- **Segmented at 320px.** Nothing wraps (arpRate is still 268 of 268); a forced overflow wraps to two rows with every segment visible.
+- **Benchmark.** `benchmark-performance.mjs`: 7.59/1.71 ms desktop and 3.37/0.81 ms portrait before, 7.51/1.69 and 3.36/0.81 after. Chrome's style recalculation over the same tab, dialog and Zen sequence, medians of five runs:
+
+  | | Style before | Style after | Layout before | Layout after |
+  |---|---|---|---|---|
+  | 1440×900 | 44.8 ms | 44.6 ms | 23.7 ms | 24.1 ms |
+  | 375 coarse | 52.2 ms | 59.0 ms | 29.2 ms | 29.8 ms |
+
+  The coarse cost is the hit-area pseudo-elements, about 0.3 ms per interaction.
+- **Tests.**
+  - `controls-ui` covers the fold tip wrapper and order, the Gestures `h2` and the toast's focus return.
+  - `recorder-ui` covers the inert rail during playback.
+  - `app-smoke` covers focus returning to `#zen`.
+- **Revs.**
+  - `controls-8b` for `style.css`, `flow-ds.css`, `controls-ui.js` and `app.js` in `instrument.html`, for `controls-kit.js` (in `controls-ui.js`) and `recorder-ui.js` (in `app.js`), and in `controls-ui.test.mjs`'s pins.
+  - `presentation.css` stays at `controls-8a`.
+
 ---
 
 ## Open decisions

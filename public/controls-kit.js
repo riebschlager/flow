@@ -397,8 +397,9 @@ export function enhanceToast(host,{timeout=6000}={}){
  if(host.dataset.enhanced)return null;
  host.dataset.enhanced='toast';
  const close=make('button','toast-close',host);close.type='button';close.textContent='×';close.setAttribute('aria-label','Dismiss');
- let timer=null,paused=false;
- const hide=()=>{clearTimeout(timer);timer=null;host.hidden=true;};
+ // Focus that arrived from elsewhere goes back there when the toast hides under it.
+ let timer=null,paused=false,returnTo=null;
+ const hide=()=>{clearTimeout(timer);timer=null;const held=host.contains(document.activeElement);host.hidden=true;if(held&&returnTo&&!returnTo.disabled)returnTo.focus?.({preventScroll:true});returnTo=null;};
  function arm(){
   clearTimeout(timer);timer=null;
   const ms=host.dataset.timeout===undefined?timeout:+host.dataset.timeout;
@@ -407,7 +408,7 @@ export function enhanceToast(host,{timeout=6000}={}){
  function render(){host.classList.toggle('is-visible',!host.hidden);arm();}
  host.addEventListener('pointerenter',()=>{paused=true;arm();});
  host.addEventListener('pointerleave',()=>{paused=host.contains(document.activeElement);arm();});
- host.addEventListener('focusin',()=>{paused=true;arm();});
+ host.addEventListener('focusin',e=>{if(e.relatedTarget&&!host.contains(e.relatedTarget))returnTo=e.relatedTarget;paused=true;arm();});
  host.addEventListener('focusout',e=>{if(!host.contains(e.relatedTarget)){paused=false;arm();}});
  host.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();hide();}});
  // The action's own handler runs first; then the toast closes.
