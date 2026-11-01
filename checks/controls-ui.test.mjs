@@ -69,6 +69,7 @@ const doc={activeElement:null,listeners:{},body:new Node('body'),
  querySelectorAll(sel){return this.body.querySelectorAll(sel);},
  querySelector(sel){const m=sel.match(/^label\[for="([^"]+)"\]$/);return m?this.body.querySelectorAll('label').find(l=>l.attrs.for===m[1])||null:this.body.querySelector(sel);},
  addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);},
+ removeEventListener(k,fn){this.listeners[k]=(this.listeners[k]||[]).filter(f=>f!==fn);},
  dispatchEvent(e){for(const fn of this.listeners[e.type]||[])fn(e);}};
 doc.body.querySelectorAll=function(sel){const m=sel.match(/^\[id="([^"]+)"\]$/);if(m){const out=[];const walk=n=>{for(const c of n.children){if(c.id===m[1])out.push(c);walk(c);}};walk(this);return out;}return Node.prototype.querySelectorAll.call(this,sel);};
 globalThis.document=doc;globalThis.HTMLInputElement=Input;
@@ -78,7 +79,7 @@ const pointer=(el,type,extra)=>{const e=new Event(type,{bubbles:true,cancelable:
 function log(el){const seen=[];el.addEventListener('input',()=>seen.push('input:'+el.value));el.addEventListener('change',()=>seen.push('change:'+el.value));return seen;}
 function select(id,values,label){const wrap=new Node('div');doc.body.append(wrap);if(label){const l=new Node('label');l.attrs.for=id;l.textContent=label;wrap.append(l);}const s=new Select();s.id=id;for(const [v,t] of values)s.append(new Option(v,t));wrap.append(s);return s;}
 
-const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
+const {KNOBS,SEGMENTED,SWATCH_GRIDS,LAYERS,SWITCH_STATUS,DIM_WHEN_OFF,POPOVERS,enhanceChrome,toNorm,fromNorm,enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,enhanceEnvelopeGraph,envelopePoints,enhanceKnobs,enhanceHelpTips,enhanceRail}=await import('../public/controls-ui.js');
 const html=fs.readFileSync(new URL('../app/instrument.html',import.meta.url),'utf8');
 for(const id of Object.keys(KNOBS)){assert.match(html,new RegExp(`<input id="${id}" type="range"`),`${id} is a range input`);assert.match(html,new RegExp(`<label class="slider-label" for="${id}">`),`${id} has a slider label`);}
 for(const level of ['volume','dropletsVolume','arpVolume','rhythmVolume','environmentVolume','rain','energy'])assert.ok(!(level in KNOBS),`${level} stays a slider`);
@@ -333,7 +334,7 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const id of ['arpLength','arpAttack','arpDecay','arpSustain','arpGlideTime','arpGlideAmount'])assert.equal(KNOBS[id].sm,true,`${id} is a small knob`);
  assert.equal(KNOBS.environmentTone.bipolar,true);
  assert.deepEqual(Object.keys(LAYERS).slice(0,3),['arpEnabled','rhythmEnabled','environmentEnabled']);assert.equal(SWITCH_STATUS.arpGlideEnabled,'arpGlideSummary');
- assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-5"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-5/);
+ assert.match(html,/<script type="module" src="controls-ui\.js\?rev=controls-6"><\/script>/);assert.match(html,/flow-ds\.css\?rev=controls-6/);
 
  // The real markup, enhanced the way startup does it.
  doc.body.replaceChildren();
@@ -488,4 +489,47 @@ assert.match(app,/\$\('bpm'\)\.addEventListener\('input',\(\)=>\{const value=Num
  for(const [title,text] of [['voiceEffects','Reverb & delay for color voices'],['drumEffects','Independent drum reverb'],['volume','A balanced output']]){const tip=($(title).closest('section')).querySelector('.help-tip');assert.ok(tip?.textContent.includes(text),`${title}'s section carries its help`);}
  assert.equal($('echoSyncLabel').tagName,'OUTPUT');assert.ok($('echoSyncLabel').closest('section').querySelector('.help-tip').textContent.includes('Shared by voices, drums'));
 }
-console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.');
+// Phase 6a: the top bar holds the session title, saved state and session menu; the canvas edge keeps the palette pill and Clear.
+{
+ const top=html.match(/<header class="topbar">[\s\S]*?<\/header>/)[0];
+ assert.ok(!html.includes('class="session-header"'),'the session header above the transport is gone');
+ const at=id=>top.indexOf(`id="${id}"`);
+ for(const id of ['sessionHeader','sessionTitle','sessionSave','sessionOrigin','sessionMenuButton','sessionMenu','allSessions','backupSession','newSession','sharedPreview','previewBack','previewTitle','previewStatus','communityLauncher','recordLauncher','help','zen','togglePanel'])assert.ok(at(id)>0,`${id} lives in the top bar`);
+ assert.ok(top.indexOf('class="brand"')<at('sessionHeader')&&at('sessionHeader')<at('sharedPreview')&&at('sharedPreview')<top.indexOf('class="header-actions"'),'brand · session · launchers');
+ const order=['communityLauncher','recordLauncher','help','zen','togglePanel'].map(at);
+ assert.deepEqual(order,[...order].sort((a,b)=>a-b),'Community · Library · ? · Zen · rail toggle');
+ const menu=top.slice(at('sessionMenu'),top.indexOf('</div>',at('sessionMenu')));
+ assert.deepEqual([...menu.matchAll(/<button id="(\w+)"[^>]*role="menuitem"/g)].map(m=>m[1]),['allSessions','backupSession','newSession'],'the session menu holds the way back, download and new');
+ assert.match(html.match(/<div id="presentStrip"[\s\S]*?<\/div>/)[0],/<button id="fullscreen"[^>]*>[^<]*<\/button><button id="presentExit">/,'fullscreen moves into the Zen strip');
+ assert.ok(at('fullscreen')<0);
+ const bottom=html.slice(html.indexOf('<div class="canvas-bottom">'),html.indexOf('<button id="performanceHint"'));
+ assert.ok(bottom.includes('class="palette-controls"')&&bottom.includes('id="cycleColors"'),'the palette pill stays on the canvas');
+ assert.match(bottom,/<button id="clear" class="icon-button canvas-clear"[^>]*aria-label="Clear canvas"/,'Clear is an icon button');
+ assert.ok(!bottom.includes('id="zen"'),'Zen leaves the canvas');
+ assert.match(bottom,/class="palette-hint sr-only" id="paletteHint" role="status"/,'the palette hint stays as a live region');
+ assert.deepEqual(POPOVERS.sessionMenuButton,{panel:'sessionMenu',menu:true});
+ assert.ok(!/enhanceChrome|enhancePopover/.test(fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8')),'app.js does not apply components');
+ assert.match(fs.readFileSync(new URL('../public/controls-ui.js',import.meta.url),'utf8'),/enhanceRail\(\);enhanceChrome\(\);/,'the top bar is enhanced at startup');
+
+ // The real top bar, enhanced the way startup does it.
+ doc.body.replaceChildren();
+ const wrap=new Node('div');doc.body.append(wrap);wrap.innerHTML=top;
+ const $=id=>doc.getElementById(id);
+ enhanceChrome(doc);
+ const button=$('sessionMenuButton'),panel=$('sessionMenu');
+ assert.equal(panel.hidden,true);assert.equal(button.getAttribute('aria-expanded'),'false');assert.equal(button.getAttribute('aria-haspopup'),'menu');assert.equal(button.getAttribute('aria-controls'),'sessionMenu');
+ button.click();assert.equal(panel.hidden,false);assert.equal(button.getAttribute('aria-expanded'),'true');assert.equal(doc.activeElement,$('allSessions'),'opening focuses the first item');
+ key(doc.activeElement,'ArrowDown');assert.equal(doc.activeElement,$('backupSession'));
+ key(doc.activeElement,'ArrowUp');key(doc.activeElement,'ArrowUp');assert.equal(doc.activeElement,$('newSession'),'arrows wrap');
+ key(doc.activeElement,'Home');assert.equal(doc.activeElement,$('allSessions'));key(doc.activeElement,'End');assert.equal(doc.activeElement,$('newSession'));
+ key(doc.activeElement,'Escape');assert.equal(panel.hidden,true,'Escape closes');assert.equal(doc.activeElement,button,'and returns focus to the trigger');
+ let made=0;$('newSession').addEventListener('click',()=>{made++;assert.equal(panel.hidden,false,'the item acts before the menu closes');});
+ button.click();$('newSession').click();assert.equal(made,1);assert.equal(panel.hidden,true,'choosing an item closes the menu');
+ $('allSessions').disabled=true;key(button,'ArrowDown');assert.equal(panel.hidden,false,'ArrowDown on the trigger opens the menu');assert.equal(doc.activeElement,$('backupSession'),'disabled items are skipped');
+ key(doc.activeElement,'ArrowUp');assert.equal(doc.activeElement,$('newSession'));
+ pointer($('backupSession'),'pointerdown');assert.equal(panel.hidden,false,'a press inside keeps it open');
+ pointer($('help'),'pointerdown');assert.equal(panel.hidden,true,'a press outside closes it');
+ button.click();button.click();assert.equal(panel.hidden,true,'the trigger toggles');
+ $('allSessions').disabled=false;
+}
+console.log('PASS: knob ids match the markup, levels stay sliders, tapers round-trip, snap to step and clamp; Segmented, swatch grid, Stepper, Layer and EnvelopeGraph keep .value, events and disabled in sync both ways; tempo has a hidden input; Sound and Scene match their target tables with no folds, and enhanceRail applies Segmented, the swatch grid and the percussion dim at startup; Layers has three switch-disclosed layers with live descriptions, one Note shape fold with the EnvelopeGraph and glide, and no visible status lines; Play has six unfolded sections with Segmented tool, grid and octaves, the quantize layer and drift status in switch descriptions, knobs for intensity and interval, and fluidListens lives in Scene; Mix has five unfolded sections, vertical layer faders that dim with their layer, large melodic-space knobs, and one echo spacing menu with a tempo-aware readout.; the top bar holds the session title, saved state and a keyboard-navigable session menu Popover, fullscreen sits in the Zen strip, and the canvas edge keeps the palette pill and a Clear icon');

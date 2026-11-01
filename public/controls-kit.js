@@ -1,5 +1,5 @@
-// Flow design system primitives: Segmented, swatch grid, Stepper, Layer and
-// EnvelopeGraph. Like the knobs, each one is a progressive enhancement: the
+// Flow design system primitives: Segmented, swatch grid, Stepper, Layer,
+// EnvelopeGraph and Popover. Like the knobs, each one is a progressive enhancement: the
 // native input stays the state, the component writes .value and dispatches
 // input/change, and programmatic writes and `disabled` flow back into the view.
 // Nothing here runs on import; a component appears only where it is applied.
@@ -191,6 +191,47 @@ export function enhanceLayer(toggle,body,{status,description}={}){
  watchControl(toggle,render,['checked']);
  render();
  return wrap;
+}
+
+// A trigger and the panel it opens. Escape, a click outside or focus leaving
+// closes it. As a menu, arrow keys move between items and choosing one closes it.
+// The panel stays in the markup; only `hidden` and aria-expanded change.
+export function enhancePopover(trigger,panel,{menu=false}={}){
+ if(trigger.dataset.popover)return null;
+ trigger.dataset.popover=panel.id||'1';
+ const host=trigger.parentElement;
+ if(panel.id)trigger.setAttribute('aria-controls',panel.id);
+ trigger.setAttribute('aria-haspopup',menu?'menu':'dialog');trigger.setAttribute('aria-expanded','false');
+ const items=()=>[...panel.querySelectorAll(menu?'[role=menuitem]':'button,input,select,textarea,a[href],[tabindex]')].filter(el=>!el.disabled&&!el.hidden);
+ const isOpen=()=>!panel.hidden;
+ function outside(e){if(!host.contains(e.target))close();}
+ function open({focus='first'}={}){
+  if(isOpen())return;
+  panel.hidden=false;trigger.setAttribute('aria-expanded','true');host.classList.add('is-open');
+  document.addEventListener('pointerdown',outside,true);
+  const list=items();(focus==='last'?list.at(-1):list[0])?.focus();
+ }
+ function close({restore=false}={}){
+  if(!isOpen())return;
+  panel.hidden=true;trigger.setAttribute('aria-expanded','false');host.classList.remove('is-open');
+  document.removeEventListener('pointerdown',outside,true);
+  if(restore)trigger.focus();
+ }
+ trigger.addEventListener('click',()=>isOpen()?close():open());
+ trigger.addEventListener('keydown',e=>{if(menu&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();open({focus:e.key==='ArrowUp'?'last':'first'});}});
+ panel.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close({restore:true});return;}
+  if(!menu)return;
+  const list=items(),i=list.indexOf(document.activeElement),n=list.length;
+  const to={ArrowDown:(i+1)%n,ArrowUp:(i-1+n)%n,Home:0,End:n-1}[e.key];
+  if(to===undefined||!n)return;
+  e.preventDefault();list[to].focus();
+ });
+ // An item's own click handler runs first; then the menu closes.
+ if(menu)panel.addEventListener('click',e=>{if(e.target.closest?.('[role=menuitem]'))close({restore:true});});
+ host.addEventListener('focusout',e=>{if(isOpen()&&e.relatedTarget&&!host.contains(e.relatedTarget))close();});
+ panel.hidden=true;
+ return {open,close,get isOpen(){return isOpen();}};
 }
 
 // ADSR preview drawn from the arpeggiator's note-shape ranges. The segment of

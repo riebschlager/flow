@@ -3,10 +3,10 @@
 // remains the source of truth, so existing listeners, storage and sessions are
 // unchanged: the knob writes .value and dispatches the same input/change events.
 // Static helper copy moves into a "?" tip beside its section title.
-// Segmented, swatch grid, Stepper, Layer and EnvelopeGraph live in controls-kit.js
-// and are applied per element by enhanceRail() below.
-import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph} from './controls-kit.js?rev=controls-4';
-export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp} from './controls-kit.js?rev=controls-4';
+// Segmented, swatch grid, Stepper, Layer, EnvelopeGraph and Popover live in
+// controls-kit.js and are applied per element by enhanceRail() and enhanceChrome() below.
+import {clamp,recentlyScrolled,watchControl,enhanceSegmented,enhanceSwatchGrid,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,enhancePopover} from './controls-kit.js?rev=controls-6';
+export {enhanceSegmented,enhanceSwatchGrid,enhanceStepper,enhanceLayer,mirrorStatus,enhanceEnvelopeGraph,envelopePoints,watchProp,enhancePopover} from './controls-kit.js?rev=controls-6';
 
 export const KNOBS={
  reverb:{lg:true},delay:{lg:true},rhythmReverb:{},rhythmDelay:{},studioReverb:{},studioDelay:{},
@@ -228,6 +228,13 @@ export function enhanceRail(root=document){
  document.dispatchEvent?.(new Event('flow:selects'));
 }
 
+// Top bar and transport components outside the rail.
+export const POPOVERS={sessionMenuButton:{panel:'sessionMenu',menu:true}};
+export function enhanceChrome(root=document){
+ const byId=id=>root.getElementById?.(id)||null;
+ for(const [id,{panel,...opts}] of Object.entries(POPOVERS)){const trigger=byId(id);if(trigger&&byId(panel))enhancePopover(trigger,byId(panel),opts);}
+}
+
 if(typeof document!=='undefined'){
- enhanceHelpTips();enhanceKnobs();enhanceSliders();enhanceRail();
+ enhanceHelpTips();enhanceKnobs();enhanceSliders();enhanceRail();enhanceChrome();
 }
